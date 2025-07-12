@@ -37,6 +37,7 @@ async function bootstrap() {
     origin: [
       'http://localhost:3000',
       'http://localhost:4000',
+      'http://192.168.1.2:4000',
       'http://localhost:' + (process.env.PORT || '3000'),
       'http://localhost:' + (process.env.NEXT_PUBLIC_PORT || '4000')
     ],

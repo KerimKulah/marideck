@@ -80,7 +80,7 @@ const initialState: CustomerState = {
     loading: false,
     error: null,
     page: 1,
-    limit: 5,
+    limit: 10,
     totalCustomers: 0,
     totalPages: 1,
     searchQuery: '',

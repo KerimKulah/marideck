@@ -35,13 +35,15 @@ const formatDate = (dateString: string) => {
 
 const formatPhone = (phoneNumber?: string | null) => {
   if (!phoneNumber) return '-';
-  const trimmed = phoneNumber.trim().replace(/\s+/g, ''); // remove spaces
-  const numeric = trimmed.replace(/[^\d]/g, ''); // only digits
-  return `+${numeric}`;
+  const cleaned = phoneNumber.replace(/[^\d+]/g, '');
+  if (!cleaned.startsWith('+')) {
+    return `+${cleaned.replace(/\D/g, '')}`;
+  }
+  return cleaned;
 };
 
 const CountryCell = ({ countryCode }: { countryCode?: string }) => {
-  if (!countryCode) return <div className="flex items-center gap-2"><Globe className="h-4 w-4 text-muted-foreground" /> -</div>;
+  if (!countryCode) return <div className="flex items-center gap-2"><Globe className="h-4 w-4 text-muted-foreground" />-</div>;
   const flag = <ReactCountryFlag countryCode={countryCode.toUpperCase()} svg style={{ width: '16px', height: '16px' }} />;
   const countryName = tr[countryCode.toLowerCase() as keyof typeof tr] || countryCode;
 
@@ -50,19 +52,33 @@ const CountryCell = ({ countryCode }: { countryCode?: string }) => {
       {flag}
       <Tooltip>
         <TooltipTrigger asChild>
-          <span className="cursor-help">
+          <span className="min-w-[120px]">
             {countryName.length > 12 ? `${countryName.slice(0, 12)}...` : countryName}
           </span>
         </TooltipTrigger>
         <TooltipContent>
           <div className="flex items-center gap-2">
             {flag}
-            <p>{countryName}</p>
+            <p >{countryName}</p>
           </div>
         </TooltipContent>
       </Tooltip>
     </div>
   );
+};
+
+const handleWhatsappMessage = (phoneNumber: string) => {
+  const formattedPhone = formatPhone(phoneNumber);
+  window.open(`https://wa.me/${formattedPhone}`);
+};
+
+const handlePhoneCall = (phoneNumber: string) => {
+  const formattedPhone = formatPhone(phoneNumber);
+  window.location.href = `tel:${formattedPhone}`;
+};
+
+const handleMail = (email: string) => {
+  window.location.href = `mailto:${email}`;
 };
 
 export default function CustomersPage() {
@@ -217,14 +233,14 @@ export default function CustomersPage() {
                     </div>
                   </TableCell>
                   {/* Firma Adı */}
-                  <TableCell>
+                  <TableCell >
                     <div className="flex items-center gap-2">
                       <Building2 className="h-4 w-4 text-muted-foreground" />
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <span>
                             {customer.company ? (
-                              customer.company?.length > 25 ? `${customer.company.slice(0, 25)}...` : customer.company
+                              customer.company?.length > 30 ? `${customer.company.slice(0, 25)}...` : customer.company
                             ) : '-'}
                           </span>
                         </TooltipTrigger>
@@ -243,7 +259,7 @@ export default function CustomersPage() {
                           <button className="hover:underline transition-colors cursor-pointer">
                             <Tooltip>
                               <TooltipTrigger asChild>
-                                <span>{customer.email}</span>
+                                <span className="max-w-[120px]">{customer.email?.length > 25 ? `${customer.email.slice(0, 25)}...` : customer.email}</span>
                               </TooltipTrigger>
                               <TooltipContent>
                                 <p>İletişim seçenekleri için tıklayın</p>
@@ -253,7 +269,7 @@ export default function CustomersPage() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="start">
                           <DropdownMenuItem className="gap-2">
-                            <Mail color="blue" className="h-4 w-4" />
+                            <Mail onClick={() => handleMail(customer.email)} color="blue" className="h-4 w-4" />
                             Mail Gönder
                           </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => navigator.clipboard.writeText(customer.email)} className="gap-2">
@@ -283,7 +299,7 @@ export default function CustomersPage() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="start">
                           <DropdownMenuItem className="gap-2">
-                            <PhoneCall color="blue" className="h-4 w-4" />
+                            <PhoneCall onClick={() => handlePhoneCall(customer.phone)} color="blue" className="h-4 w-4" />
                             Telefon Et
                           </DropdownMenuItem>
                           <DropdownMenuItem className="items-center">
@@ -292,7 +308,7 @@ export default function CustomersPage() {
                               alt="WhatsApp"
                               className="h-[22px] w-[22px] translate-x-[-3px]"
                             />
-                            <span className="translate-x-[-7px]">WhatsApp Mesajı Gönder</span>
+                            <span onClick={() => handleWhatsappMessage(customer.phone)} className="translate-x-[-7px] cursor-pointer">WhatsApp Mesajı Gönder</span>
                           </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => navigator.clipboard.writeText(customer.phone)} className="gap-2">
                             <Copy color="black" className="h-4 w-4" />
@@ -303,7 +319,7 @@ export default function CustomersPage() {
                     </div>
                   </TableCell>
                   {/* Ülke */}
-                  <TableCell>
+                  <TableCell >
                     <CountryCell countryCode={customer.country} />
                   </TableCell>
                   {/* Son İşlem Tarihi */}
