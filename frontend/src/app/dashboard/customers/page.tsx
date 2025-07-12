@@ -48,11 +48,11 @@ const CountryCell = ({ countryCode }: { countryCode?: string }) => {
   const countryName = tr[countryCode.toLowerCase() as keyof typeof tr] || countryCode;
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-2 min-w-[120px]">
       {flag}
       <Tooltip>
         <TooltipTrigger asChild>
-          <span className="min-w-[120px]">
+          <span>
             {countryName.length > 12 ? `${countryName.slice(0, 12)}...` : countryName}
           </span>
         </TooltipTrigger>
