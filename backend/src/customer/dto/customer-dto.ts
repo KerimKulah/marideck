@@ -2,25 +2,30 @@ import { IsEmail, IsNotEmpty, IsString, IsOptional } from "class-validator";
 import { ApiProperty } from "@nestjs/swagger";
 
 export class CustomerDto {
-    @IsNotEmpty({ message: 'Name is required' })
+    @IsNotEmpty({ message: 'Ad Soyad zorunlu' })
     @IsString()
     @ApiProperty()
     name: string;
 
-    @IsNotEmpty({ message: 'Email is required' })
-    @IsEmail({}, { message: 'Invalid email format' })
+    @IsNotEmpty({ message: 'Email zorunlu' })
+    @IsEmail({}, { message: 'Geçersiz e-posta formatı' })
     @ApiProperty()
     email: string;
 
-    @IsOptional()
+    @IsNotEmpty({ message: 'Telefon zorunlu' })
     @IsString()
     @ApiProperty()
-    phone?: string;
+    phone: string;
+
+    @IsOptional() 
+    @IsString()
+    @ApiProperty()
+    address?: string;
 
     @IsOptional()
     @IsString()
     @ApiProperty()
-    address?: string;
+    notes?: string;
 
     @IsOptional()
     @IsString()

@@ -1,8 +1,6 @@
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import api from '../../api/axios';
 
-
-
 interface GetCustomersParams {
     page?: number;
     limit?: number;
@@ -38,20 +36,24 @@ export const createCustomer = createAsyncThunk("customer/createCustomer", async 
 })
 
 // UPDATE CUSTOMER
-export const updateCustomer = createAsyncThunk("customer/updateCustomer", async (customer: any, { rejectWithValue }) => {
-    try {
-        const response = await api.put(`/customer/${customer.id}`, customer);
-        return response.data;
-    } catch (error: any) {
-        return rejectWithValue(error.response?.data || { message: "Bilinmeyen hata" });
+export const updateCustomer = createAsyncThunk(
+    "customer/updateCustomer",
+    async (payload: { id: string; data: any }, { rejectWithValue }) => {
+        try {
+            const { id, data } = payload;
+            const response = await api.put(`/customer/${id}`, data);
+            return response.data;
+        } catch (error: any) {
+            return rejectWithValue(error.response?.data || { message: "Bilinmeyen hata" });
+        }
     }
-})
+)
 
 // DELETE CUSTOMER (SOFT)
 export const deleteCustomer = createAsyncThunk("customer/deleteCustomer", async (id: string, { rejectWithValue }) => {
     try {
         const response = await api.delete(`/customer/${id}`);
-        return response.data;
+        return { id, ...response.data }; // ID'yi de döndürüyoruz
     } catch (error: any) {
         return rejectWithValue(error.response?.data || { message: "Bilinmeyen hata" });
     }
@@ -67,6 +69,9 @@ interface CustomerState {
     totalCustomers: number;
     totalPages: number;
     searchQuery: string;
+    createLoading: boolean;
+    updateLoading: boolean;
+    deleteLoading: boolean;
 }
 
 const initialState: CustomerState = {
@@ -79,6 +84,9 @@ const initialState: CustomerState = {
     totalCustomers: 0,
     totalPages: 1,
     searchQuery: '',
+    createLoading: false,
+    updateLoading: false,
+    deleteLoading: false,
 };
 
 export const customerSlice = createSlice({
@@ -100,8 +108,25 @@ export const customerSlice = createSlice({
             state.page = 1;
         },
         resetCustomerState: () => initialState,
+        // Optimistic updates için manuel güncelleme reducerları
+        addCustomerOptimistic: (state, action) => {
+            const newCustomer = { ...action.payload, id: `temp-${Date.now()}` };
+            state.customers.unshift(newCustomer);
+            state.totalCustomers += 1;
+        },
+        updateCustomerOptimistic: (state, action) => {
+            const index = state.customers.findIndex(c => c.id === action.payload.id);
+            if (index !== -1) {
+                state.customers[index] = { ...state.customers[index], ...action.payload };
+            }
+        },
+        removeCustomerOptimistic: (state, action) => {
+            state.customers = state.customers.filter(c => c.id !== action.payload);
+            state.totalCustomers -= 1;
+        },
     },
     extraReducers: (builder) => {
+        // GET CUSTOMERS
         builder.addCase(getCustomers.pending, (state) => {
             state.loading = true;
             state.error = null;
@@ -111,7 +136,6 @@ export const customerSlice = createSlice({
             state.customers = action.payload.customers;
             state.totalCustomers = action.payload.customersCount;
 
-            // Only update pagination if they were provided in the request
             if (action.payload.page !== undefined) state.page = action.payload.page;
             if (action.payload.limit !== undefined) state.limit = action.payload.limit;
             if (action.payload.totalPages !== undefined) state.totalPages = action.payload.totalPages;
@@ -122,48 +146,82 @@ export const customerSlice = createSlice({
             state.loading = false;
             state.error = (action.payload as any)?.message || "Bilinmeyen hata";
         })
+
+        // CREATE CUSTOMER
         builder.addCase(createCustomer.pending, (state) => {
-            state.loading = true;
+            state.createLoading = true;
             state.error = null;
         })
         builder.addCase(createCustomer.fulfilled, (state, action) => {
-            state.loading = false;
-            state.customers.unshift(action.payload);
+            state.createLoading = false;
+
+            // Optimistic update yapıldıysa temp ID'li öğeyi kaldır ve gerçek veriyi ekle
+            const tempIndex = state.customers.findIndex(c => c.id && c.id.toString().startsWith('temp-'));
+            if (tempIndex !== -1) {
+                state.customers[tempIndex] = action.payload;
+            } else {
+                // Eğer optimistic update yapılmadıysa direkt ekle
+                state.customers.unshift(action.payload);
+                state.totalCustomers += 1;
+            }
+
             state.error = null;
         })
         builder.addCase(createCustomer.rejected, (state, action) => {
-            state.loading = false;
+            state.createLoading = false;
             state.error = (action.payload as any)?.message || "Bilinmeyen hata";
+
+            // Optimistic update başarısızsa temp öğeyi kaldır
+            state.customers = state.customers.filter(c => !c.id || !c.id.toString().startsWith('temp-'));
+            state.totalCustomers -= 1;
         })
+
+        // UPDATE CUSTOMER
         builder.addCase(updateCustomer.pending, (state) => {
-            state.loading = true;
+            state.updateLoading = true;
             state.error = null;
         })
         builder.addCase(updateCustomer.fulfilled, (state, action) => {
-            state.loading = false;
-            state.customers = state.customers.map((customer) => customer.id === action.payload.id ? action.payload : customer);
+            state.updateLoading = false;
+
+            // State'teki müşteriyi güncelle
+            const index = state.customers.findIndex(c => c.id === action.payload.id);
+            if (index !== -1) {
+                state.customers[index] = action.payload;
+            }
+
             state.error = null;
         })
         builder.addCase(updateCustomer.rejected, (state, action) => {
-            state.loading = false;
+            state.updateLoading = false;
             state.error = (action.payload as any)?.message || "Bilinmeyen hata";
         })
+
+        // DELETE CUSTOMER
         builder.addCase(deleteCustomer.pending, (state) => {
-            state.loading = true;
+            state.deleteLoading = true;
             state.error = null;
         })
         builder.addCase(deleteCustomer.fulfilled, (state, action) => {
-            state.loading = false;
-            state.customers = state.customers.filter((customer) => customer.id !== action.payload.id);
+            state.deleteLoading = false;
+
+            // Müşteriyi listeden kaldır
+            state.customers = state.customers.filter(c => c.id !== action.payload.id);
+            state.totalCustomers -= 1;
+
+            // Eğer sayfa boş kaldıysa ve birinci sayfa değilse, önceki sayfaya git
+            if (state.customers.length === 0 && state.page > 1) {
+                state.page -= 1;
+            }
+
             state.error = null;
         })
         builder.addCase(deleteCustomer.rejected, (state, action) => {
-            state.loading = false;
+            state.deleteLoading = false;
             state.error = (action.payload as any)?.message || "Bilinmeyen hata";
         })
     }
 });
 
 export default customerSlice.reducer;
-export const { clearError, setPage, setLimit, setSearchQuery, resetCustomerState } = customerSlice.actions;
-
+export const { clearError, setPage, setLimit, setSearchQuery, resetCustomerState, addCustomerOptimistic, updateCustomerOptimistic, removeCustomerOptimistic } = customerSlice.actions;

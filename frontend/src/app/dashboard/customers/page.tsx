@@ -1,6 +1,6 @@
 "use client"
 
-import { Search, Plus, Building2, User, Mail, Phone, Globe, Calendar, MoreHorizontal, ChevronDown } from "lucide-react"
+import { Search, Plus, Building2, User, Mail, Phone, Globe, Calendar, MoreHorizontal, ChevronDown, PhoneCall, MessageCircle, Copy } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, } from "@/components/ui/table"
@@ -16,7 +16,10 @@ import { getCustomers, setPage, setLimit, setSearchQuery, deleteCustomer } from 
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination"
 import { MiniLoading } from "@/components/ui/mini-loading"
 import { CustomerDetailsModal } from "@/components/customer-details-modal"
-import CustomerAddOrEditModal from "@/components/customer-addoredit-modal"
+import { CustomerAddOrEditModal } from "@/components/customer-addoredit-modal"
+import tr from 'react-phone-input-2/lang/tr.json'
+import ReactCountryFlag from "react-country-flag"
+
 
 const formatDate = (dateString: string) => {
   if (!dateString) return '-';
@@ -30,12 +33,47 @@ const formatDate = (dateString: string) => {
   });
 }
 
+const formatPhone = (phoneNumber?: string | null) => {
+  if (!phoneNumber) return '-';
+  const trimmed = phoneNumber.trim().replace(/\s+/g, ''); // remove spaces
+  const numeric = trimmed.replace(/[^\d]/g, ''); // only digits
+  return `+${numeric}`;
+};
+
+const CountryCell = ({ countryCode }: { countryCode?: string }) => {
+  if (!countryCode) return <div className="flex items-center gap-2"><Globe className="h-4 w-4 text-muted-foreground" /> -</div>;
+  const flag = <ReactCountryFlag countryCode={countryCode.toUpperCase()} svg style={{ width: '16px', height: '16px' }} />;
+  const countryName = tr[countryCode.toLowerCase() as keyof typeof tr] || countryCode;
+
+  return (
+    <div className="flex items-center gap-2">
+      {flag}
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <span className="cursor-help">
+            {countryName.length > 12 ? `${countryName.slice(0, 12)}...` : countryName}
+          </span>
+        </TooltipTrigger>
+        <TooltipContent>
+          <div className="flex items-center gap-2">
+            {flag}
+            <p>{countryName}</p>
+          </div>
+        </TooltipContent>
+      </Tooltip>
+    </div>
+  );
+};
+
 export default function CustomersPage() {
   const dispatch = useDispatch<AppDispatch>();
   const { customers, loading, error, page, limit, totalPages, searchQuery, totalCustomers } = useSelector((state: RootState) => state.customer);
   const [searchInput, setSearchInput] = useState(searchQuery);
   const [selectedCustomer, setSelectedCustomer] = useState<any | null>(null);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+  const [isAddEditModalOpen, setIsAddEditModalOpen] = useState(false);
+  const [editingCustomer, setEditingCustomer] = useState<any | null>(null);
+
 
   const handleShowDetails = (customer: any) => {
     setSelectedCustomer(customer);
@@ -45,6 +83,27 @@ export default function CustomersPage() {
   const handleCloseDetails = () => {
     setSelectedCustomer(null);
     setIsDetailsModalOpen(false);
+  };
+
+  const handleAddCustomer = () => {
+    setEditingCustomer(null);
+    setIsAddEditModalOpen(true);
+  };
+
+  const handleEditCustomer = (customer: any) => {
+    setEditingCustomer(customer);
+    setIsAddEditModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsAddEditModalOpen(false);
+    setEditingCustomer(null);
+  };
+
+  const handleSuccess = () => {
+    setIsAddEditModalOpen(false);
+    setEditingCustomer(null);
+    dispatch(getCustomers({ page, limit, search: searchQuery }));
   };
 
   // İlk yükleme
@@ -74,20 +133,14 @@ export default function CustomersPage() {
     dispatch(setLimit(newLimit));
   };
 
-  // ALERT OLMALI , SILININCE F5 OTO YUKLENSIN
   const handleDeleteCustomer = (id: string) => {
     if (confirm('Bu müşteriyi silmek istediğinizden emin misiniz?')) {
-      dispatch(deleteCustomer(id));
+      dispatch(deleteCustomer(id)).then(() => {
+        // Silme işlemi başarılı olursa verileri yeniden yükle
+        dispatch(getCustomers({ page, limit, search: searchQuery }));
+      });
     }
   };
-
-  // const handleEditCustomer = (id: string) => {
-  //   dispatch(setCustomer(id));
-  // };
-
-  // const showCustomerDetails = (customer: Customer) => {
-  //   dispatch(setCustomer(customer));
-  // };
 
   if (loading) {
     return <MiniLoading />
@@ -115,7 +168,7 @@ export default function CustomersPage() {
           />
         </div>
         {/* Yeni Müşteri Ekle Butonu */}
-        <Button className="w-full sm:w-auto">
+        <Button onClick={handleAddCustomer} className="w-full sm:w-auto">
           <Plus className="mr-2 h-4 w-4" />
           <span>Yeni Müşteri Ekle</span>
         </Button>
@@ -133,7 +186,7 @@ export default function CustomersPage() {
               <TableHead>Telefon</TableHead>
               <TableHead>Ülke</TableHead>
               <TableHead>Son İşlem Tarihi</TableHead>
-              <TableHead>İşlemler</TableHead>
+              <TableHead >İşlemler</TableHead>
             </TableRow>
           </TableHeader>
           {/* Tablo Body */}
@@ -170,7 +223,9 @@ export default function CustomersPage() {
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <span>
-                            {customer.company?.length > 25 ? `${customer.company.slice(0, 25)}...` : customer.company}
+                            {customer.company ? (
+                              customer.company?.length > 25 ? `${customer.company.slice(0, 25)}...` : customer.company
+                            ) : '-'}
                           </span>
                         </TooltipTrigger>
                         <TooltipContent>
@@ -179,48 +234,77 @@ export default function CustomersPage() {
                       </Tooltip>
                     </div>
                   </TableCell>
-                  {/* E-posta */}
+                  {/* E-posta (Mail gönder ve maili kopyala olmalı.*/}
                   <TableCell>
                     <div className="flex items-center gap-2">
                       <Mail className="h-4 w-4 text-muted-foreground" />
-                      <a href={`mailto:${customer.email}`} className="hover:underline">
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <span>
-                              {customer.email?.length > 25 ? `${customer.email.slice(0, 25)}...` : customer.email}
-                            </span>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>{customer.email}</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </a>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <button className="hover:underline transition-colors cursor-pointer">
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <span>{customer.email}</span>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>İletişim seçenekleri için tıklayın</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="start">
+                          <DropdownMenuItem className="gap-2">
+                            <Mail color="blue" className="h-4 w-4" />
+                            Mail Gönder
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => navigator.clipboard.writeText(customer.email)} className="gap-2">
+                            <Copy color="black" className="h-4 w-4" />
+                            Maili Kopyala
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
                   </TableCell>
                   {/* Telefon */}
                   <TableCell>
                     <div className="flex items-center gap-2">
                       <Phone className="h-4 w-4 text-muted-foreground" />
-                      <a href={`tel:${customer.phone}`} className="hover:underline">
-                        {customer.phone}
-                      </a>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <button className="hover:underline transition-colors cursor-pointer">
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <span>{formatPhone(customer.phone)}</span>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>İletişim seçenekleri için tıklayın</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="start">
+                          <DropdownMenuItem className="gap-2">
+                            <PhoneCall color="blue" className="h-4 w-4" />
+                            Telefon Et
+                          </DropdownMenuItem>
+                          <DropdownMenuItem className="items-center">
+                            <img
+                              src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg"
+                              alt="WhatsApp"
+                              className="h-[22px] w-[22px] translate-x-[-3px]"
+                            />
+                            <span className="translate-x-[-7px]">WhatsApp Mesajı Gönder</span>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => navigator.clipboard.writeText(customer.phone)} className="gap-2">
+                            <Copy color="black" className="h-4 w-4" />
+                            Numarayı Kopyala
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
                   </TableCell>
                   {/* Ülke */}
                   <TableCell>
-                    <div className="flex items-center gap-2">
-                      <Globe className="h-4 w-4 text-muted-foreground" />
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <span>
-                            {!customer.country ? '-' : (customer.country.length > 12 ? `${customer.country.slice(0, 12)}...` : customer.country)}
-                          </span>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>{customer.country}</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </div>
+                    <CountryCell countryCode={customer.country} />
                   </TableCell>
                   {/* Son İşlem Tarihi */}
                   <TableCell>
@@ -230,7 +314,7 @@ export default function CustomersPage() {
                     </div>
                   </TableCell>
                   {/* İşlemler */}
-                  <TableCell className="text-right">
+                  <TableCell>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" className="h-8 w-8 p-0">
@@ -240,7 +324,7 @@ export default function CustomersPage() {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem onClick={() => handleShowDetails(customer)}>Detayları Görüntüle</DropdownMenuItem>
-                        <DropdownMenuItem>Düzenle</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleEditCustomer(customer)}>Düzenle</DropdownMenuItem>
                         <DropdownMenuItem
                           className="text-destructive"
                           onClick={() => handleDeleteCustomer(customer.id)}
@@ -400,8 +484,13 @@ export default function CustomersPage() {
       )}
 
       {/* Modals */}
+      <CustomerDetailsModal isOpen={isDetailsModalOpen} onClose={handleCloseDetails} customer={selectedCustomer} />
+      <CustomerAddOrEditModal
+        isOpen={isAddEditModalOpen}
+        onClose={handleCloseModal}
+        customer={editingCustomer}
+        onSuccess={handleSuccess}
+      />
     </div>
-
-
   )
-}
+} 

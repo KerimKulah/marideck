@@ -142,3 +142,45 @@
 .animate-lines {
   animation: linesMove 2s linear infinite;
 }
+
+.react-tel-input .form-control {
+  transition: border 0.2s, box-shadow 0.1s;
+  box-shadow: 0 1px 4px 0 rgba(0, 0, 0, 0.05);
+  box-sizing: border-box;
+  outline: none;
+}
+
+.react-tel-input .form-control:focus {
+  border-color: #a1a1a1;
+  box-shadow: 0 0 0 3px rgba(161, 161, 161, 0.5);
+}
+
+.react-tel-input .flag-dropdown.open,
+.react-tel-input .flag-dropdown:focus {
+  border-color: #a1a1a1;
+  box-shadow: 0 0 0 3px rgba(161, 161, 161, 0.5);
+}
+
+.my-custom-flags-select button[id="rfs-btn"] {
+  border: 1px solid rgba(161, 161, 161, 0.3) !important;
+  transition: border 0.1s, box-shadow 0.1s !important;
+  box-shadow: 0 1px 4px 0 rgba(0, 0, 0, 0.05) !important;
+  box-sizing: border-box !important;
+  border-radius: 8px !important;
+  height: 36px !important;
+  outline: none !important;
+}
+
+.my-custom-flags-select button[id="rfs-btn"]:focus {
+  border-color: rgba(161, 161, 161, 0.3) !important;
+  box-shadow: 0 0 0 3px rgba(161, 161, 161, 0.5) !important;
+}
+
+.my-custom-flags-select button[id="rfs-btn"][aria-expanded="true"] {
+  border-color: rgba(161, 161, 161, 0.3) !important;
+  box-shadow: 0 0 0 3px rgba(161, 161, 161, 0.5) !important;
+}
+
+.my-custom-flags-select button[id="rfs-btn"]:hover {
+  border-color: rgba(161, 161, 161, 0.3) !important;
+}

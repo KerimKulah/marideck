@@ -57,7 +57,7 @@ export class CustomerService {
         return customer;
     }
 
-    // CREATE
+    // CREATE (Eğer eklenecek müşteri soft delete ise restore yapması lazım)
     async create(customerDto: CustomerDto): Promise<{ message: string, data: Customer }> {
         const customer = this.customerRepo.create(customerDto);
         await this.customerRepo.save(customer);

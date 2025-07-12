@@ -19,11 +19,14 @@ export class Customer {
     email: string;
 
     @Index()
-    @Column({ nullable: true })
-    phone?: string;
+    @Column()
+    phone: string;
 
     @Column({ type: 'text', nullable: true })
     address?: string;
+
+    @Column({ type: 'text', nullable: true })
+    notes?: string;
 
     @Column({ nullable: true })
     country?: string;
@@ -40,4 +43,3 @@ export class Customer {
     @DeleteDateColumn({ type: 'timestamptz' })
     deletedAt?: Date;
 }
- 

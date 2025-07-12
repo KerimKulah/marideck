@@ -1,6 +1,6 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Button } from "./ui/button";
-import { Building2, User, Mail, Phone, MapPin, Calendar, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Building2, User, Mail, Phone, MapPin, Calendar, Globe, CalendarClock, StickyNote } from "lucide-react";
 
 type CustomerDetailsModalProps = {
     isOpen: boolean;
@@ -14,76 +14,40 @@ export const CustomerDetailsModal = ({ isOpen, onClose, customer }: CustomerDeta
     const formatDate = (dateString?: string) => {
         if (!dateString) return 'Henüz işlem yok';
         const date = new Date(dateString);
-        return date.toLocaleString('tr-TR', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
+        return date.toLocaleString('tr-TR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
     };
 
+    const InfoRow = ({ icon: Icon, label, value }: { icon: React.ElementType; label: string; value?: string; }) => (
+        <div className="flex items-start gap-3">
+            <Icon className="h-5 w-5 text-muted-foreground" />
+            <div>
+                <p className="text-sm text-muted-foreground">{label}</p>
+                <p className="font-medium text-foreground">{value || '-'}</p>
+            </div>
+        </div>
+    );
+
     return (
+
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="max-w-md">
+            <DialogContent className="max-w-md sm:max-w-lg">
                 <DialogHeader>
-                    <DialogTitle>Müşteri Detayları</DialogTitle>
+                    <DialogTitle className="text-lg font-semibold">Müşteri Detayları</DialogTitle>
                 </DialogHeader>
 
-                <div className="space-y-4 py-4">
-                    <div className="flex items-center space-x-3">
-                        <Building2 className="h-5 w-5 text-muted-foreground" />
-                        <div>
-                            <p className="text-sm text-muted-foreground">Firma</p>
-                            <p className="font-medium">{customer.company}</p>
-                        </div>
-                    </div>
-
-                    <div className="flex items-center space-x-3">
-                        <User className="h-5 w-5 text-muted-foreground" />
-                        <div>
-                            <p className="text-sm text-muted-foreground">Yetkili Kişi</p>
-                            <p className="font-medium">{customer.name}</p>
-                        </div>
-                    </div>
-
-                    <div className="flex items-start space-x-3">
-                        <MapPin className="h-5 w-5 text-muted-foreground mt-0.5" />
-                        <div>
-                            <p className="text-sm text-muted-foreground">Adres</p>
-                            <p className="font-medium">{customer.address || '-'}</p>
-                        </div>
-                    </div>
-
-                    <div className="flex items-center space-x-3">
-                        <Phone className="h-5 w-5 text-muted-foreground" />
-                        <div>
-                            <p className="text-sm text-muted-foreground">Telefon</p>
-                            <p className="font-medium">{customer.phone || '-'}</p>
-                        </div>
-                    </div>
-
-                    <div className="flex items-center space-x-3">
-                        <Mail className="h-5 w-5 text-muted-foreground" />
-                        <div>
-                            <p className="text-sm text-muted-foreground">E-posta</p>
-                            <p className="font-medium">{customer.email || '-'}</p>
-                        </div>
-                    </div>
-
-                    <div className="flex items-center space-x-3">
-                        <Calendar className="h-5 w-5 text-muted-foreground" />
-                        <div>
-                            <p className="text-sm text-muted-foreground">Son İşlem Tarihi</p>
-                            <p className="font-medium">{formatDate(customer.lastTransactionDate)}</p>
-                        </div>
-                    </div>
+                <div className="grid gap-5 py-4">
+                    <InfoRow icon={Building2} label="Firma" value={customer.company} />
+                    <InfoRow icon={User} label="Yetkili Kişi" value={customer.name} />
+                    <InfoRow icon={Globe} label="Ülke" value={customer.country} />
+                    <InfoRow icon={MapPin} label="Adres" value={customer.address} />
+                    <InfoRow icon={Phone} label="Telefon" value={customer.phone} />
+                    <InfoRow icon={Mail} label="E-posta" value={customer.email} />
+                    <InfoRow icon={CalendarClock} label="Son İşlem Tarihi" value={formatDate(customer.lastTransactionDate)} />
+                    <InfoRow icon={StickyNote} label="Notlar" value={customer.notes} />
                 </div>
 
-                <div className="flex justify-end space-x-2 pt-4">
-                    <Button variant="outline" onClick={onClose}>
-                        Kapat
-                    </Button>
+                <div className="flex justify-end">
+                    <Button variant="outline" onClick={onClose}>Kapat</Button>
                 </div>
             </DialogContent>
         </Dialog>

@@ -37,7 +37,7 @@ export function LoginForm({ className, ...props }: React.ComponentProps<"div">) 
       router.push("/dashboard"); //ls
     }
   };
- 
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>, setter: React.Dispatch<React.SetStateAction<string>>) => {
     setter(e.target.value);
     if (error) dispatch(clearError());
@@ -53,9 +53,14 @@ export function LoginForm({ className, ...props }: React.ComponentProps<"div">) 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card>
-        <CardHeader>
-          <CardTitle>Personel Hesabınıza Giriş Yapın</CardTitle>
-          <CardDescription>Lütfen email adresinizi ve şifrenizi girin.</CardDescription>
+        <CardHeader className="text-center space-y-4">
+          <div className="flex justify-center">
+            <img className="h-16 w-auto" src="/kmaritime-logo.png" alt="KMaritime Logo" />
+          </div>
+          <div className="space-y-2">
+            <CardTitle>K-Maritime Yönetim Sistemine Hoşgeldiniz</CardTitle>
+            <CardDescription>Lütfen email adresinizi ve şifrenizi girin.</CardDescription>
+          </div>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleLogin}>
