@@ -20,6 +20,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import React from 'react'
 import ReactFlagsSelect from 'react-flags-select'
+import { Building2, Globe, Mail, MapPin, Phone, StickyNote, User } from 'lucide-react'
 
 const formSchema = z.object({
     name: z.string().nonempty({ message: "Yetkili Kişinin Adı Soyadı zorunludur" }),
@@ -152,7 +153,7 @@ export function CustomerAddOrEditModal({ isOpen, onClose, customer, onSuccess }:
         <Dialog open={isOpen} onOpenChange={handleClose}>
             <DialogContent className="sm:max-w-[500px]">
                 <DialogHeader>
-                    <DialogTitle>{customer ? "Müşteri Düzenle" : "Yeni Müşteri Ekle"}</DialogTitle>
+                    <DialogTitle className="mb-4">{customer ? "Müşteri Bilgilerini Düzenle" : "Yeni Müşteri Ekle"}</DialogTitle>
                 </DialogHeader>
 
                 <Form {...form}>
@@ -163,7 +164,9 @@ export function CustomerAddOrEditModal({ isOpen, onClose, customer, onSuccess }:
                                 name="name"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Yetkili Kişi <span className="text-red-500">*</span></FormLabel>
+                                        <FormLabel>
+                                            <User className="h-4 w-4 text-muted-foreground" />
+                                            Yetkili Kişi <span className="text-red-500">*</span></FormLabel>
                                         <FormControl>
                                             <Input placeholder="Ad Soyad giriniz" {...field} />
                                         </FormControl>
@@ -177,7 +180,9 @@ export function CustomerAddOrEditModal({ isOpen, onClose, customer, onSuccess }:
                                 name="email"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>E-posta <span className="text-red-500">*</span></FormLabel>
+                                        <FormLabel>
+                                            <Mail className="h-4 w-4 text-muted-foreground" />
+                                            E-posta <span className="text-red-500">*</span></FormLabel>
                                         <FormControl>
                                             <Input type="email" placeholder="E-posta giriniz" {...field} />
                                         </FormControl>
@@ -193,6 +198,7 @@ export function CustomerAddOrEditModal({ isOpen, onClose, customer, onSuccess }:
                                 render={({ field }) => (
                                     <FormItem>
                                         <FormLabel>
+                                            <Phone className="h-4 w-4 text-muted-foreground " />
                                             Telefon <span className="text-red-500">*</span>
                                         </FormLabel>
                                         <FormControl>
@@ -230,6 +236,7 @@ export function CustomerAddOrEditModal({ isOpen, onClose, customer, onSuccess }:
                                 render={({ field }) => (
                                     <FormItem>
                                         <FormLabel>
+                                            <Building2 className="h-4 w-4 text-muted-foreground" />
                                             Firma
                                         </FormLabel>
                                         <FormControl>
@@ -245,7 +252,10 @@ export function CustomerAddOrEditModal({ isOpen, onClose, customer, onSuccess }:
                                 name="country"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Ülke</FormLabel>
+                                        <FormLabel>
+                                            <Globe className="h-4 w-4 text-muted-foreground" />
+                                            Ülke
+                                        </FormLabel>
                                         <FormControl>
                                             <ReactFlagsSelect
                                                 className="my-custom-flags-select"
@@ -267,7 +277,10 @@ export function CustomerAddOrEditModal({ isOpen, onClose, customer, onSuccess }:
                                 name="address"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Adres</FormLabel>
+                                        <FormLabel>
+                                            <MapPin className="h-4 w-4 text-muted-foreground" />
+                                            Adres
+                                        </FormLabel>
                                         <FormControl>
                                             <Textarea
                                                 placeholder="Adres bilgisi giriniz"
@@ -285,7 +298,10 @@ export function CustomerAddOrEditModal({ isOpen, onClose, customer, onSuccess }:
                                 name="notes"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Not</FormLabel>
+                                        <FormLabel>
+                                            <StickyNote className="h-4 w-4 text-muted-foreground" />
+                                            Not
+                                        </FormLabel>
                                         <FormControl>
                                             <Textarea
                                                 placeholder="Notunuz varsa giriniz"

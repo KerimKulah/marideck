@@ -16,6 +16,16 @@ const getCountryName = (countryCode: string): string => {
     return countryName;
 };
 
+const formatPhone = (phoneNumber?: string | null) => {
+    if (!phoneNumber) return '-';
+    const cleaned = phoneNumber.replace(/[^\d+]/g, '');
+    if (!cleaned.startsWith('+')) {
+        return `+${cleaned.replace(/\D/g, '')}`;
+    }
+    return cleaned;
+};
+
+
 export const CustomerDetailsModal = ({ isOpen, onClose, customer }: CustomerDetailsModalProps) => {
     if (!customer) return null;
 
@@ -120,7 +130,7 @@ export const CustomerDetailsModal = ({ isOpen, onClose, customer }: CustomerDeta
                         </h3>
                         <hr className="my-2" />
                         <div className="space-y-3 sm:space-y-0 sm:grid sm:grid-cols-1 md:grid-cols-2 sm:gap-4">
-                            <InfoRow icon={Phone} label="Telefon" value={customer.phone} />
+                            <InfoRow icon={Phone} label="Telefon" value={formatPhone(customer.phone)} />
                             <div className="flex items-start gap-3 py-2">
                                 <Mail className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground mt-0.5 flex-shrink-0" />
                                 <div className="flex-1 min-w-0">
