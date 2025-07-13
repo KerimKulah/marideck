@@ -285,10 +285,10 @@ export function CustomerAddOrEditModal({ isOpen, onClose, customer, onSuccess }:
                                 name="notes"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Notlar</FormLabel>
+                                        <FormLabel>Not</FormLabel>
                                         <FormControl>
                                             <Textarea
-                                                placeholder="Notlar giriniz"
+                                                placeholder="Notunuz varsa giriniz"
                                                 className="min-h-[80px]"
                                                 {...field}
                                             />

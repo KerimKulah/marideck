@@ -1,11 +1,12 @@
 "use client"
 
-import { Search, Plus, Building2, User, Mail, Phone, Globe, Calendar, MoreHorizontal, ChevronDown, PhoneCall, MessageCircle, Copy } from "lucide-react"
+import { Search, Plus, Building2, User, Mail, Phone, Globe, Calendar, MoreHorizontal, ChevronDown, PhoneCall, MessageCircle, Copy, Edit, Trash, Eye, AlertTriangle } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, } from "@/components/ui/table"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, } from "@/components/ui/dropdown-menu"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { AppDispatch } from "@/redux/store"
 import { useDispatch } from "react-redux"
 import { useSelector } from "react-redux"
@@ -89,7 +90,9 @@ export default function CustomersPage() {
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [isAddEditModalOpen, setIsAddEditModalOpen] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState<any | null>(null);
-
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [customerToDelete, setCustomerToDelete] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const handleShowDetails = (customer: any) => {
     setSelectedCustomer(customer);
@@ -122,6 +125,29 @@ export default function CustomersPage() {
     dispatch(getCustomers({ page, limit, search: searchQuery }));
   };
 
+  const handleDeleteCustomer = (id: string) => {
+    setCustomerToDelete(id);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!customerToDelete) return;
+
+    setIsDeleting(true);
+    try {
+      await dispatch(deleteCustomer(customerToDelete)).unwrap();
+      // Modalı hemen kapat
+      setIsDeleteDialogOpen(false);
+      setCustomerToDelete(null);
+      // Verileri yenile
+      await dispatch(getCustomers({ page, limit, search: searchQuery }));
+    } catch (error) {
+      console.error('Müşteri silinirken hata oluştu:', error);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   // İlk yükleme
   useEffect(() => {
     dispatch(getCustomers({ page, limit, search: searchQuery }));
@@ -149,15 +175,6 @@ export default function CustomersPage() {
     dispatch(setLimit(newLimit));
   };
 
-  const handleDeleteCustomer = (id: string) => {
-    if (confirm('Bu müşteriyi silmek istediğinizden emin misiniz?')) {
-      dispatch(deleteCustomer(id)).then(() => {
-        // Silme işlemi başarılı olursa verileri yeniden yükle
-        dispatch(getCustomers({ page, limit, search: searchQuery }));
-      });
-    }
-  };
-
   if (loading) {
     return <MiniLoading />
   }
@@ -170,6 +187,40 @@ export default function CustomersPage() {
 
   return (
     <div className="grid space-y-4">
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="h-6 w-6 text-yellow-500" />
+              <DialogTitle>Müşteriyi Sil</DialogTitle>
+            </div>
+            <DialogDescription className="pt-2">
+              Bu müşteriyi silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="sm:justify-end gap-2">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIsDeleteDialogOpen(false);
+                setCustomerToDelete(null);
+              }}
+              disabled={isDeleting}
+            >
+              İptal
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={confirmDelete}
+              disabled={isDeleting}
+            >
+              {isDeleting ? 'Siliniyor...' : 'Sil'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Arama ve Yeni Müşteri Ekle Butonu */}
       <div className="flex flex-col sm:flex-row gap-3 sm:items-center justify-between">
         {/* Arama Inputu */}
@@ -201,7 +252,6 @@ export default function CustomersPage() {
               <TableHead>E-posta</TableHead>
               <TableHead>Telefon</TableHead>
               <TableHead>Ülke</TableHead>
-              <TableHead>Son İşlem Tarihi</TableHead>
               <TableHead >İşlemler</TableHead>
             </TableRow>
           </TableHeader>
@@ -217,7 +267,7 @@ export default function CustomersPage() {
               customers?.map((customer) => (
                 <TableRow key={customer.id} className="hover:bg-muted/50">
                   {/* Yetkili Kişi */}
-                  <TableCell>
+                  <TableCell className="min-w-[200px]">
                     <div className="flex items-center gap-2">
                       <User className="h-4 w-4 text-muted-foreground" />
                       <Tooltip>
@@ -233,7 +283,7 @@ export default function CustomersPage() {
                     </div>
                   </TableCell>
                   {/* Firma Adı */}
-                  <TableCell >
+                  <TableCell className="min-w-[200px]">
                     <div className="flex items-center gap-2">
                       <Building2 className="h-4 w-4 text-muted-foreground" />
                       <Tooltip>
@@ -251,7 +301,7 @@ export default function CustomersPage() {
                     </div>
                   </TableCell>
                   {/* E-posta (Mail gönder ve maili kopyala olmalı.*/}
-                  <TableCell>
+                  <TableCell className="min-w-[200px]">
                     <div className="flex items-center gap-2">
                       <Mail className="h-4 w-4 text-muted-foreground" />
                       <DropdownMenu>
@@ -281,7 +331,7 @@ export default function CustomersPage() {
                     </div>
                   </TableCell>
                   {/* Telefon */}
-                  <TableCell>
+                  <TableCell className="min-w-[170px]">
                     <div className="flex items-center gap-2">
                       <Phone className="h-4 w-4 text-muted-foreground" />
                       <DropdownMenu>
@@ -322,13 +372,6 @@ export default function CustomersPage() {
                   <TableCell >
                     <CountryCell countryCode={customer.country} />
                   </TableCell>
-                  {/* Son İşlem Tarihi */}
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <Calendar className="h-4 w-4 text-muted-foreground" />
-                      {formatDate(customer.lastTransactionDate)}
-                    </div>
-                  </TableCell>
                   {/* İşlemler */}
                   <TableCell>
                     <DropdownMenu>
@@ -339,14 +382,9 @@ export default function CustomersPage() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => handleShowDetails(customer)}>Detayları Görüntüle</DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleEditCustomer(customer)}>Düzenle</DropdownMenuItem>
-                        <DropdownMenuItem
-                          className="text-destructive"
-                          onClick={() => handleDeleteCustomer(customer.id)}
-                        >
-                          Sil
-                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleShowDetails(customer)}><Eye /> Detayları Görüntüle</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleEditCustomer(customer)}><Edit /> Düzenle</DropdownMenuItem>
+                        <DropdownMenuItem className="text-destructive" onClick={() => handleDeleteCustomer(customer.id)}><Trash className="text-destructive" /> Sil</DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>
