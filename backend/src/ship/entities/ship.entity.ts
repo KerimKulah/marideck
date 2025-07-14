@@ -1,4 +1,5 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, DeleteDateColumn } from "typeorm";
+import { Customer } from "src/customer/entities/customer.entity";
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, DeleteDateColumn, ManyToOne } from "typeorm";
 
 @Entity()
 export class Ship {
@@ -6,10 +7,10 @@ export class Ship {
     id: number;
 
     @Column({ unique: true })
-    imoNumber: string; 
+    imoNumber: string;
 
     @Column()
-    name: string; 
+    name: string;
 
     @Column({ nullable: true })
     type?: string;
@@ -40,6 +41,9 @@ export class Ship {
 
     @Column({ nullable: true })
     agent?: string;
+
+    @ManyToOne(() => Customer, (customer) => customer.ship, { nullable: true })
+    customer?: Customer;
 
     @CreateDateColumn({ type: 'timestamptz' })
     createdAt: Date;

@@ -52,7 +52,7 @@ export class CustomerService {
 
     // GET ONE
     async findOne(id: number): Promise<Customer> {
-        const customer = await this.customerRepo.findOne({ where: { id } });
+        const customer = await this.customerRepo.findOne({ where: { id }, relations: ['ship'] });
         if (!customer) throw new NotFoundException('Customer not found');
         return customer;
     }

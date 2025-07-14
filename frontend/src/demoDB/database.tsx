@@ -87,6 +87,7 @@ export const ships = [
         id: 1,
         name: "M/V Atlantic Star",
         imo: 9876543,
+        source: "manual",
         type: "Tanker",
         length: "120",
         flag: "Türkiye",
@@ -97,12 +98,15 @@ export const ships = [
         etd: "2025-06-24T18:00:00",
         status: "devam",
         agency: "Deniz Acentelik",
-        operator: "Mediterranean Shipping Company"
+        operator: "Mediterranean Shipping Company",
+        updatedAt: "2025-06-22T08:45:00",
+        customer: customers[0]
     },
     {
         id: 2,
         name: "M/V Pacific Dawn",
         imo: 8765432,
+        source: "ais",
         type: "Container",
         length: "120",
         flag: "Türkiye",
@@ -113,12 +117,15 @@ export const ships = [
         etd: "2025-06-27T16:00:00",
         status: "beklemede",
         agency: "Ege Denizcilik",
-        operator: "Pacific Carriers"
+        operator: "Pacific Carriers",
+        updatedAt: "2025-06-22T08:45:00",
+        customer: customers[1]
     },
     {
         id: 3,
         name: "M/V Mediterranean Queen",
         imo: 7654321,
+        source: "ais",
         type: "Container",
         length: "120",
         flag: "Türkiye",
@@ -129,12 +136,15 @@ export const ships = [
         etd: "2025-06-21T20:00:00",
         status: "tamamlandı",
         agency: "Akdeniz Acentelik",
-        operator: "Teekay Shipping"
+        operator: "Teekay Shipping",
+        updatedAt: "2025-06-22T08:45:00",
+        customer: customers[2]
     },
     {
         id: 4,
         name: "M/V Nordic Voyager",
         imo: 6543210,
+        source: "manual",
         type: "Container",
         length: "120",
         flag: "Türkiye",
@@ -145,12 +155,15 @@ export const ships = [
         etd: "2025-06-25T15:00:00",
         status: "devam",
         agency: "Karadeniz Acentelik",
-        operator: "Nordic Tankers"
+        operator: "Nordic Tankers",
+        updatedAt: "2025-06-22T08:45:00",
+        customer: customers[3]
     },
     {
         id: 5,
         name: "M/V Blue Horizon",
-        imo: 5432109,
+        imo: 9506291,
+        source: "manual",
         type: "Bulk Carrier",
         length: "120",
         flag: "Finland",
@@ -161,7 +174,9 @@ export const ships = [
         etd: "2025-06-22T17:00:00",
         status: "devam",
         agency: "Akdeniz Acentelik",
-        operator: "Blue Horizon Shipping"
+        operator: "Blue Horizon Shipping",
+        updatedAt: "2025-06-22T08:45:00",
+        customer: customers[4]
     }
 ]
 

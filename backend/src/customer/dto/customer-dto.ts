@@ -17,10 +17,15 @@ export class CustomerDto {
     @ApiProperty()
     phone: string;
 
-    @IsOptional() 
+    @IsOptional()
     @IsString()
     @ApiProperty()
     address?: string;
+
+    @IsOptional()
+    @IsString()
+    @ApiProperty()
+    taxNumber?: string;
 
     @IsOptional()
     @IsString()

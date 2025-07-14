@@ -1,6 +1,6 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Building2, User, Mail, Phone, MapPin, Calendar, Globe, CalendarClock, StickyNote, Ship } from "lucide-react";
+import { Building2, User, Mail, Phone, MapPin, Calendar, Globe, CalendarClock, StickyNote, Ship, IdCard } from "lucide-react";
 import 'react-phone-input-2/lib/style.css';
 import tr from 'react-phone-input-2/lang/tr.json';
 import ReactCountryFlag from "react-country-flag";
@@ -148,6 +148,7 @@ export const CustomerDetailsModal = ({ isOpen, onClose, customer }: CustomerDeta
                         </h3>
                         <hr className="my-2" />
                         <div className="space-y-4">
+                            <InfoRow icon={IdCard} label="Vergi Numarası" value={customer.taxNumber} />
                             <InfoRowLarge icon={MapPin} label="Adres" value={customer.address} />
                             <InfoRowLarge icon={StickyNote} label="Notlar" value={customer.notes} />
                             <InfoRowLarge icon={Ship} label="İlişkili Gemiler" value="-" />

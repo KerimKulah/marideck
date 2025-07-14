@@ -20,13 +20,14 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import React from 'react'
 import ReactFlagsSelect from 'react-flags-select'
-import { Building2, Globe, Mail, MapPin, Phone, StickyNote, User } from 'lucide-react'
+import { Building2, Globe, IdCard, Mail, MapPin, Phone, StickyNote, User } from 'lucide-react'
 
 const formSchema = z.object({
     name: z.string().nonempty({ message: "Yetkili Kişinin Adı Soyadı zorunludur" }),
     email: z.string().email({ message: "Lütfen geçerli bir e-posta adresi giriniz" }),
     phone: z.string().nonempty({ message: "Telefon numarası zorunlu" })
         .regex(/^\+?[0-9]{1,30}$/, { message: "Geçerli bir telefon numarası giriniz. En fazla 30 haneli olmalıdır", }),
+    taxNumber: z.string().optional(),
     address: z.string().max(500, { message: "Adres en fazla 500 karakter uzunluğunda olmalıdır" }).optional(),
     country: z.string().max(100, { message: "Ülke en fazla 100 karakter uzunluğunda olmalıdır" }).optional(),
     company: z.string().max(500, { message: "Firma en fazla 500 karakter uzunluğunda olmalıdır" }).optional(),
@@ -40,6 +41,7 @@ interface Customer {
     name: string
     email: string
     phone?: string
+    taxNumber?: string
     address?: string
     country?: string
     company?: string
@@ -70,6 +72,7 @@ export function CustomerAddOrEditModal({ isOpen, onClose, customer, onSuccess }:
             name: "",
             email: "",
             phone: "",
+            taxNumber: "",
             address: "",
             country: "",
             company: "",
@@ -88,6 +91,7 @@ export function CustomerAddOrEditModal({ isOpen, onClose, customer, onSuccess }:
                     name: customer.name || "",
                     email: customer.email || "",
                     phone: customer.phone || "",
+                    taxNumber: customer.taxNumber || "",
                     address: customer.address || "",
                     country: customer.country || "",
                     company: customer.company || "",
@@ -241,6 +245,23 @@ export function CustomerAddOrEditModal({ isOpen, onClose, customer, onSuccess }:
                                         </FormLabel>
                                         <FormControl>
                                             <Input placeholder="Firma adı giriniz" {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+                            <FormField
+                                control={form.control}
+                                name="taxNumber"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>
+                                            <IdCard className="h-4 w-4 text-muted-foreground" />
+                                            Vergi Numarası
+                                        </FormLabel>
+                                        <FormControl>
+                                            <Input placeholder="Vergi Numarası giriniz" {...field} />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>

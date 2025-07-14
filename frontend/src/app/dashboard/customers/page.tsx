@@ -1,3 +1,6 @@
+// SAFE DELETE YAPILMIŞ MAİL TEKRA KAYDOLURKEN HATA GELİYOR ONA BAKILACAK
+// AKTİF OPERASYON? gibi bir boolean eklenebilir.
+
 "use client"
 
 import { Search, Plus, Building2, User, Mail, Phone, Globe, Calendar, MoreHorizontal, ChevronDown, PhoneCall, MessageCircle, Copy, Edit, Trash, Eye, AlertTriangle } from "lucide-react"
@@ -20,6 +23,7 @@ import { CustomerDetailsModal } from "@/components/customer-details-modal"
 import { CustomerAddOrEditModal } from "@/components/customer-addoredit-modal"
 import tr from 'react-phone-input-2/lang/tr.json'
 import ReactCountryFlag from "react-country-flag"
+import CustomerStatsCards from "@/components/customer-stats-cards"
 
 
 const formatDate = (dateString: string) => {
@@ -188,6 +192,8 @@ export default function CustomersPage() {
   return (
     <div className="grid space-y-4">
       {/* Delete Confirmation Dialog */}
+      <CustomerStatsCards />
+
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
@@ -252,7 +258,7 @@ export default function CustomersPage() {
               <TableHead>E-posta</TableHead>
               <TableHead>Telefon</TableHead>
               <TableHead>Ülke</TableHead>
-              <TableHead >İşlemler</TableHead>
+              <TableHead>İşlemler</TableHead>
             </TableRow>
           </TableHeader>
           {/* Tablo Body */}
@@ -318,8 +324,8 @@ export default function CustomersPage() {
                           </button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="start">
-                          <DropdownMenuItem className="gap-2">
-                            <Mail onClick={() => handleMail(customer.email)} color="blue" className="h-4 w-4" />
+                          <DropdownMenuItem onClick={() => handleMail(customer.email)} className="gap-2">
+                            <Mail color="blue" className="h-4 w-4" />
                             Mail Gönder
                           </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => navigator.clipboard.writeText(customer.email)} className="gap-2">
@@ -348,17 +354,17 @@ export default function CustomersPage() {
                           </button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="start">
-                          <DropdownMenuItem className="gap-2">
-                            <PhoneCall onClick={() => handlePhoneCall(customer.phone)} color="blue" className="h-4 w-4" />
+                          <DropdownMenuItem onClick={() => handlePhoneCall(customer.phone)} className="gap-2">
+                            <PhoneCall color="blue" className="h-4 w-4" />
                             Telefon Et
                           </DropdownMenuItem>
-                          <DropdownMenuItem className="items-center">
+                          <DropdownMenuItem onClick={() => handleWhatsappMessage(customer.phone)} className="gap-2">
                             <img
                               src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg"
                               alt="WhatsApp"
                               className="h-[22px] w-[22px] translate-x-[-3px]"
                             />
-                            <span onClick={() => handleWhatsappMessage(customer.phone)} className="translate-x-[-7px] cursor-pointer">WhatsApp Mesajı Gönder</span>
+                            <span className="translate-x-[-7px] cursor-pointer">WhatsApp Mesajı Gönder</span>
                           </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => navigator.clipboard.writeText(customer.phone)} className="gap-2">
                             <Copy color="black" className="h-4 w-4" />

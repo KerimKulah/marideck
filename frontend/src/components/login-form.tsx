@@ -28,6 +28,12 @@ export function LoginForm({ className, ...props }: React.ComponentProps<"div">) 
     }
   }, [isInitialized, isAuthenticated, router]);
 
+  // Eğer kullanıcı authenticated ise hiç renderlanma
+  if (isAuthenticated) {
+    return (
+      <Loading />
+    );
+  }
 
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
