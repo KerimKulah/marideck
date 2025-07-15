@@ -108,7 +108,6 @@ export const customerSlice = createSlice({
             state.page = 1;
         },
         resetCustomerState: () => initialState,
-        // Optimistic updates için manuel güncelleme reducerları
         addCustomerOptimistic: (state, action) => {
             const newCustomer = { ...action.payload, id: `temp-${Date.now()}` };
             state.customers.unshift(newCustomer);

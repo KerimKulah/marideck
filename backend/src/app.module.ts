@@ -34,7 +34,6 @@ import { ShipModule } from './ship/ship.module';
         },
       },
     }),
-
   ]
 })
 export class AppModule {

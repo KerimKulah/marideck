@@ -1,7 +1,6 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, ParseIntPipe, HttpCode, UseFilters, UseGuards, Query } from '@nestjs/common';
 import { ShipService } from './ship.service';
-import { CreateShipDto } from './dto/create-ship.dto';
-import { UpdateShipDto } from './dto/update-ship.dto';
+import { ShipDto } from './dto/ship.dto';
 import { ExceptionFilterImp } from '../filters/exception-filter';
 import { JwtGuard } from '../auth/common/guards/JwtGuard';
 import { RolesGuard } from '../auth/common/guards/RolesGuard';
@@ -20,16 +19,14 @@ export class ShipController {
 
   @Post()
   @HttpCode(201)
-  async create(@Body() createShipDto: CreateShipDto): Promise<{ message: string, data: Ship }> {
-    return await this.shipService.create(createShipDto);
+  async create(@Body() shipDto: ShipDto): Promise<{ message: string, data: Ship }> {
+    return await this.shipService.create(shipDto);
   }
 
   @Get()
   @HttpCode(200)
-  async findAll(@Query('page') page?: string, @Query('limit') limit?: string): Promise<Ship[]> {
-    const pageNum = page ? parseInt(page, 10) : undefined;
-    const limitNum = limit ? parseInt(limit, 10) : undefined;
-    return await this.shipService.findAll(pageNum, limitNum);
+  async findAll(@Query('page', ParseIntPipe) page?: number, @Query('limit', ParseIntPipe) limit?: number, @Query('search') search?: string) {
+    return this.shipService.findAll(page, limit, search);
   }
 
   @Get(':id')
@@ -40,8 +37,8 @@ export class ShipController {
 
   @Patch(':id')
   @HttpCode(200)
-  async update(@Param('id', ParseIntPipe) id: number, @Body() updateShipDto: UpdateShipDto): Promise<{ message: string, data: Ship }> {
-    return await this.shipService.update(id, updateShipDto);
+  async update(@Param('id', ParseIntPipe) id: number, @Body() shipDto: ShipDto): Promise<{ message: string, data: Ship }> {
+    return await this.shipService.update(id, shipDto);
   }
 
   @Delete(':id')

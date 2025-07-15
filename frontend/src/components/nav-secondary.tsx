@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { type Icon } from "@tabler/icons-react"
+import { IconCommand, type Icon } from "@tabler/icons-react"
 
 import {
   SidebarGroup,
@@ -9,7 +9,9 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarSeparator,
 } from "@/components/ui/sidebar"
+import Image from 'next/image'
 
 export function NavSecondary({
   items,
@@ -37,6 +39,15 @@ export function NavSecondary({
           ))}
         </SidebarMenu>
       </SidebarGroupContent>
+      <SidebarSeparator className="mx-0" />
+
+      <div className="flex flex-col items-center mt-2 px-2">
+        <div className="flex items-center gap-2">
+          <Image src="/kmaritime-logo.png" alt="Logo" width={15} height={15} quality={90} />
+          <span className="text-xs font-bold">MARITIME DESK</span>
+        </div>
+        <span className="text-xs text-gray-600">Maritime Yönetim Sistemi</span>
+      </div>
     </SidebarGroup>
   )
 }

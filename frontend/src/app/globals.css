@@ -167,8 +167,9 @@
   box-shadow: 0 1px 4px 0 rgba(0, 0, 0, 0.05) !important;
   box-sizing: border-box !important;
   border-radius: 8px !important;
-  height: 36px !important;
+  height: 38px !important;
   outline: none !important;
+  margin-top: -10px !important
 }
 
 .my-custom-flags-select button[id="rfs-btn"]:focus {

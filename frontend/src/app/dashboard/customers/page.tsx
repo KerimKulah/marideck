@@ -24,6 +24,7 @@ import { CustomerAddOrEditModal } from "@/components/customer-addoredit-modal"
 import tr from 'react-phone-input-2/lang/tr.json'
 import ReactCountryFlag from "react-country-flag"
 import CustomerStatsCards from "@/components/customer-stats-cards"
+import { toast } from "sonner"
 
 
 const formatDate = (dateString: string) => {
@@ -143,10 +144,12 @@ export default function CustomersPage() {
       // Modalı hemen kapat
       setIsDeleteDialogOpen(false);
       setCustomerToDelete(null);
+      toast("Müşteri başarıyla silindi.");
       // Verileri yenile
       await dispatch(getCustomers({ page, limit, search: searchQuery }));
     } catch (error) {
       console.error('Müşteri silinirken hata oluştu:', error);
+      toast("Müşteri silinirken bir hata oluştu.");
     } finally {
       setIsDeleting(false);
     }
@@ -178,16 +181,6 @@ export default function CustomersPage() {
   const handleLimitChange = (newLimit: number) => {
     dispatch(setLimit(newLimit));
   };
-
-  if (loading) {
-    return <MiniLoading />
-  }
-
-  if (error) {
-    return <div className="flex items-center justify-center h-screen">
-      <span className="text-red-500">{error}</span>
-    </div>
-  }
 
   return (
     <div className="grid space-y-4">
@@ -253,19 +246,28 @@ export default function CustomersPage() {
           {/* Tablo Header */}
           <TableHeader>
             <TableRow>
-              <TableHead>Yetkili Kişi</TableHead>
+              <TableHead>Adı Soyadı</TableHead>
+              <TableHead>Müşteri Türü</TableHead>
               <TableHead>Firma Adı</TableHead>
               <TableHead>E-posta</TableHead>
               <TableHead>Telefon</TableHead>
               <TableHead>Ülke</TableHead>
+              <TableHead>Eklenme Tarihi</TableHead>
               <TableHead>İşlemler</TableHead>
             </TableRow>
           </TableHeader>
+
           {/* Tablo Body */}
           <TableBody>
-            {customers?.length === 0 ? (
+            {loading ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={8} className="h-24">
+                  <MiniLoading />
+                </TableCell>
+              </TableRow>
+            ) : customers?.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                   {searchQuery ? 'Arama kriterlerine uygun müşteri bulunamadı.' : 'Henüz müşteri kaydı bulunmuyor.'}
                 </TableCell>
               </TableRow>
@@ -288,6 +290,22 @@ export default function CustomersPage() {
                       </Tooltip>
                     </div>
                   </TableCell>
+                  {/* Müşteri Türü */}
+                  <TableCell className="min-w-[200px]">
+                    <div className="flex items-center gap-2">
+                      <User className="h-4 w-4 text-muted-foreground" />
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span>
+                            {customer.customer_type?.length > 15 ? `${customer.customer_type.slice(0, 15)}...` : customer.customer_type}
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>{customer.customer_type}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </div>
+                  </TableCell>
                   {/* Firma Adı */}
                   <TableCell className="min-w-[200px]">
                     <div className="flex items-center gap-2">
@@ -306,7 +324,7 @@ export default function CustomersPage() {
                       </Tooltip>
                     </div>
                   </TableCell>
-                  {/* E-posta (Mail gönder ve maili kopyala olmalı.*/}
+                  {/* E-posta*/}
                   <TableCell className="min-w-[200px]">
                     <div className="flex items-center gap-2">
                       <Mail className="h-4 w-4 text-muted-foreground" />
@@ -328,7 +346,17 @@ export default function CustomersPage() {
                             <Mail color="blue" className="h-4 w-4" />
                             Mail Gönder
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => navigator.clipboard.writeText(customer.email)} className="gap-2">
+                          <DropdownMenuItem
+                            onClick={async () => {
+                              try {
+                                await navigator.clipboard.writeText(customer.email);
+                                toast.success('Mail kopyalandı!');
+                              } catch (error) {
+                                toast.error('Kopyalama başarısız!');
+                              }
+                            }}
+                            className="gap-2"
+                          >
                             <Copy color="black" className="h-4 w-4" />
                             Maili Kopyala
                           </DropdownMenuItem>
@@ -366,7 +394,14 @@ export default function CustomersPage() {
                             />
                             <span className="translate-x-[-7px] cursor-pointer">WhatsApp Mesajı Gönder</span>
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => navigator.clipboard.writeText(customer.phone)} className="gap-2">
+                          <DropdownMenuItem onClick={async () => {
+                            try {
+                              await navigator.clipboard.writeText(customer.phone);
+                              toast.success('Numara kopyalandı!');
+                            } catch (error) {
+                              toast.error('Kopyalama başarısız!');
+                            }
+                          }} className="gap-2">
                             <Copy color="black" className="h-4 w-4" />
                             Numarayı Kopyala
                           </DropdownMenuItem>
@@ -377,6 +412,10 @@ export default function CustomersPage() {
                   {/* Ülke */}
                   <TableCell >
                     <CountryCell countryCode={customer.country} />
+                  </TableCell>
+                  {/* Eklenme Tarihi */}
+                  <TableCell>
+                    {formatDate(customer.createdAt)}
                   </TableCell>
                   {/* İşlemler */}
                   <TableCell>
@@ -399,7 +438,6 @@ export default function CustomersPage() {
             )}
           </TableBody>
         </Table>
-
       </div>
       {/* Limit Seçici ve Toplam Kayıt Bilgisi */}
       <div className="flex items-center justify-between">

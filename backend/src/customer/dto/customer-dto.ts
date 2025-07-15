@@ -1,5 +1,30 @@
-import { IsEmail, IsNotEmpty, IsString, IsOptional } from "class-validator";
-import { ApiProperty } from "@nestjs/swagger";
+import { IsEmail, IsNotEmpty, IsString, IsOptional, IsEnum } from "class-validator";
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
+import { Transform } from "class-transformer";
+
+export enum CustomerType {
+    Armator = 'Armatör',
+    Broker = 'Broker',
+    FreightForwarder = 'Taşımacı',
+    Acente = 'Acente',
+    YukSahibi = 'Yük Sahibi',
+    Exporter = 'İhracatçı',
+    Importer = 'İthalatçı',
+    TerminalOperator = 'Terminal Operatörü',
+    PortAuthority = 'Port Yetkilisi',
+    CustomsBroker = 'Gümrük Müşaviri',
+    LegalRepresentative = 'Hukuk Temsilcisi',
+    Diger = 'Diğer'
+}
+
+const normalizeCustomerType = (value: string): CustomerType | undefined => {
+    if (!value) return undefined;
+
+    const found = Object.entries(CustomerType).find(
+        ([, val]) => val.toLowerCase() === value.toLowerCase()
+    );
+    return found?.[1] as CustomerType | undefined;
+};
 
 export class CustomerDto {
     @IsNotEmpty({ message: 'Ad Soyad zorunlu' })
@@ -19,31 +44,37 @@ export class CustomerDto {
 
     @IsOptional()
     @IsString()
-    @ApiProperty()
+    @ApiPropertyOptional()
     address?: string;
 
     @IsOptional()
     @IsString()
-    @ApiProperty()
+    @ApiPropertyOptional()
     taxNumber?: string;
 
     @IsOptional()
     @IsString()
-    @ApiProperty()
+    @ApiPropertyOptional()
     notes?: string;
 
     @IsOptional()
     @IsString()
-    @ApiProperty()
+    @ApiPropertyOptional()
     country?: string;
 
     @IsOptional()
     @IsString()
-    @ApiProperty()
+    @ApiPropertyOptional()
     company?: string;
 
     @IsOptional()
     @IsString()
-    @ApiProperty()
+    @ApiPropertyOptional()
     lastTransactionDate?: string;
+
+    @IsOptional()
+    @Transform(({ value }) => normalizeCustomerType(value))
+    @IsEnum(CustomerType, { message: 'Geçersiz müşteri tipi' })
+    @ApiPropertyOptional({ enum: CustomerType, description: 'Müşteri tipi (büyük/küçük harf duyarsız)' })
+    customer_type?: CustomerType;
 }

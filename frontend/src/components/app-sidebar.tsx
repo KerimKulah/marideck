@@ -4,7 +4,10 @@ import * as React from "react"
 import { IconAnchor, IconChartBar, IconCommand, IconDashboard, IconFileWord, IconHelp, IconSettings, IconShip, IconUsers, IconClipboardList } from "@tabler/icons-react"
 import { NavMain } from "@/components/nav-main"
 import { NavSecondary } from "@/components/nav-secondary"
-import { Sidebar, SidebarContent, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar"
+import { Sidebar, SidebarContent, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarSeparator } from "@/components/ui/sidebar"
+import Image from 'next/image';
+import { useSelector } from "react-redux"
+import { RootState } from "@/redux/store"
 
 const data = {
   navMain: [
@@ -19,7 +22,7 @@ const data = {
       icon: IconUsers,
     },
     {
-      title: "Gemi Listesi",
+      title: "Takip Edilen Gemiler",
       url: "/dashboard/ships",
       icon: IconShip,
     },
@@ -34,7 +37,7 @@ const data = {
       icon: IconFileWord,
     },
     {
-      title: "Finans & Fatura",
+      title: "Finans & Faturalar",
       url: "/dashboard/finance",
       icon: IconChartBar,
     },
@@ -44,7 +47,7 @@ const data = {
       icon: IconClipboardList,
     },
     {
-      title: "Personel",
+      title: "Çalışanlar",
       url: "/dashboard/personnel",
       icon: IconUsers,
     },
@@ -66,22 +69,35 @@ const data = {
 }
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const { user, loading } = useSelector((state: RootState) => state.auth)
+
   return (
     <Sidebar collapsible="offcanvas" {...props}>
       <SidebarHeader className="px-3">
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild className="px-2">
-              <a href="#" className="w-full">
+              <div className="mt-1 h-15 flex items-center justify-center">
+                <Image
+                  src="/flama-maritime.png"
+                  alt="Logo"
+                  width={100}
+                  height={100}
+                  quality={100}
+                />
+              </div>
+              {/* <a href="#" className="w-full">
                 <div className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
                   <IconCommand className="size-4" />
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-medium">K-MARITIME</span>
+                  <span className="truncate font-medium">MARITIME DESK</span>
                   <span className="truncate text-xs">Maritime Yönetim Sistemi</span>
                 </div>
-              </a>
+              </a> */}
             </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>

@@ -21,7 +21,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import React from 'react'
 import ReactFlagsSelect from 'react-flags-select'
 import { Building2, Globe, IdCard, Mail, MapPin, Phone, StickyNote, User } from 'lucide-react'
-
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 const formSchema = z.object({
     name: z.string().nonempty({ message: "Yetkili Kişinin Adı Soyadı zorunludur" }),
     email: z.string().email({ message: "Lütfen geçerli bir e-posta adresi giriniz" }),
@@ -31,10 +31,29 @@ const formSchema = z.object({
     address: z.string().max(500, { message: "Adres en fazla 500 karakter uzunluğunda olmalıdır" }).optional(),
     country: z.string().max(100, { message: "Ülke en fazla 100 karakter uzunluğunda olmalıdır" }).optional(),
     company: z.string().max(500, { message: "Firma en fazla 500 karakter uzunluğunda olmalıdır" }).optional(),
+    customer_type: z.enum(["Armatör", "Broker", "Taşımacı", "Acente", "Yük Sahibi", "İhracatçı", "İthalatçı", "Terminal Operatörü", "Port Yetkilisi", "Gümrük Müşaviri", "Hukuk Temsilcisi", "Diğer"], {
+        required_error: "Müşteri türü zorunlu",
+        invalid_type_error: "Geçersiz müşteri türü"
+    }),
     notes: z.string().optional()
 })
 
 type CustomerFormValues = z.infer<typeof formSchema>
+
+enum CustomerType {
+    Armator = 'Armatör',
+    Broker = 'Broker',
+    FreightForwarder = 'Taşımacı',
+    Acente = 'Acente',
+    YukSahibi = 'Yük Sahibi',
+    Exporter = 'İhracatçı',
+    Importer = 'İthalatçı',
+    TerminalOperator = 'Terminal Operatörü',
+    PortAuthority = 'Port Yetkilisi',
+    CustomsBroker = 'Gümrük Müşaviri',
+    LegalRepresentative = 'Hukuk Temsilcisi',
+    Diger = 'Diğer'
+}
 
 interface Customer {
     id: string
@@ -45,6 +64,7 @@ interface Customer {
     address?: string
     country?: string
     company?: string
+    customer_type?: CustomerType
     notes?: string
 }
 
@@ -64,7 +84,7 @@ export function CustomerAddOrEditModal({ isOpen, onClose, customer, onSuccess }:
     const [isMounted, setIsMounted] = useState(false)
     const [isSubmitting, setIsSubmitting] = useState(false)
     const dispatch = useDispatch<AppDispatch>()
-    const { loading, error } = useSelector((state: RootState) => state.customer)
+    const { loading } = useSelector((state: RootState) => state.customer)
 
     const form = useForm<CustomerFormValues>({
         resolver: zodResolver(formSchema),
@@ -76,6 +96,7 @@ export function CustomerAddOrEditModal({ isOpen, onClose, customer, onSuccess }:
             address: "",
             country: "",
             company: "",
+            customer_type: undefined,
             notes: "",
         },
     })
@@ -95,6 +116,7 @@ export function CustomerAddOrEditModal({ isOpen, onClose, customer, onSuccess }:
                     address: customer.address || "",
                     country: customer.country || "",
                     company: customer.company || "",
+                    customer_type: customer.customer_type || undefined,
                     notes: customer.notes || "",
                 })
             } else {
@@ -105,6 +127,7 @@ export function CustomerAddOrEditModal({ isOpen, onClose, customer, onSuccess }:
                     address: "",
                     country: "",
                     company: "",
+                    customer_type: undefined,
                     notes: "",
                 })
             }
@@ -145,7 +168,7 @@ export function CustomerAddOrEditModal({ isOpen, onClose, customer, onSuccess }:
             // Modal'ı kapat
             onClose()
         } catch (error: any) {
-            toast.error(error?.message || "Bir hata oluştu")
+            toast.error("Hata oluştu :" + error?.message || "Bir hata oluştu")
         } finally {
             setIsSubmitting(false); // İşlem bittiğinde veya hata durumunda state'i sıfırla
         }
@@ -155,14 +178,14 @@ export function CustomerAddOrEditModal({ isOpen, onClose, customer, onSuccess }:
 
     return (
         <Dialog open={isOpen} onOpenChange={handleClose}>
-            <DialogContent className="sm:max-w-[500px]">
+            <DialogContent className="sm:max-w-[500px] ">
                 <DialogHeader>
                     <DialogTitle className="mb-4">{customer ? "Müşteri Bilgilerini Düzenle" : "Yeni Müşteri Ekle"}</DialogTitle>
                 </DialogHeader>
 
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                        <div className="grid grid-cols-1 gap-4">
+                        <div className="grid grid-cols-2 gap-4">
                             <FormField
                                 control={form.control}
                                 name="name"
@@ -170,7 +193,7 @@ export function CustomerAddOrEditModal({ isOpen, onClose, customer, onSuccess }:
                                     <FormItem>
                                         <FormLabel>
                                             <User className="h-4 w-4 text-muted-foreground" />
-                                            Yetkili Kişi <span className="text-red-500">*</span></FormLabel>
+                                            Ad Soyad <span className="text-red-500">*</span></FormLabel>
                                         <FormControl>
                                             <Input placeholder="Ad Soyad giriniz" {...field} />
                                         </FormControl>
@@ -233,6 +256,39 @@ export function CustomerAddOrEditModal({ isOpen, onClose, customer, onSuccess }:
                                     </FormItem>
                                 )}
                             />
+
+                            <FormField
+                                control={form.control}
+                                name="customer_type"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>
+                                            <User className="h-4 w-4 text-muted-foreground" />
+                                            Müşteri Türü
+                                            <span className="text-xs text-red-500">*</span>
+                                        </FormLabel>
+                                        <FormControl>
+                                            <Select
+                                                onValueChange={field.onChange}
+                                                defaultValue={field.value || ""}
+                                            >
+                                                <SelectTrigger className="w-full">
+                                                    <SelectValue placeholder="-" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    {Object.values(CustomerType).map((type) => (
+                                                        <SelectItem key={type} value={type}>
+                                                            {type}
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
 
                             <FormField
                                 control={form.control}
@@ -305,7 +361,6 @@ export function CustomerAddOrEditModal({ isOpen, onClose, customer, onSuccess }:
                                         <FormControl>
                                             <Textarea
                                                 placeholder="Adres bilgisi giriniz"
-                                                className="min-h-[80px]"
                                                 {...field}
                                             />
                                         </FormControl>
@@ -326,7 +381,6 @@ export function CustomerAddOrEditModal({ isOpen, onClose, customer, onSuccess }:
                                         <FormControl>
                                             <Textarea
                                                 placeholder="Notunuz varsa giriniz"
-                                                className="min-h-[80px]"
                                                 {...field}
                                             />
                                         </FormControl>

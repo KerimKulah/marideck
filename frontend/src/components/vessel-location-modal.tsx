@@ -106,6 +106,7 @@ const VesselLocationModal: React.FC<VesselLocationModalProps> = ({
                             Yenile
                         </Button>
                     </div>
+
                 </DialogHeader>
 
                 <div className="space-y-4">
@@ -151,7 +152,7 @@ const VesselLocationModal: React.FC<VesselLocationModalProps> = ({
                     <div className="flex justify-end gap-3 pt-4 border-t">
                         <Button
                             variant="outline"
-                            onClick={() => window.open(`https://www.vesselfinder.com/vessels/${vessel.imo}`, '_blank')}
+                            onClick={() => window.open(`https://www.vesselfinder.com/vessels/details/${vessel.imo}`, '_blank')}
                         >
                             <ExternalLink className="h-4 w-4 mr-2" />
                             VesselFinder'da Aç

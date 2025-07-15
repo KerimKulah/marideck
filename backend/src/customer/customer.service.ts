@@ -23,7 +23,8 @@ export class CustomerService {
                     qb.where('customer.name ILIKE :search', { search: `%${search}%` })
                         .orWhere('customer.phone ILIKE :search', { search: `%${search}%` })
                         .orWhere('customer.company ILIKE :search', { search: `%${search}%` })
-                        .orWhere('customer.email ILIKE :search', { search: `%${search}%` });
+                        .orWhere('customer.email ILIKE :search', { search: `%${search}%` })
+                        .orWhere('customer.customer_type ILIKE :search', { search: `%${search}%` });
                 }),
             );
         }
@@ -52,7 +53,7 @@ export class CustomerService {
 
     // GET ONE
     async findOne(id: number): Promise<Customer> {
-        const customer = await this.customerRepo.findOne({ where: { id }, relations: ['ship'] });
+        const customer = await this.customerRepo.findOne({ where: { id } });
         if (!customer) throw new NotFoundException('Customer not found');
         return customer;
     }
@@ -86,6 +87,4 @@ export class CustomerService {
         await this.customerRepo.restore(customer.id);
         return { message: 'Customer restored successfully' };
     }
-
-
 }

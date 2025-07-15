@@ -1,16 +1,25 @@
 "use client"
 
-import { Search, Plus, MoreHorizontal, Ship, Clock, Anchor, LocationEditIcon, Locate, MapPin, MapPinned, Circle } from "lucide-react"
+import { Search, Plus, MoreHorizontal, Ship, Clock, Anchor, LocationEditIcon, Locate, MapPin, MapPinned, Circle, Edit, Trash, AlertTriangle, ChevronDown } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, } from "@/components/ui/dropdown-menu"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
-import { ships } from "@/demoDB/database"
-import VesselLocationModal from "@/components/vessel-location-modal"
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import ShipStatsCards from '@/components/ship-stats-cards';
+import VesselLocationModal2 from "@/components/vessel-location-modal-2"
+import { ShipAddOrEditModal } from "@/components/ship-addoredit-modal"
+import { useSelector, useDispatch } from "react-redux"
+import { RootState, AppDispatch } from "@/redux/store"
+import { getShips, setPage, setLimit, setSearchQuery, deleteShip, removeShipOptimistic } from "@/redux/slices/shipSlice"
+import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination"
+import { MiniLoading } from "@/components/ui/mini-loading"
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import debounce from "lodash/debounce"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { toast } from "sonner"
 
 const statusColors = {
     beklemede: "bg-blue-100 text-blue-800",
@@ -30,39 +39,101 @@ const formatDate = (dateString: string) => {
     })
 }
 
-
 export default function ShipsPage() {
+    const dispatch = useDispatch<AppDispatch>();
+    const { ships, loading, error, page, limit, totalPages, searchQuery, totalShips } = useSelector((state: RootState) => state.ship);
+    const [searchInput, setSearchInput] = useState(searchQuery);
+    const [selectedShip, setSelectedShip] = useState<any | null>(null);
     const [vesselLocationModal, setVesselLocationModal] = useState<{
         isOpen: boolean;
-        vessel: {
-            imo: string;
-            name: string;
-            type?: string;
-            flag?: string;
-        } | null;
-    }>({
-        isOpen: false,
-        vessel: null
-    });
+        vessel: { imo: string; name: string; type?: string; flag?: string, mmsi: string; } | null;
+    }>({ isOpen: false, vessel: null });
+    const [shipAddOrEditModal, setShipAddOrEditModal] = useState<{
+        isOpen: boolean;
+        ship: any | null;
+    }>({ isOpen: false, ship: null });
+    const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+    const [shipToDelete, setShipToDelete] = useState<string | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
+
+    useEffect(() => {
+        dispatch(getShips({ page, limit, search: searchQuery }));
+    }, [dispatch, page, limit, searchQuery]);
+
+    // toast'ı dependency array'den çıkar
+    useEffect(() => {
+        if (error) {
+            toast(error);
+        }
+    }, [error]); // toast'ı buradan kaldır
+
+    const handleSearchChange = useMemo(
+        () => debounce((value: string) => {
+            dispatch(setSearchQuery(value));
+        }, 300),
+        [dispatch]
+    );
+
+    const handlePageChange = (newPage: number) => {
+        dispatch(setPage(newPage));
+    };
+
+    const handleLimitChange = (newLimit: number) => {
+        dispatch(setLimit(newLimit));
+    };
+
+    const handleDeleteShip = (id: string) => {
+        setShipToDelete(id);
+        setIsDeleteDialogOpen(true);
+    };
+
+    const confirmDelete = async () => {
+        console.log("butona basıldı");
+        if (!shipToDelete) return;
+
+        setIsDeleting(true);
+        try {
+            await dispatch(deleteShip(shipToDelete)).unwrap();
+            // Close the dialog immediately
+            setIsDeleteDialogOpen(false);
+            setShipToDelete(null);
+            toast("Gemi başarıyla silindi.");
+            // Refresh the data
+            await dispatch(getShips({ page, limit, search: searchQuery }));
+        } catch (error) {
+            console.error('Gemi silinirken hata oluştu:', error);
+            toast("Gemi silinirken bir hata oluştu.");
+        } finally {
+            setIsDeleting(false);
+        }
+    };
 
     const handleOpenVesselLocationModal = (ship: any) => {
         setVesselLocationModal({
             isOpen: true,
-            vessel: {
-                imo: ship.imo,
-                name: ship.name,
-                type: ship.type,
-                flag: ship.flag
-            }
+            vessel: { imo: ship.imo, name: ship.name, type: ship.type, flag: ship.flag, mmsi: ship.mmsi }
         });
     };
 
     const handleCloseVesselLocationModal = () => {
-        setVesselLocationModal({
-            isOpen: false,
-            vessel: null
-        });
+        setVesselLocationModal({ isOpen: false, vessel: null });
     };
+
+    const handleOpenShipAddOrEditModal = (ship: any) => {
+        setShipAddOrEditModal({ isOpen: true, ship });
+    };
+
+    const handleCloseShipAddOrEditModal = () => {
+        setShipAddOrEditModal({ isOpen: false, ship: null });
+    };
+
+    if (error) {
+        return (
+            <div className="text-red-500 text-center p-4">
+                {error}
+            </div>
+        );
+    }
 
     return (
         <div className="grid space-y-4">
@@ -74,121 +145,284 @@ export default function ShipsPage() {
                         type="search"
                         placeholder="Gemi veya IMO no ile ara..."
                         className="w-full pl-9 pr-4 py-2 text-sm sm:text-base"
+                        value={searchInput}
+                        onChange={(e) => {
+                            setSearchInput(e.target.value);
+                            handleSearchChange(e.target.value);
+                        }}
                     />
                 </div>
-                <Button className="w-full sm:w-auto">
-                    <Plus className="mr-2 h-4 w-4" />
-                    <span className="sm:inline">Yeni Gemi Ekle</span>
-                </Button>
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <Button className="w-full sm:w-auto">
+                            <Plus className="mr-2 h-4 w-4" />
+                            <span className="sm:inline">Takip Edilecek Gemi Ekle</span>
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent>
+                        <DropdownMenuItem onClick={() => handleOpenShipAddOrEditModal(null)}>
+                            El ile Ekle
+                        </DropdownMenuItem>
+                        <DropdownMenuItem>
+                            AIS Verisi ile Ekle
+                        </DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
             </div>
 
             <div className="rounded-lg border overflow-x-auto">
-                <Table className="min-w-[800px] sm:min-w-full">
+                <Table>
                     <TableHeader>
                         <TableRow>
-                            <TableHead>IMO No</TableHead>
                             <TableHead>Gemi Adı</TableHead>
+                            <TableHead>IMO</TableHead>
                             <TableHead>Tipi</TableHead>
-                            <TableHead className="px-4">Boy</TableHead>
-                            <TableHead>Bayrağı</TableHead>
-                            <TableHead>ETA</TableHead>
-                            <TableHead>ETD</TableHead>
+                            <TableHead>Bayrak</TableHead>
                             <TableHead>Durum</TableHead>
-                            <TableHead>Armatör</TableHead>
-                            <TableHead>Son Güncelleme</TableHead>
-                            <TableHead>Konum</TableHead>
+                            <TableHead>Son Konum</TableHead>
                             <TableHead>İşlemler</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {ships.map((ship) => (
-                            <TableRow key={ship.id} className="hover:bg-muted/50">
-                                <TableCell>{ship.imo}</TableCell>
-                                <TableCell>
-                                    <div className="flex items-center gap-2">
-                                        <Ship className="h-4 w-4 text-muted-foreground" />
-                                        <Tooltip>
-                                            <TooltipTrigger asChild>
-                                                <span>
-                                                    {ship.name.length > 15 ? `${ship.name.slice(0, 15)}...` : ship.name}
-                                                </span>
-                                            </TooltipTrigger>
-                                            <TooltipContent>
-                                                <p>{ship.name}</p>
-                                            </TooltipContent>
-                                        </Tooltip>
-                                    </div>
-                                </TableCell>
-                                <TableCell>{ship.type}</TableCell>
-                                <TableCell className="px-4">{ship.length} m</TableCell>
-                                <TableCell>{ship.flag}</TableCell>
-                                <TableCell>
-                                    <div className="flex items-center gap-2">
-                                        <Clock className="h-3.5 w-3.5 text-muted-foreground" />
-                                        {formatDate(ship.eta)}
-                                    </div>
-                                </TableCell>
-                                <TableCell>
-                                    <div className="flex items-center gap-2">
-                                        <Clock className="h-3.5 w-3.5 text-muted-foreground" />
-                                        {formatDate(ship.etd)}
-                                    </div>
-                                </TableCell>
-                                <TableCell>
-                                    <Badge className={`${statusColors[ship.status as keyof typeof statusColors]} capitalize`}>
-                                        {ship.status}
-                                        <Circle className="text-green-700 w-3 h-3 animate-pulse" fill="green" />
-
-                                    </Badge>
-                                </TableCell>
-                                <TableCell>
-                                    <Tooltip>
-                                        <TooltipTrigger asChild>
-                                            <span>
-                                                {ship.operator.length > 15 ? `${ship.operator.slice(0, 15)}...` : ship.operator}
-                                            </span>
-                                        </TooltipTrigger>
-                                    </Tooltip>
-                                </TableCell>
-                                <TableCell>
-                                    <div className="flex items-center gap-2">
-                                        {formatDate(ship.updatedAt)} <Circle className="text-green-700 w-3 h-3 animate-pulse" fill="green" />
-                                    </div>
-                                </TableCell>
-                                <TableCell>
-                                    <div
-                                        className="flex justify-center cursor-pointer hover:opacity-70 transition-opacity"
-                                        onClick={() => handleOpenVesselLocationModal(ship)}
-                                    >
-                                        <MapPinned className="h-5 w-5" color="red" />
-                                    </div>
-                                </TableCell>
-                                <TableCell className="text-right">
-                                    <DropdownMenu>
-                                        <DropdownMenuTrigger asChild>
-                                            <Button variant="ghost" className="h-8 w-8 p-0">
-                                                <span className="sr-only">Menüyü aç</span>
-                                                <MoreHorizontal className="h-4 w-4" />
-                                            </Button>
-                                        </DropdownMenuTrigger>
-                                        <DropdownMenuContent align="end">
-                                            <DropdownMenuItem>Detayları Görüntüle</DropdownMenuItem>
-                                            <DropdownMenuItem>Güncelle</DropdownMenuItem>
-                                            <DropdownMenuItem className="text-destructive">Takip Listesinden Çıkar</DropdownMenuItem>
-                                        </DropdownMenuContent>
-                                    </DropdownMenu>
+                        {loading ? (
+                            <TableRow>
+                                <TableCell colSpan={7} className="h-24 text-center">
+                                    <MiniLoading />
                                 </TableCell>
                             </TableRow>
-                        ))}
+                        ) : ships?.length === 0 ? (
+                            <TableRow>
+                                <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                                    Henüz gemi kaydı bulunmuyor.
+                                </TableCell>
+                            </TableRow>
+                        ) : (
+                            ships.map((ship) => (
+                                <TableRow key={ship.id}>
+                                    <TableCell>{ship.name}</TableCell>
+                                    <TableCell>{ship.imo}</TableCell>
+                                    <TableCell>{ship.type}</TableCell>
+                                    <TableCell>{ship.flag}</TableCell>
+                                    <TableCell>
+                                        <Badge className={statusColors[ship.status?.toLowerCase() as keyof typeof statusColors] || ''}>
+                                            {ship.status}
+                                        </Badge>
+                                    </TableCell>
+                                    <TableCell>
+                                        {ship.lastPosition ? (
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <span className="cursor-pointer" onClick={() => handleOpenVesselLocationModal(ship)}>
+                                                        <LocationEditIcon className="h-4 w-4" />
+                                                    </span>
+                                                </TooltipTrigger>
+                                                <TooltipContent>
+                                                    <p>Son Konum: {ship.lastPosition}</p>
+                                                </TooltipContent>
+                                            </Tooltip>
+                                        ) : (
+                                            '-'
+                                        )}
+                                    </TableCell>
+                                    <TableCell>
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <MoreHorizontal className="h-4 w-4 cursor-pointer" />
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent>
+                                                <DropdownMenuItem onClick={() => handleOpenVesselLocationModal(ship)}><LocationEditIcon className="mr-2 h-4 w-4" />Konum Bilgisi</DropdownMenuItem>
+                                                <DropdownMenuItem onClick={() => handleOpenShipAddOrEditModal(ship)}><Edit className="mr-2 h-4 w-4" />Düzenle</DropdownMenuItem>
+                                                <DropdownMenuItem onClick={() => handleDeleteShip(ship.id)} className="text-red-600 focus:text-red-600"><Trash className="mr-2 h-4 w-4" />Sil</DropdownMenuItem>
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
+                                    </TableCell>
+                                </TableRow>
+                            ))
+                        )}
                     </TableBody>
                 </Table>
             </div>
+            <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                    <span className="text-sm text-muted-foreground">Sayfa başına:</span>
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="outline" size="sm" className="w-15">
+                                {limit}
+                                <ChevronDown className="ml-1 h-4 w-4" />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent>
+                            {[5, 10, 20, 50].map((limitOption) => (
+                                <DropdownMenuItem
+                                    key={limitOption}
+                                    onClick={() => handleLimitChange(limitOption)}
+                                    className={limit === limitOption ? "bg-accent" : ""}>
+                                    {limitOption}
+                                </DropdownMenuItem>
+                            ))}
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                </div>
+                <div className="text-sm text-muted-foreground">
+                    Toplam {totalShips} kayıt
+                </div>
+            </div>
 
-            {/* Vessel Location Modal */}
-            <VesselLocationModal
+            {totalPages > 1 && (
+                <Pagination>
+                    <PaginationContent>
+                        {/* Previous */}
+                        <PaginationItem>
+                            <PaginationPrevious
+                                href="#"
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    if (page > 1) handlePageChange(page - 1);
+                                }}
+                                aria-disabled={page === 1}
+                                className={page === 1 ? "pointer-events-none opacity-50" : ""}
+                            />
+                        </PaginationItem>
+
+                        {/* First Page */}
+                        <PaginationItem>
+                            <PaginationLink
+                                href="#"
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    handlePageChange(1);
+                                }}
+                                aria-current={1 === page ? "page" : undefined}
+                                className={1 === page ? "font-bold underline" : ""}
+                            >
+                                1
+                            </PaginationLink>
+                        </PaginationItem>
+
+                        {/* Left Ellipsis */}
+                        {page > 3 && (
+                            <PaginationItem>
+                                <span className="px-2">...</span>
+                            </PaginationItem>
+                        )}
+
+                        {/* Middle Pages */}
+                        {Array.from(
+                            { length: Math.min(3, totalPages - 2) },
+                            (_, i) => {
+                                let pageNumber;
+                                if (page <= 3) {
+                                    pageNumber = i + 2;
+                                } else if (page >= totalPages - 2) {
+                                    pageNumber = totalPages - 3 + i;
+                                } else {
+                                    pageNumber = page - 1 + i;
+                                }
+
+                                if (pageNumber > 1 && pageNumber < totalPages) {
+                                    return (
+                                        <PaginationItem key={pageNumber}>
+                                            <PaginationLink
+                                                href="#"
+                                                onClick={(e) => {
+                                                    e.preventDefault();
+                                                    handlePageChange(pageNumber);
+                                                }}
+                                                aria-current={pageNumber === page ? "page" : undefined}
+                                                className={pageNumber === page ? "font-bold underline" : ""}
+                                            >
+                                                {pageNumber}
+                                            </PaginationLink>
+                                        </PaginationItem>
+                                    );
+                                }
+                                return null;
+                            }
+                        )}
+
+                        {/* Right Ellipsis */}
+                        {page < totalPages - 2 && (
+                            <PaginationItem>
+                                <span className="px-2">...</span>
+                            </PaginationItem>
+                        )}
+
+                        {/* Last Page */}
+                        {totalPages > 1 && (
+                            <PaginationItem>
+                                <PaginationLink
+                                    href="#"
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        handlePageChange(totalPages);
+                                    }}
+                                    aria-current={totalPages === page ? "page" : undefined}
+                                    className={totalPages === page ? "font-bold underline" : ""}
+                                >
+                                    {totalPages}
+                                </PaginationLink>
+                            </PaginationItem>
+                        )}
+
+                        {/* Next */}
+                        <PaginationItem>
+                            <PaginationNext
+                                href="#"
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    if (page < totalPages) handlePageChange(page + 1);
+                                }}
+                                aria-disabled={page === totalPages}
+                                className={page === totalPages ? "pointer-events-none opacity-50" : ""}
+                            />
+                        </PaginationItem>
+                    </PaginationContent>
+                </Pagination>
+            )}
+            <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+                <DialogContent className="sm:max-w-[425px]">
+                    <DialogHeader>
+                        <div className="flex items-center gap-2">
+                            <AlertTriangle className="h-6 w-6 text-yellow-500" />
+                            <DialogTitle>Gemiyi Sil</DialogTitle>
+                        </div>
+                        <DialogDescription className="pt-2">
+                            Bu gemiyi silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter className="sm:justify-end gap-2">
+                        <Button
+                            variant="outline"
+                            onClick={() => {
+                                setIsDeleteDialogOpen(false);
+                                setShipToDelete(null);
+                            }}
+                            disabled={isDeleting}
+                        >
+                            İptal
+                        </Button>
+                        <Button
+                            variant="destructive"
+                            onClick={confirmDelete}
+                            disabled={isDeleting}
+                        >
+                            {isDeleting ? 'Siliniyor...' : 'Sil'}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            <VesselLocationModal2
                 isOpen={vesselLocationModal.isOpen}
                 onClose={handleCloseVesselLocationModal}
                 vessel={vesselLocationModal.vessel}
+            />
+
+            <ShipAddOrEditModal
+                isOpen={shipAddOrEditModal.isOpen}
+                onClose={handleCloseShipAddOrEditModal}
+                ship={shipAddOrEditModal.ship}
             />
         </div>
     );

@@ -87,7 +87,8 @@ export const ships = [
         id: 1,
         name: "M/V Atlantic Star",
         imo: 9876543,
-        source: "manual",
+        mmsi: "636022113",
+        callSign: "ABCDE",
         type: "Tanker",
         length: "120",
         flag: "Türkiye",
@@ -106,7 +107,8 @@ export const ships = [
         id: 2,
         name: "M/V Pacific Dawn",
         imo: 8765432,
-        source: "ais",
+        mmsi: "636022113",
+        callSign: "FGHIJ",
         type: "Container",
         length: "120",
         flag: "Türkiye",
@@ -124,8 +126,9 @@ export const ships = [
     {
         id: 3,
         name: "M/V Mediterranean Queen",
+        mmsi: "636022113",
         imo: 7654321,
-        source: "ais",
+        callSign: "KLMNO",
         type: "Container",
         length: "120",
         flag: "Türkiye",
@@ -143,8 +146,9 @@ export const ships = [
     {
         id: 4,
         name: "M/V Nordic Voyager",
+        mmsi: "636022113",
         imo: 6543210,
-        source: "manual",
+        callSign: "PQRST",
         type: "Container",
         length: "120",
         flag: "Türkiye",
@@ -162,8 +166,9 @@ export const ships = [
     {
         id: 5,
         name: "M/V Blue Horizon",
+        mmsi: "636022113",
         imo: 9506291,
-        source: "manual",
+        callSign: "UVWXY",
         type: "Bulk Carrier",
         length: "120",
         flag: "Finland",
@@ -184,8 +189,6 @@ export const operations = [
     {
         id: 1,
         ship_id: 1,
-        status: "devam",
-
-
+        status: "devam"
     }
 ]

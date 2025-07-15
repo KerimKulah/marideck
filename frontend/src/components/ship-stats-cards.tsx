@@ -33,7 +33,7 @@ const StatCard = ({ title, value, icon: Icon, trend, trendValue, bgColor, iconCo
                 )}
             </div>
             <div className={`p-3 rounded-full ${iconColor}`}>
-                <Icon className="h-6 w-6 text-white" />
+                <Icon className="h-6 w-6 text-white " />
             </div>
         </div>
     </div>
@@ -57,7 +57,7 @@ export default function ShipStatsCards() {
             <StatCard
                 title="Beklemede"
                 value={statsData.totalCountries}
-                icon={Clock}
+                icon={ Clock}
                 trend="up"
                 trendValue="+2 bu ay"
                 bgColor="bg-white"

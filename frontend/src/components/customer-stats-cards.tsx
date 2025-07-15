@@ -1,3 +1,5 @@
+"use client"
+
 import React from 'react';
 import {
     Users,
@@ -9,6 +11,7 @@ import {
     Mail,
     Phone
 } from 'lucide-react';
+import { useSelector } from 'react-redux';
 
 // Örnek data - gerçek uygulamada Redux store'dan gelecek
 const statsData = {
@@ -23,19 +26,13 @@ const statsData = {
 };
 
 const StatCard = ({ title, value, icon: Icon, trend, trendValue, bgColor, iconColor }: any) => (
-    <div className={`rounded-lg border p-5 ${bgColor} hover:shadow-md transition-shadow`}>
+    <div className={`rounded-lg border p-3 ${bgColor} hover:shadow-md transition-shadow`}>
         <div className="flex items-center justify-between">
             <div className="space-y-1">
                 <p className="text-sm text-muted-foreground">{title}</p>
                 <p className="text-2xl font-bold">{value}</p>
-                {trend && (
-                    <div className={`flex items-center text-xs ${trend === 'up' ? 'text-green-600' : 'text-red-600'}`}>
-                        <TrendingUp className="h-3 w-3 mr-1" />
-                        {trendValue}
-                    </div>
-                )}
             </div>
-            <div className={`p-3 rounded-full ${iconColor}`}>
+            <div className={`p-2 rounded-full ${iconColor}`}>
                 <Icon className="h-6 w-6 text-white" />
             </div>
         </div>
@@ -43,12 +40,15 @@ const StatCard = ({ title, value, icon: Icon, trend, trendValue, bgColor, iconCo
 );
 
 export default function CustomerStatsCards() {
+    const { totalCustomers } = useSelector((state: any) => state.customer);
+
+
     return (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
             {/* Toplam Müşteri */}
             <StatCard
                 title="Toplam Müşteri"
-                value={statsData.totalCustomers}
+                value={totalCustomers}
                 icon={Users}
                 trend="up"
                 trendValue="+12 bu ay"

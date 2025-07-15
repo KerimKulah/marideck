@@ -1,9 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { CreateShipDto } from './dto/create-ship.dto';
-import { UpdateShipDto } from './dto/update-ship.dto';
+import { ShipDto } from './dto/ship.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Ship } from './entities/ship.entity';
-import { Repository } from 'typeorm';
+import { Brackets, Repository, WhereExpressionBuilder } from 'typeorm';
 
 @Injectable()
 export class ShipService {
@@ -13,34 +12,63 @@ export class ShipService {
 
 
   // CREATE
-  async create(createShipDto: CreateShipDto): Promise<{ message: string, data: Ship }> {
+  async create(createShipDto: ShipDto): Promise<{ message: string, data: Ship }> {
     const ship = this.shipRepository.create(createShipDto);
     await this.shipRepository.save(ship);
     return { message: 'Ship created successfully', data: ship };
   }
 
   // GET ALL
-  async findAll(page?: number, limit?: number): Promise<Ship[]> {
-    if (page != null && limit != null) {
-      return this.shipRepository.find({
-        skip: (page - 1) * limit,
-        take: limit,
-        order: { createdAt: 'DESC' }
-      });
+  async findAll(page?: number, limit?: number, search?: string): Promise<{
+    ships: Ship[]; shipsCount: number; page?: number; limit?: number; totalPages?: number;
+  }> {
+    const queryBuilder = this.shipRepository.createQueryBuilder('ship');
+
+    if (search) {
+      const searchTerm = `%${search}%`;
+      queryBuilder.andWhere(
+        new Brackets((qb: WhereExpressionBuilder) => {
+          qb.where('ship.name ILIKE :search', { search: searchTerm })
+            .orWhere('ship.imoNumber ILIKE :search', { search: searchTerm })
+            .orWhere('ship.shipOwner ILIKE :search', { search: searchTerm });
+        })
+      );
     }
-    return this.shipRepository.find({ order: { createdAt: 'DESC' } });
+
+    queryBuilder.orderBy('ship.createdAt', 'DESC');
+
+    // Eğer hem page hem limit varsa, skip ve take uygula
+    if (page != null && limit != null) {
+      queryBuilder.skip((page - 1) * limit).take(limit);
+    }
+
+    const [ships, shipsCount] = await queryBuilder.getManyAndCount();
+
+    const result: { ships: Ship[], shipsCount: number, page?: number, limit?: number, totalPages?: number } = {
+      ships,
+      shipsCount,
+    };
+
+    // Eğer sayfalama varsa totalPages ekle
+    if (page != null && limit != null) {
+      result.page = page;
+      result.limit = limit;
+      result.totalPages = Math.ceil(shipsCount / limit);
+    }
+
+    return result;
   }
 
   // GET ONE
   async findOne(id: number): Promise<Ship> {
-    const ship = await this.shipRepository.findOne({ where: { id } });
+    const ship = await this.shipRepository.findOne({ where: { id }, relations: ['customer'] });
     if (!ship) throw new NotFoundException('Ship not found');
     return ship;
   }
 
   // UPDATE
-  async update(id: number, updateShipDto: UpdateShipDto): Promise<{ message: string, data: Ship }> {
-    const ship = await this.shipRepository.findOne({ where: { id } });
+  async update(id: number, updateShipDto: ShipDto): Promise<{ message: string, data: Ship }> {
+    const ship = await this.shipRepository.findOne({ where: { id }, relations: ['customer'] });
     if (!ship) throw new NotFoundException('Ship not found');
     const updatedShip = this.shipRepository.merge(ship, updateShipDto);
     await this.shipRepository.save(updatedShip);
