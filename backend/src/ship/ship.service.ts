@@ -30,7 +30,6 @@ export class ShipService {
         new Brackets((qb: WhereExpressionBuilder) => {
           qb.where('ship.name ILIKE :search', { search: searchTerm })
             .orWhere('ship.imoNumber ILIKE :search', { search: searchTerm })
-            .orWhere('ship.shipOwner ILIKE :search', { search: searchTerm });
         })
       );
     }

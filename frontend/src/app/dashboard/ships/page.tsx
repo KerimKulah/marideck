@@ -248,7 +248,7 @@ export default function ShipsPage() {
                     <TableBody>
                         {loading ? (
                             <TableRow>
-                                <TableCell className="h-24 text-center">
+                                <TableCell colSpan={7} className="h-24 text-center">
                                     <MiniLoading />
                                 </TableCell>
                             </TableRow>
