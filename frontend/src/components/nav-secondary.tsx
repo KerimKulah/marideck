@@ -21,6 +21,7 @@ export function NavSecondary({
     title: string
     url: string
     icon: Icon
+    onClick?: () => void
   }[]
 } & React.ComponentPropsWithoutRef<typeof SidebarGroup>) {
   return (
@@ -30,7 +31,15 @@ export function NavSecondary({
           {items.map((item) => (
             <SidebarMenuItem key={item.title}>
               <SidebarMenuButton asChild>
-                <a href={item.url}>
+                <a
+                  href={item.url}
+                  onClick={(e) => {
+                    if (item.onClick) {
+                      e.preventDefault()
+                      item.onClick()
+                    }
+                  }}
+                >
                   <item.icon />
                   <span>{item.title}</span>
                 </a>

@@ -21,34 +21,19 @@ export class ShipDto {
     flag?: string;
 
     @IsOptional()
-    lat?: number; // Enlem (y)
-
-    @IsOptional()
-    lon?: number; // Boylam (x)
-
-    @IsOptional()
-    speed?: number; // Hız (knot)
-
-    @IsOptional()
-    course?: number; // Yön (derece) 
-
-    @IsOptional()
     eta?: Date; // Tahmini varış zamanı
 
     @IsOptional()
     etd?: Date; // Tahmini kalkış zamanı (Eğer veri varsa)
 
     @IsOptional()
-    lastPort?: string; // Son liman
+    departurePort?: string; // Kalkış liman
 
     @IsOptional()
-    nextPort?: string; // Sonraki liman
+    destinationPort?: string; // Varış liman
 
     @IsOptional()
     status?: string; // Durum (active, berthed vb.)
-
-    @IsOptional()
-    shipOwner?: string; // Gemi sahibi
 
     @IsOptional()
     builtYear?: number; // İnşa yılı

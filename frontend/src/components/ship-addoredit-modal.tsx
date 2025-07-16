@@ -1,5 +1,9 @@
 "use client"
-
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css"
+import { registerLocale } from "react-datepicker";
+import { tr as trLocale } from "date-fns/locale";
+registerLocale("tr", trLocale);
 import { useState, useEffect } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -21,24 +25,17 @@ import tr from 'react-phone-input-2/lang/tr.json'
 
 // Düzeltilmiş form şeması - backend ile uyumlu
 const formSchema = z.object({
-    imoNumber: z.string().optional(),
+    imoNumber: z.string().nonempty({ message: "IMO numarası gerekli" }),
     mmsiNumber: z.string().optional(),
     callsign: z.string().optional(),
-    name: z.string().optional(),
+    name: z.string().nonempty({ message: "Gemi adı gerekli" }),
     type: z.string().optional(),
     flag: z.string().optional(),
-    lat: z.coerce.number().optional(),
-    lon: z.coerce.number().optional(),
-    speed: z.coerce.number().optional(),
-    course: z.coerce.number().optional(),
     eta: z.date().optional(),
     etd: z.date().optional(),
-    lastPort: z.string().optional(),
-    currentPort: z.string().optional(),
-    nextPort: z.string().optional(),
+    departurePort: z.string().optional(),
+    destinationPort: z.string().optional(),
     status: z.string().optional(),
-    shipOwner: z.string().optional(),
-    agent: z.string().optional(),
     builtYear: z.coerce.number().optional(),
     grossTonnage: z.coerce.number().optional(),
     deadweight: z.coerce.number().optional(),
@@ -46,8 +43,6 @@ const formSchema = z.object({
     length: z.coerce.number().optional(),
     beam: z.coerce.number().optional(),
     notes: z.string().optional(),
-    customerId: z.coerce.number().optional(),
-    cargoDetails: z.string().optional(),
 })
 
 type ShipFormValues = z.infer<typeof formSchema>
@@ -57,6 +52,26 @@ const uppercaseLabels = Object.keys(tr).reduce((acc, key) => {
     return acc;
 }, {} as Record<string, string>);
 
+enum Status {
+    Beklemede, // 1, 7
+    Limanda, // 5
+    Yolda, // 0, 8, 11, 12	
+    Demirde, // 1
+    Gecikmeli, // 2, 3, 4, 6
+    Acil, // 14
+    Bilinimiyor // 15, 9, 10, 13
+}
+
+enum ShipTypes {
+    Cargo,
+    Container,
+    Oil,
+    Gas,
+    Liquid,
+    DryBulk,
+    Other
+}
+
 interface Ship {
     id?: number;
     imoNumber?: string;
@@ -65,18 +80,11 @@ interface Ship {
     name?: string;
     type?: string;
     flag?: string;
-    lat?: number;
-    lon?: number;
-    speed?: number;
-    course?: number;
     eta?: Date;
     etd?: Date;
-    lastPort?: string;
-    currentPort?: string;
-    nextPort?: string;
+    departurePort?: string;
+    destinationPort?: string;
     status?: string;
-    shipOwner?: string;
-    agent?: string;
     builtYear?: number;
     grossTonnage?: number;
     deadweight?: number;
@@ -84,8 +92,6 @@ interface Ship {
     notes?: string;
     length?: number;
     beam?: number;
-    customerId?: number;
-    cargoDetails?: string;
 }
 
 interface ShipAddOrEditModalProps {
@@ -112,18 +118,11 @@ export function ShipAddOrEditModal({ isOpen, onClose, ship, onSuccess }: ShipAdd
             name: "",
             type: "",
             flag: "",
-            lat: undefined,
-            lon: undefined,
-            speed: undefined,
-            course: undefined,
             eta: undefined,
             etd: undefined,
-            lastPort: "",
-            currentPort: "",
-            nextPort: "",
+            departurePort: "",
+            destinationPort: "",
             status: "",
-            shipOwner: "",
-            agent: "",
             builtYear: undefined,
             grossTonnage: undefined,
             deadweight: undefined,
@@ -131,8 +130,6 @@ export function ShipAddOrEditModal({ isOpen, onClose, ship, onSuccess }: ShipAdd
             length: undefined,
             beam: undefined,
             notes: "",
-            customerId: undefined,
-            cargoDetails: "",
         },
     })
 
@@ -150,18 +147,11 @@ export function ShipAddOrEditModal({ isOpen, onClose, ship, onSuccess }: ShipAdd
                     name: ship.name || "",
                     type: ship.type || "",
                     flag: ship.flag || "",
-                    lat: ship.lat || undefined,
-                    lon: ship.lon || undefined,
-                    speed: ship.speed || undefined,
-                    course: ship.course || undefined,
                     eta: ship.eta || undefined,
                     etd: ship.etd || undefined,
-                    lastPort: ship.lastPort || "",
-                    currentPort: ship.currentPort || "",
-                    nextPort: ship.nextPort || "",
+                    departurePort: ship.departurePort || "",
+                    destinationPort: ship.destinationPort || "",
                     status: ship.status || "",
-                    shipOwner: ship.shipOwner || "",
-                    agent: ship.agent || "",
                     builtYear: ship.builtYear || undefined,
                     grossTonnage: ship.grossTonnage || undefined,
                     deadweight: ship.deadweight || undefined,
@@ -169,8 +159,6 @@ export function ShipAddOrEditModal({ isOpen, onClose, ship, onSuccess }: ShipAdd
                     length: ship.length || undefined,
                     beam: ship.beam || undefined,
                     notes: ship.notes || "",
-                    customerId: ship.customerId || undefined,
-                    cargoDetails: ship.cargoDetails || "",
                 })
             } else {
                 form.reset({
@@ -180,18 +168,11 @@ export function ShipAddOrEditModal({ isOpen, onClose, ship, onSuccess }: ShipAdd
                     name: "",
                     type: "",
                     flag: "",
-                    lat: undefined,
-                    lon: undefined,
-                    speed: undefined,
-                    course: undefined,
                     eta: undefined,
                     etd: undefined,
-                    lastPort: "",
-                    currentPort: "",
-                    nextPort: "",
+                    departurePort: "",
+                    destinationPort: "",
                     status: "",
-                    shipOwner: "",
-                    agent: "",
                     builtYear: undefined,
                     grossTonnage: undefined,
                     deadweight: undefined,
@@ -199,8 +180,6 @@ export function ShipAddOrEditModal({ isOpen, onClose, ship, onSuccess }: ShipAdd
                     length: undefined,
                     beam: undefined,
                     notes: "",
-                    customerId: undefined,
-                    cargoDetails: "",
                 })
             }
         }
@@ -268,14 +247,14 @@ export function ShipAddOrEditModal({ isOpen, onClose, ship, onSuccess }: ShipAdd
                                         <FormLabel className="flex items-center gap-2">
                                             <Ship className="h-4 w-4 text-muted-foreground" />
                                             Gemi Adı
+                                            <span className="text-red-500">*</span>
                                         </FormLabel>
                                         <FormControl>
                                             <Input placeholder="Gemi adı giriniz" {...field} />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
-                                )}
-                            />
+                                )} />
 
                             <FormField
                                 control={form.control}
@@ -291,8 +270,7 @@ export function ShipAddOrEditModal({ isOpen, onClose, ship, onSuccess }: ShipAdd
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
-                                )}
-                            />
+                                )} />
 
                             <FormField
                                 control={form.control}
@@ -308,8 +286,7 @@ export function ShipAddOrEditModal({ isOpen, onClose, ship, onSuccess }: ShipAdd
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
-                                )}
-                            />
+                                )} />
 
                             <FormField
                                 control={form.control}
@@ -325,8 +302,62 @@ export function ShipAddOrEditModal({ isOpen, onClose, ship, onSuccess }: ShipAdd
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
+                                )} />
+
+                            <FormField
+                                control={form.control}
+                                name="etd"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel className="flex items-center gap-2">
+                                            <Calendar className="h-4 w-4 text-muted-foreground" />
+                                            ETD (Tahmini Kalkış)
+                                        </FormLabel>
+                                        <FormControl>
+                                            <DatePicker
+                                                selected={field.value}
+                                                onChange={(date) => field.onChange(date)}
+                                                locale="tr"
+                                                timeInputLabel="Saat"
+                                                showTimeInput
+                                                dateFormat="yyyy-MM-dd HH:mm"
+                                                timeFormat="HH:mm"
+                                                placeholderText="Tarih seçin"
+                                                className="w-full border border-input rounded-md px-3 py-2 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+                                            />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
                                 )}
                             />
+
+                            <FormField
+                                control={form.control}
+                                name="eta"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel className="flex items-center gap-2">
+                                            <Calendar className="h-4 w-4 text-muted-foreground" />
+                                            ETA (Tahmini Varış)
+                                        </FormLabel>
+                                        <FormControl>
+                                            <DatePicker
+                                                selected={field.value}
+                                                onChange={(date) => field.onChange(date)}
+                                                locale="tr"
+                                                timeInputLabel="Saat"
+                                                showTimeInput
+                                                dateFormat="yyyy-MM-dd HH:mm"
+                                                timeFormat="HH:mm"
+                                                placeholderText="Tarih seçin"
+                                                className="w-full border border-input rounded-md px-3 py-2 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+                                            />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )} />
+
+
 
                             <FormField
                                 control={form.control}
@@ -342,8 +373,7 @@ export function ShipAddOrEditModal({ isOpen, onClose, ship, onSuccess }: ShipAdd
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
-                                )}
-                            />
+                                )} />
 
                             <FormField
                                 control={form.control}
@@ -367,64 +397,58 @@ export function ShipAddOrEditModal({ isOpen, onClose, ship, onSuccess }: ShipAdd
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
-                                )}
-                            />
-                        </div>
-
-                        {/* Zaman Bilgileri */}
-                        <div className="grid grid-cols-2 gap-4">
-                            <FormField
-                                control={form.control}
-                                name="eta"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel className="flex items-center gap-2">
-                                            <Calendar className="h-4 w-4 text-muted-foreground" />
-                                            ETA (Tahmini Varış)
-                                        </FormLabel>
-                                        <FormControl>
-                                            <Input
-                                                type="datetime-local"
-                                                value={field.value ? new Date(field.value.getTime() - field.value.getTimezoneOffset() * 60000).toISOString().slice(0, 16) : ''}
-                                                onChange={(e) => field.onChange(e.target.value ? new Date(e.target.value) : undefined)}
-                                            />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
+                                )} />
 
                             <FormField
                                 control={form.control}
-                                name="etd"
+                                name="status"
                                 render={({ field }) => (
                                     <FormItem>
                                         <FormLabel className="flex items-center gap-2">
-                                            <Calendar className="h-4 w-4 text-muted-foreground" />
-                                            ETD (Tahmini Kalkış)
+                                            <Building2 className="h-4 w-4 text-muted-foreground" />
+                                            Durum
                                         </FormLabel>
                                         <FormControl>
-                                            <Input
-                                                type="datetime-local"
-                                                value={field.value ? new Date(field.value.getTime() - field.value.getTimezoneOffset() * 60000).toISOString().slice(0, 16) : ''}
-                                                onChange={(e) => field.onChange(e.target.value ? new Date(e.target.value) : undefined)}
-                                            />
+                                            <Select onValueChange={field.onChange} value={field.value}>
+                                                <SelectTrigger className="w-full">
+                                                    <SelectValue placeholder="Durum Seçin" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    {Object.values(Status)
+                                                        .filter((value): value is string => typeof value === 'string')
+                                                        .map((status) => (
+                                                            <SelectItem key={status} value={status}>
+                                                                {status}
+                                                            </SelectItem>
+                                                        ))}
+                                                </SelectContent>
+                                            </Select>
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
-                                )}
-                            />
+                                )} />
                         </div>
 
-                        <Button
-                            type="button"
-                            variant="ghost"
-                            className="w-full text-sm text-blue-600 hover:underline"
-                            onClick={() => setShowAdvanced(!showAdvanced)}
-                        >
+                        {/* Notlar */}
+                        <FormField
+                            control={form.control}
+                            name="notes"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel className="flex items-center gap-2">
+                                        <StickyNote className="h-4 w-4 text-muted-foreground" />
+                                        Notlar
+                                    </FormLabel>
+                                    <FormControl>
+                                        <Textarea placeholder="Notlar" {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )} />
+
+                        <Button type="button" variant="ghost" className="w-full text-sm text-blue-600 hover:underline" onClick={() => setShowAdvanced(!showAdvanced)}>
                             {showAdvanced ? "Gelişmiş Bilgileri Gizle" : "Gelişmiş Bilgileri Göster"}
                         </Button>
-
 
                         {showAdvanced && (
                             <div className="mt-4 space-y-4">
@@ -432,228 +456,38 @@ export function ShipAddOrEditModal({ isOpen, onClose, ship, onSuccess }: ShipAdd
                                 <div className="grid grid-cols-3 gap-4">
                                     <FormField
                                         control={form.control}
-                                        name="lastPort"
+                                        name="departurePort"
                                         render={({ field }) => (
                                             <FormItem>
                                                 <FormLabel className="flex items-center gap-2">
                                                     <Building2 className="h-4 w-4 text-muted-foreground" />
-                                                    Son Liman
+                                                    Kalkış Liman (Departure)
                                                 </FormLabel>
                                                 <FormControl>
-                                                    <Input placeholder="Son liman" {...field} />
+                                                    <Input placeholder="Kalkış liman" {...field} />
                                                 </FormControl>
                                                 <FormMessage />
                                             </FormItem>
-                                        )}
-                                    />
+                                        )} />
 
                                     <FormField
                                         control={form.control}
-                                        name="currentPort"
+                                        name="destinationPort"
                                         render={({ field }) => (
                                             <FormItem>
                                                 <FormLabel className="flex items-center gap-2">
                                                     <Building2 className="h-4 w-4 text-muted-foreground" />
-                                                    Şu Anki Liman
+                                                    Hedef Liman (Destination)
                                                 </FormLabel>
                                                 <FormControl>
-                                                    <Input placeholder="Şu anki liman" {...field} />
+                                                    <Input placeholder="Hedef liman" {...field} />
                                                 </FormControl>
                                                 <FormMessage />
                                             </FormItem>
-                                        )}
-                                    />
-
-                                    <FormField
-                                        control={form.control}
-                                        name="nextPort"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel className="flex items-center gap-2">
-                                                    <Building2 className="h-4 w-4 text-muted-foreground" />
-                                                    Sonraki Liman
-                                                </FormLabel>
-                                                <FormControl>
-                                                    <Input placeholder="Sonraki liman" {...field} />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
+                                        )} />
                                 </div>
-
-                                {/* Durum ve Sahiplik */}
-                                <div className="grid grid-cols-3 gap-4">
-                                    <FormField
-                                        control={form.control}
-                                        name="status"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel className="flex items-center gap-2">
-                                                    <Building2 className="h-4 w-4 text-muted-foreground" />
-                                                    Durum
-                                                </FormLabel>
-                                                <FormControl>
-                                                    <Select onValueChange={field.onChange} value={field.value}>
-                                                        <SelectTrigger>
-                                                            <SelectValue placeholder="Durum Seçin" />
-                                                        </SelectTrigger>
-                                                        <SelectContent>
-                                                            <SelectItem value="devam-eden">Devam Eden</SelectItem>
-                                                            <SelectItem value="limanda">Limanda</SelectItem>
-                                                            <SelectItem value="gecikme">Gecikme</SelectItem>
-                                                            <SelectItem value="bekleme">Bekleme</SelectItem>
-                                                        </SelectContent>
-                                                    </Select>
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-
-                                    <FormField
-                                        control={form.control}
-                                        name="shipOwner"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel className="flex items-center gap-2">
-                                                    <User className="h-4 w-4 text-muted-foreground" />
-                                                    Armatör
-                                                </FormLabel>
-                                                <FormControl>
-                                                    <Input placeholder="Armatör" {...field} />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-
-                                    <FormField
-                                        control={form.control}
-                                        name="agent"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel className="flex items-center gap-2">
-                                                    <User className="h-4 w-4 text-muted-foreground" />
-                                                    Agent
-                                                </FormLabel>
-                                                <FormControl>
-                                                    <Input placeholder="Agent" {...field} />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                </div>
-
-                                {/* Müşteri ve Yük */}
-                                <div className="grid grid-cols-2 gap-4">
-                                    <FormField
-                                        control={form.control}
-                                        name="customerId"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel className="flex items-center gap-2">
-                                                    <User className="h-4 w-4 text-muted-foreground" />
-                                                    İlgili Müşteri
-                                                </FormLabel>
-                                                <FormControl>
-                                                    <Input type="number" placeholder="Müşteri ID" {...field} />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-
-                                    <FormField
-                                        control={form.control}
-                                        name="cargoDetails"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel className="flex items-center gap-2">
-                                                    <Building2 className="h-4 w-4 text-muted-foreground" />
-                                                    Yük Detayları
-                                                </FormLabel>
-                                                <FormControl>
-                                                    <Input placeholder="Yük detayları" {...field} />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                </div>
-
-                                {/* Notlar */}
-                                <FormField
-                                    control={form.control}
-                                    name="notes"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel className="flex items-center gap-2">
-                                                <StickyNote className="h-4 w-4 text-muted-foreground" />
-                                                Notlar
-                                            </FormLabel>
-                                            <FormControl>
-                                                <Textarea placeholder="Notlar" {...field} />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
 
                                 <div className="grid grid-cols-3 gap-4">
-                                    <FormField
-                                        control={form.control}
-                                        name="lat"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>Enlem (Latitude)</FormLabel>
-                                                <FormControl>
-                                                    <Input type="number" placeholder="Enlem" {...field} />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                    <FormField
-                                        control={form.control}
-                                        name="lon"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>Boylam (Longitude)</FormLabel>
-                                                <FormControl>
-                                                    <Input type="number" placeholder="Boylam" {...field} />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                    <FormField
-                                        control={form.control}
-                                        name="speed"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>Hız (knot)</FormLabel>
-                                                <FormControl>
-                                                    <Input type="number" placeholder="Hız" {...field} />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                    <FormField
-                                        control={form.control}
-                                        name="course"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>Rota (derece)</FormLabel>
-                                                <FormControl>
-                                                    <Input type="number" placeholder="Rota" {...field} />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
                                     <FormField
                                         control={form.control}
                                         name="builtYear"
@@ -672,7 +506,7 @@ export function ShipAddOrEditModal({ isOpen, onClose, ship, onSuccess }: ShipAdd
                                         name="grossTonnage"
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel>Gross Tonnage</FormLabel>
+                                                <FormLabel>Brüt Tonaj (Gross Tonnage)</FormLabel>
                                                 <FormControl>
                                                     <Input type="number" placeholder="GT" {...field} />
                                                 </FormControl>
@@ -685,9 +519,9 @@ export function ShipAddOrEditModal({ isOpen, onClose, ship, onSuccess }: ShipAdd
                                         name="deadweight"
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel>Deadweight</FormLabel>
+                                                <FormLabel>Yük Kapasitesi (Deadweight)</FormLabel>
                                                 <FormControl>
-                                                    <Input type="number" placeholder="DWT" {...field} />
+                                                    <Input type="number" placeholder="Yük Kapasitesi" {...field} />
                                                 </FormControl>
                                                 <FormMessage />
                                             </FormItem>
@@ -698,7 +532,7 @@ export function ShipAddOrEditModal({ isOpen, onClose, ship, onSuccess }: ShipAdd
                                         name="draft"
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel>Draft (m)</FormLabel>
+                                                <FormLabel>Draft</FormLabel>
                                                 <FormControl>
                                                     <Input type="number" placeholder="Draft" {...field} />
                                                 </FormControl>
@@ -724,7 +558,7 @@ export function ShipAddOrEditModal({ isOpen, onClose, ship, onSuccess }: ShipAdd
                                         name="beam"
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel>Genişlik (Beam)</FormLabel>
+                                                <FormLabel>Genişlik (m)</FormLabel>
                                                 <FormControl>
                                                     <Input type="number" placeholder="Beam" {...field} />
                                                 </FormControl>

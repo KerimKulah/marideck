@@ -8,6 +8,7 @@ import { Sidebar, SidebarContent, SidebarHeader, SidebarMenu, SidebarMenuButton,
 import Image from 'next/image';
 import { useSelector } from "react-redux"
 import { RootState } from "@/redux/store"
+import { SettingsDialog } from "./settings-dialog"
 
 const data = {
   navMain: [
@@ -57,7 +58,7 @@ const data = {
   navSecondary: [
     {
       title: "Ayarlar",
-      url: "#",
+      url: "",
       icon: IconSettings,
     },
     {
@@ -70,41 +71,44 @@ const data = {
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { user, loading } = useSelector((state: RootState) => state.auth)
+  const [isSettingsOpen, setIsSettingsOpen] = React.useState(false)
+
+  const navSecondaryItems = React.useMemo(() =>
+    data.navSecondary.map(item =>
+      item.title === "Ayarlar"
+        ? {
+          ...item,
+          onClick: () => setIsSettingsOpen(true),
+          url: '#' // Prevent navigation
+        }
+        : item
+    ),
+    []
+  )
 
   return (
-    <Sidebar collapsible="offcanvas" {...props}>
-      <SidebarHeader className="px-3">
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton size="lg" asChild className="px-2">
-              <div className="mt-1 h-15 flex items-center justify-center">
-                <Image
-                  src="/flama-maritime.png"
-                  alt="Logo"
-                  width={100}
-                  height={100}
-                  quality={100}
-                />
-              </div>
-              {/* <a href="#" className="w-full">
-                <div className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
-                  <IconCommand className="size-4" />
+    <>
+      <Sidebar collapsible="offcanvas" {...props}>
+        <SidebarHeader className="px-3">
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton size="lg" asChild className="px-2">
+                <div className="mt-1 h-15 flex items-center justify-center">
+                  <Image src="/flama-maritime.png" alt="Logo" width={100} height={100} quality={100} />
                 </div>
-                <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-medium">MARITIME DESK</span>
-                  <span className="truncate text-xs">Maritime Yönetim Sistemi</span>
-                </div>
-              </a> */}
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-          </SidebarMenuItem>
-        </SidebarMenu>
-      </SidebarHeader>
-      <SidebarContent className="px-3">
-        <NavMain items={data.navMain} />
-        <NavSecondary items={data.navSecondary} className="mt-auto" />
-      </SidebarContent>
-    </Sidebar>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarHeader>
+        <SidebarContent className="px-3">
+          <NavMain items={data.navMain} />
+          <NavSecondary
+            items={navSecondaryItems}
+            className="mt-auto"
+          />
+        </SidebarContent>
+      </Sidebar>
+      <SettingsDialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen} />
+    </>
   )
 }

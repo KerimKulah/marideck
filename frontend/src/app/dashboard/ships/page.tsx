@@ -1,6 +1,6 @@
 "use client"
 
-import { Search, Plus, MoreHorizontal, Ship, Clock, Anchor, LocationEditIcon, Locate, MapPin, MapPinned, Circle, Edit, Trash, AlertTriangle, ChevronDown } from "lucide-react"
+import { Search, Plus, MoreHorizontal, Ship, Clock, Anchor, LocationEditIcon, Locate, MapPin, MapPinned, Circle, Edit, Trash, AlertTriangle, ChevronDown, ShipIcon, Calendar, MapPinnedIcon, X, Eye } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -9,7 +9,6 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import React, { useState, useEffect, useMemo } from 'react';
 import ShipStatsCards from '@/components/ship-stats-cards';
-import VesselLocationModal2 from "@/components/vessel-location-modal-2"
 import { ShipAddOrEditModal } from "@/components/ship-addoredit-modal"
 import { useSelector, useDispatch } from "react-redux"
 import { RootState, AppDispatch } from "@/redux/store"
@@ -18,13 +17,56 @@ import { Pagination, PaginationContent, PaginationItem, PaginationLink, Paginati
 import { MiniLoading } from "@/components/ui/mini-loading"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import debounce from "lodash/debounce"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { toast } from "sonner"
+import ReactCountryFlag from "react-country-flag"
+import tr from 'react-phone-input-2/lang/tr.json'
+import { Globe } from "lucide-react"
+import VesselLocationModal from "@/components/vessel-location-modal"
+import { ShipDetailsModal } from "@/components/ship-details-modal"
+
+const CountryCell = ({ countryCode }: { countryCode?: string }) => {
+    if (!countryCode) return <div className="flex items-center gap-2"><Globe className="h-4 w-4 text-muted-foreground" />-</div>;
+    const flag = <ReactCountryFlag countryCode={countryCode.toUpperCase()} svg style={{ width: '16px', height: '16px' }} />;
+    const countryName = tr[countryCode.toLowerCase() as keyof typeof tr] || countryCode;
+
+    return (
+        <div className="flex items-center gap-2 min-w-[120px]">
+            {flag}
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <span>
+                        {countryName.length > 12 ? `${countryName.slice(0, 12)}...` : countryName}
+                    </span>
+                </TooltipTrigger>
+                <TooltipContent>
+                    <div className="flex items-center gap-2">
+                        {flag}
+                        <p >{countryName}</p>
+                    </div>
+                </TooltipContent>
+            </Tooltip>
+        </div>
+    );
+};
+
+enum Status {
+    Beklemede, // 1, 7
+    Limanda, // 5
+    Yolda, // 0, 8, 11, 12	
+    Demirde, // 1
+    Gecikmeli, // 2, 3, 4, 6
+    Acil, // 14
+    Bilinimiyor // 15, 9, 10, 13
+}
 
 const statusColors = {
-    beklemede: "bg-blue-100 text-blue-800",
-    devam: "bg-yellow-100 text-yellow-800",
-    tamamlandı: "bg-green-100 text-green-800"
+    [Status.Beklemede]: "bg-gray-100 text-blue-800",
+    [Status.Limanda]: "bg-green-100 text-green-800",
+    [Status.Yolda]: "bg-green-100 text-green-800",
+    [Status.Demirde]: "bg-green-100 text-green-800",
+    [Status.Gecikmeli]: "bg-green-100 text-green-800",
+    [Status.Acil]: "bg-green-100 text-green-800",
+    [Status.Bilinimiyor]: "bg-green-100 text-green-800"
 }
 
 const formatDate = (dateString: string) => {
@@ -56,6 +98,19 @@ export default function ShipsPage() {
     const [shipToDelete, setShipToDelete] = useState<string | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
 
+    const [shipDetailsModal, setShipDetailsModal] = useState({
+        isOpen: false,
+        ship: null,
+    });
+
+    const handleCloseShipDetailsModal = () => {
+        setShipDetailsModal({ isOpen: false, ship: null });
+    };
+
+    const handleOpenShipDetailsModal = (ship: any) => {
+        setShipDetailsModal({ isOpen: true, ship });
+    };
+
     useEffect(() => {
         dispatch(getShips({ page, limit, search: searchQuery }));
     }, [dispatch, page, limit, searchQuery]);
@@ -66,6 +121,7 @@ export default function ShipsPage() {
             toast(error);
         }
     }, [error]); // toast'ı buradan kaldır
+
 
     const handleSearchChange = useMemo(
         () => debounce((value: string) => {
@@ -111,7 +167,7 @@ export default function ShipsPage() {
     const handleOpenVesselLocationModal = (ship: any) => {
         setVesselLocationModal({
             isOpen: true,
-            vessel: { imo: ship.imo, name: ship.name, type: ship.type, flag: ship.flag, mmsi: ship.mmsi }
+            vessel: { imo: ship.imoNumber, name: ship.name, type: ship.type, flag: ship.flag, mmsi: ship.mmsiNumber }
         });
     };
 
@@ -125,6 +181,10 @@ export default function ShipsPage() {
 
     const handleCloseShipAddOrEditModal = () => {
         setShipAddOrEditModal({ isOpen: false, ship: null });
+    };
+
+    const handleShipAddSuccess = () => {
+        dispatch(getShips({ page, limit, search: searchQuery }));
     };
 
     if (error) {
@@ -174,19 +234,21 @@ export default function ShipsPage() {
                 <Table>
                     <TableHeader>
                         <TableRow>
+                            <TableHead>IMO / MMSI</TableHead>
                             <TableHead>Gemi Adı</TableHead>
-                            <TableHead>IMO</TableHead>
                             <TableHead>Tipi</TableHead>
                             <TableHead>Bayrak</TableHead>
+                            <TableHead>ETA / ETD</TableHead>
                             <TableHead>Durum</TableHead>
-                            <TableHead>Son Konum</TableHead>
+                            <TableHead className="w-20">Son Güncelleme</TableHead>
+                            <TableHead className="text-center">Konum</TableHead>
                             <TableHead>İşlemler</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
                         {loading ? (
                             <TableRow>
-                                <TableCell colSpan={7} className="h-24 text-center">
+                                <TableCell className="h-24 text-center">
                                     <MiniLoading />
                                 </TableCell>
                             </TableRow>
@@ -199,30 +261,61 @@ export default function ShipsPage() {
                         ) : (
                             ships.map((ship) => (
                                 <TableRow key={ship.id}>
-                                    <TableCell>{ship.name}</TableCell>
-                                    <TableCell>{ship.imo}</TableCell>
-                                    <TableCell>{ship.type}</TableCell>
-                                    <TableCell>{ship.flag}</TableCell>
+                                    {/* IMO / MMSI */}
                                     <TableCell>
-                                        <Badge className={statusColors[ship.status?.toLowerCase() as keyof typeof statusColors] || ''}>
-                                            {ship.status}
+                                        <div className="flex flex-col">
+                                            <span className="text-sm">IMO: {ship.imoNumber}</span>
+                                            <span className="text-sm">MMSI: {ship.mmsiNumber}</span>
+                                        </div>
+                                    </TableCell>
+                                    {/* gemi adı */}
+                                    <TableCell>
+                                        <div className="flex items-center gap-2">
+                                            <ShipIcon className="h-4 w-4" /> {ship.name}
+                                        </div>
+                                    </TableCell>
+                                    {/* gemi tipi */}
+                                    <TableCell>{ship.type}</TableCell>
+                                    {/* bayrak */}
+                                    <TableCell>
+                                        <CountryCell countryCode={ship.flag} />
+                                    </TableCell>
+                                    {/* eta / etd */}
+                                    <TableCell>
+                                        <div className="flex flex-col gap-2">
+                                            <div className="flex gap-2">
+                                                <Calendar className="h-4 w-4" /> {ship.eta ? formatDate(ship.eta) : '-'}
+                                            </div>
+                                            <div className="flex gap-2">
+                                                <Calendar className="h-4 w-4" /> {ship.etd ? formatDate(ship.etd) : '-'}
+                                            </div>
+                                        </div>
+                                    </TableCell>
+                                    {/* durum */}
+                                    <TableCell>
+                                        <Badge className={statusColors[ship.status as keyof typeof statusColors] || ''}>
+                                            <Circle color="green" fill="green" className="h-4 w-4 animate-pulse" /> {ship.status}
                                         </Badge>
                                     </TableCell>
+                                    {/* son güncelleme */}
                                     <TableCell>
-                                        {ship.lastPosition ? (
-                                            <Tooltip>
-                                                <TooltipTrigger asChild>
-                                                    <span className="cursor-pointer" onClick={() => handleOpenVesselLocationModal(ship)}>
-                                                        <LocationEditIcon className="h-4 w-4" />
-                                                    </span>
-                                                </TooltipTrigger>
-                                                <TooltipContent>
-                                                    <p>Son Konum: {ship.lastPosition}</p>
-                                                </TooltipContent>
-                                            </Tooltip>
-                                        ) : (
-                                            '-'
-                                        )}
+                                        <div className="flex items-center gap-2">
+                                            <Calendar className="h-4 w-4" />
+                                            {formatDate(ship.updatedAt)}
+                                        </div>
+                                    </TableCell>
+                                    {/* konum */}
+                                    <TableCell>
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <div className="flex items-center justify-center">
+                                                    <MapPinnedIcon color="red" className="h-5 w-5 cursor-pointer" onClick={() => handleOpenVesselLocationModal(ship)} />
+                                                </div>
+                                            </TooltipTrigger>
+                                            <TooltipContent>
+                                                Konumu Haritada Göster
+                                            </TooltipContent>
+                                        </Tooltip>
                                     </TableCell>
                                     <TableCell>
                                         <DropdownMenu>
@@ -230,12 +323,13 @@ export default function ShipsPage() {
                                                 <MoreHorizontal className="h-4 w-4 cursor-pointer" />
                                             </DropdownMenuTrigger>
                                             <DropdownMenuContent>
-                                                <DropdownMenuItem onClick={() => handleOpenVesselLocationModal(ship)}><LocationEditIcon className="mr-2 h-4 w-4" />Konum Bilgisi</DropdownMenuItem>
-                                                <DropdownMenuItem onClick={() => handleOpenShipAddOrEditModal(ship)}><Edit className="mr-2 h-4 w-4" />Düzenle</DropdownMenuItem>
-                                                <DropdownMenuItem onClick={() => handleDeleteShip(ship.id)} className="text-red-600 focus:text-red-600"><Trash className="mr-2 h-4 w-4" />Sil</DropdownMenuItem>
+                                                <DropdownMenuItem onClick={() => handleOpenShipDetailsModal(ship)}><Eye className="mr-2 h-4 w-4" />Detayları Göster</DropdownMenuItem>
+                                                <DropdownMenuItem onClick={() => handleOpenShipAddOrEditModal(ship)}><Edit className="mr-2 h-4 w-4" />Gemi Bilgilerini Güncelle</DropdownMenuItem>
+                                                <DropdownMenuItem onClick={() => handleDeleteShip(ship.id)} className="text-red-600 focus:text-red-600"><X color="red" className="mr-2 h-4 w-4" />Gemiyi Takipten Çıkart</DropdownMenuItem>
                                             </DropdownMenuContent>
                                         </DropdownMenu>
                                     </TableCell>
+
                                 </TableRow>
                             ))
                         )}
@@ -413,7 +507,13 @@ export default function ShipsPage() {
                 </DialogContent>
             </Dialog>
 
-            <VesselLocationModal2
+            <ShipDetailsModal
+                isOpen={shipDetailsModal.isOpen}
+                onClose={handleCloseShipDetailsModal}
+                ship={shipDetailsModal.ship}
+            />
+
+            <VesselLocationModal
                 isOpen={vesselLocationModal.isOpen}
                 onClose={handleCloseVesselLocationModal}
                 vessel={vesselLocationModal.vessel}
@@ -421,8 +521,9 @@ export default function ShipsPage() {
 
             <ShipAddOrEditModal
                 isOpen={shipAddOrEditModal.isOpen}
-                onClose={handleCloseShipAddOrEditModal}
+                onClose={() => setShipAddOrEditModal({ isOpen: false, ship: null })}
                 ship={shipAddOrEditModal.ship}
+                onSuccess={handleShipAddSuccess}
             />
         </div>
     );

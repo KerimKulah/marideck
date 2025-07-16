@@ -37,27 +37,10 @@ export class Ship {
     notes?: string; // Notlar 
 
     @Column({ nullable: true })
-    lastPort?: string; // Son liman
+    departurePort?: string; // Kalkış liman
 
     @Column({ nullable: true })
-    nextPort?: string; // Sonraki liman
-
-    // Buradan sonrası daha teknik/coğrafi bilgiler
-
-    @Column({ nullable: true, type: 'float' })
-    lat?: number; // Enlem (y)
-
-    @Column({ nullable: true, type: 'float' })
-    lon?: number; // Boylam (x)
-
-    @Column({ nullable: true, type: 'float' })
-    speed?: number; // Hız (knot)
-
-    @Column({ nullable: true, type: 'float' })
-    course?: number; // Yön (derece) 
-
-    @Column({ nullable: true })
-    shipOwner?: string; // Gemi sahibi
+    destinationPort?: string; // Varış liman
 
     @Column({ nullable: true, type: 'int' })
     builtYear?: number; // İnşa yılı
@@ -66,13 +49,13 @@ export class Ship {
     grossTonnage?: number; // Brüt tonaj (GT)
 
     @Column({ nullable: true, type: 'float' })
-    deadweight?: number; // Deadweight tonaj (DWT)
+    deadweight?: number; // Deadweight tonaj (DWT) 
 
     @Column({ nullable: true, type: 'float' })
     draft?: number; // Draft (su çekimi)
 
     @Column({ nullable: true, type: 'float' })
-    length?: number; // Uzunluk (metre)
+    length?: number; // Uzunluk (metre) 
 
     @Column({ nullable: true, type: 'float' })
     beam?: number; // Genişlik (metre)
