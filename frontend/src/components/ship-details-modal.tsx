@@ -127,9 +127,9 @@ export const ShipDetailsModal = ({ isOpen, onClose, ship }: ShipDetailsModalProp
                         </h3>
                         <hr className="my-2" />
                         <div className="space-y-3 sm:space-y-0 sm:grid sm:grid-cols-1 md:grid-cols-2 sm:gap-4">
-                            <InfoRow icon={MapPin} label="Son Liman" value={ship.lastPort} />
+                            {/* <InfoRow icon={MapPin} label="Son Liman" value={ship.lastPort} />
                             <InfoRow icon={MapPin} label="Mevcut Liman" value={ship.currentPort} />
-                            <InfoRow icon={MapPin} label="Sonraki Liman" value={ship.nextPort} />
+                            <InfoRow icon={MapPin} label="Sonraki Liman" value={ship.nextPort} /> */}
                             <InfoRow icon={Calendar} label="ETA" value={formatDate(ship.eta)} />
                             <InfoRow icon={Calendar} label="ETD" value={formatDate(ship.etd)} />
                         </div>

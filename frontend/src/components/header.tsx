@@ -6,12 +6,13 @@ import { SidebarTrigger } from "@/components/ui/sidebar"
 import { Bell, ChevronDown, User, LogOut, Settings } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger, } from "@/components/ui/dropdown-menu"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Skeleton } from "@/components/ui/skeleton"
 import { usePathname } from "next/navigation"
 import { useMemo } from "react"
 import { Logout } from "./logout"
 import { useSelector } from "react-redux"
+import Link from "next/link"
 import { RootState } from "../redux/store"
 
 const getCurrentMenuItem = (pathname: string) => {
@@ -89,7 +90,8 @@ export function Header() {
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <Button variant="ghost" className="h-9 px-2 gap-2 hover:bg-gray-100">
-                                    <Avatar className="h-8 w-8 rounded-lg">
+                                    <Avatar className="h-8 w-8">
+                                        <AvatarImage src={`http://localhost:3000/${user.photo}`} alt="Profile-Photo" />
                                         <AvatarFallback className="rounded-lg">
                                             {user.firstName.split(' ').map((n: string) => n[0]).join('')}
                                             {user.lastName.split(' ').map((n: string) => n[0]).join('')}
@@ -98,14 +100,15 @@ export function Header() {
                                     <div className="hidden md:flex flex-col items-start min-w-[120px]">
                                         <span className="text-xs text-black truncate">{user.firstName + " " + user.lastName}</span>
                                         <span className="text-xs text-gray-500 truncate">{user.roles[0].name === "admin" ? "Yönetici" : "Personel"}</span>
-                                    </div> 
+                                    </div>
                                     <ChevronDown className="h-4 w-4 opacity-50" />
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent className="w-56 rounded-lg" align="end" sideOffset={8}>
                                 <DropdownMenuLabel className="p-0 font-normal">
                                     <div className="flex items-center gap-2 p-2">
-                                        <Avatar className="h-10 w-10 rounded-lg">
+                                        <Avatar className="h-8 w-8">
+                                            <AvatarImage src={`http://localhost:3000/${user.photo}`} alt="Profile-Photo" />
                                             <AvatarFallback className="rounded-lg">
                                                 {user.firstName.split(' ').map((n: string) => n[0]).join('')}
                                                 {user.lastName.split(' ').map((n: string) => n[0]).join('')}
@@ -121,7 +124,7 @@ export function Header() {
                                 <DropdownMenuGroup>
                                     <DropdownMenuItem>
                                         <User className="mr-2 h-4 w-4" />
-                                        <span>Profil</span>
+                                        <Link href="/profile">Profil</Link>
                                     </DropdownMenuItem>
                                     <DropdownMenuItem>
                                         <Settings className="mr-2 h-4 w-4" />

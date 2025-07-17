@@ -69,6 +69,16 @@ const statusColors = {
     [Status.Bilinimiyor]: "bg-green-100 text-green-800"
 }
 
+const statusIcons = {
+    [Status.Beklemede]: <Circle className="h-4 w-4 text-yellow-500 animate-pulse" />,
+    [Status.Limanda]: <Circle className="h-4 w-4 text-green-500" />,
+    [Status.Yolda]: <Circle className="h-4 w-4 text-green-500 animate-pulse" />,
+    [Status.Demirde]: <Circle className="h-4 w-4 text-green-500 animate-pulse" />,
+    [Status.Gecikmeli]: <Circle className="h-4 w-4 text-red-500 animate-pulse" />,
+    [Status.Acil]: <Circle className="h-4 w-4 text-red-500 animate-pulse" />,
+    [Status.Bilinimiyor]: <Circle className="h-4 w-4 text-black" />
+}
+
 const formatDate = (dateString: string) => {
     const date = new Date(dateString)
     return date.toLocaleString('tr-TR', {
@@ -248,13 +258,13 @@ export default function ShipsPage() {
                     <TableBody>
                         {loading ? (
                             <TableRow>
-                                <TableCell colSpan={7} className="h-24 text-center">
+                                <TableCell colSpan={9} className="h-24 text-center">
                                     <MiniLoading />
                                 </TableCell>
                             </TableRow>
                         ) : ships?.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                                <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
                                     Henüz gemi kaydı bulunmuyor.
                                 </TableCell>
                             </TableRow>

@@ -3,6 +3,7 @@ export class UserDto {
     firstName: string;
     lastName: string;
     email: string;
+    photo?: string;
     roles: { id: number; name: string }[];
     isActive: boolean;
     createdAt: Date;

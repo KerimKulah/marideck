@@ -21,11 +21,6 @@ export const Loading = () => {
             {/* Loading text */}
             <div className="text-center">
                 <p className="text-lg font-medium text-gray-700 mb-2">Yükleniyor</p>
-                <div className="flex space-x-1 justify-center">
-                    <div className="w-2 h-2 bg-black rounded-full animate-bounce"></div>
-                    <div className="w-2 h-2 bg-black rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                    <div className="w-2 h-2 bg-black rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-                </div>
             </div>
         </div>
     );

@@ -47,6 +47,7 @@ export const currentUser = createAsyncThunk("auth/currentUser", async (_, { reje
 // Backendden gelen UserDto
 interface User {
     id: number;
+    photo?: string;
     firstName: string;
     lastName: string;
     email: string;

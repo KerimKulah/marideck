@@ -31,8 +31,8 @@ const formSchema = z.object({
     name: z.string().nonempty({ message: "Gemi adı gerekli" }),
     type: z.string().optional(),
     flag: z.string().optional(),
-    eta: z.date().optional(),
-    etd: z.date().optional(),
+    eta: z.date().nullable().optional(),
+    etd: z.date().nullable().optional(),
     departurePort: z.string().optional(),
     destinationPort: z.string().optional(),
     status: z.string().optional(),
@@ -99,6 +99,59 @@ interface ShipAddOrEditModalProps {
     onClose: () => void
     ship?: Ship | null
     onSuccess?: () => void
+}
+
+enum ShipType {
+    // Genel
+    Unknown = "Unknown", // 0
+
+    // Yolcu Gemileri (AIS codes 60-69)
+    Passenger = "Passenger Ship",         // 60
+    HighSpeedPassenger = "High-Speed Passenger", // 69 (örnek özel durum)
+    Cruise = "Cruise Ship",               // 61
+    Ferry = "Ferry",                      // 63
+
+    // Yük Gemileri (AIS codes 70-79)
+    GeneralCargo = "General Cargo Ship",  // 70
+    ContainerShip = "Container Ship",     // 71
+    BulkCarrier = "Bulk Carrier",         // 72
+    RefrigeratedCargo = "Refrigerated Cargo", // 73
+    VehicleCarrier = "Vehicle Carrier",   // 74
+    RoRoCargo = "Ro-Ro Cargo Ship",       // 75
+
+    // Tankerler (AIS codes 80-89)
+    OilTanker = "Oil Tanker",             // 80
+    ChemicalTanker = "Chemical Tanker",   // 81
+    LPGTanker = "LPG Tanker",             // 82
+    LNGTanker = "LNG Tanker",             // 83
+    OtherTanker = "Other Tanker",         // 84–89
+
+    // Balıkçılık ve Destek Gemileri (AIS codes 30-39, 90-99)
+    Fishing = "Fishing Vessel",           // 30
+    Towing = "Towing Vessel",             // 31
+    Tug = "Tug",                          // 32
+    Pilot = "Pilot Vessel",              // 33
+    SearchAndRescue = "SAR Vessel",       // 36
+    LawEnforcement = "Law Enforcement",   // 37
+    PortTender = "Port Tender",           // 38
+    AntiPollution = "Anti-pollution Equipment", // 39
+    DivingVessel = "Diving Vessel",       // 91
+    Military = "Military/Naval Ship",     // 35, 93
+
+    // Özel Amaçlı Gemiler
+    Dredging = "Dredging or Underwater Ops", // 34
+    Sailing = "Sailing Vessel",           // 36
+    PleasureCraft = "Pleasure Craft (Yacht)", // 37
+    ResearchSurvey = "Research/Survey Vessel", // 40+
+    Medical = "Medical Transport",        // 95
+    Noncombatant = "Non-Combatant Military", // 94
+
+    // Römorkör / Yedekleme
+    TugBoat = "Tug Boat",                 // 32
+    TowingLarge = "Towing (Large)",       // 31
+
+    // Diğer
+    Other = "Other",                      // 99
 }
 
 export function ShipAddOrEditModal({ isOpen, onClose, ship, onSuccess }: ShipAddOrEditModalProps) {
@@ -195,7 +248,7 @@ export function ShipAddOrEditModal({ isOpen, onClose, ship, onSuccess }: ShipAdd
 
         setIsSubmitting(true);
         try {
-            // Boş string değerlerini undefined'a çevirme
+            // Clean empty strings and convert to undefined
             const cleanedValues = Object.fromEntries(
                 Object.entries(values).map(([key, value]) => [
                     key,
@@ -264,6 +317,7 @@ export function ShipAddOrEditModal({ isOpen, onClose, ship, onSuccess }: ShipAdd
                                         <FormLabel className="flex items-center gap-2">
                                             <IdCard className="h-4 w-4 text-muted-foreground" />
                                             IMO Numarası
+                                            <span className="text-red-500">*</span>
                                         </FormLabel>
                                         <FormControl>
                                             <Input placeholder="IMO numarası" {...field} />
@@ -316,7 +370,7 @@ export function ShipAddOrEditModal({ isOpen, onClose, ship, onSuccess }: ShipAdd
                                         <FormControl>
                                             <DatePicker
                                                 selected={field.value}
-                                                onChange={(date) => field.onChange(date)}
+                                                onChange={(date: Date | null) => field.onChange(date)}
                                                 locale="tr"
                                                 timeInputLabel="Saat"
                                                 showTimeInput
@@ -365,15 +419,27 @@ export function ShipAddOrEditModal({ isOpen, onClose, ship, onSuccess }: ShipAdd
                                 render={({ field }) => (
                                     <FormItem>
                                         <FormLabel className="flex items-center gap-2">
-                                            <Ship className="h-4 w-4 text-blue-500" />
+                                            <Ship className="h-4 w-4" />
                                             Gemi Tipi
                                         </FormLabel>
                                         <FormControl>
-                                            <Input placeholder="Gemi tipi" {...field} />
+                                            <Select onValueChange={field.onChange} value={field.value || ""}>
+                                                <SelectTrigger className="w-full">
+                                                    <SelectValue placeholder="Gemi tipi seçiniz" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    {Object.entries(ShipType).map(([key, value]) => (
+                                                        <SelectItem key={key} value={value}>
+                                                            {value}
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
-                                )} />
+                                )}
+                            />
 
                             <FormField
                                 control={form.control}

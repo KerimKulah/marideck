@@ -7,9 +7,24 @@ import { addTransactionalDataSource, initializeTransactionalContext } from 'type
 import { DataSource } from 'typeorm';
 import { CustomerModule } from './customer/customer.module';
 import { ShipModule } from './ship/ship.module';
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { join } from 'path';
 
 @Module({
   imports: [
+    // Serve static files from public directory
+    ServeStaticModule.forRoot({
+      rootPath: join(__dirname, '..', 'public', 'images'),
+      serveRoot: '/images',
+      serveStaticOptions: {
+        setHeaders: (res) => {
+          res.setHeader('Access-Control-Allow-Origin', '*');
+          res.setHeader('Access-Control-Allow-Methods', 'GET');
+          res.setHeader('Cache-Control', 'public, max-age=31536000');
+        },
+      },
+    }),
+
     // Modules  
     AuthModule, CustomerModule, ShipModule,
 
