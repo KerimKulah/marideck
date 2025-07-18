@@ -24,7 +24,7 @@ export function LoginForm({ className, ...props }: React.ComponentProps<"div">) 
   useEffect(() => {
     if (isInitialized && isAuthenticated) {
       console.log("Kullanıcı authenticated, dashboard'a yönlendiriliyor");
-      router.replace("/dashboard");
+      router.replace("/");
     }
   }, [isInitialized, isAuthenticated, router]);
 
@@ -40,7 +40,7 @@ export function LoginForm({ className, ...props }: React.ComponentProps<"div">) 
     dispatch(clearError());
     const result = await dispatch(login({ email, password }));
     if (result.meta.requestStatus === "fulfilled") {
-      router.push("/dashboard"); //ls
+      router.push("/"); //ls
     }
   };
 
@@ -61,10 +61,10 @@ export function LoginForm({ className, ...props }: React.ComponentProps<"div">) 
       <Card>
         <CardHeader className="text-center space-y-4">
           <div className="flex justify-center">
-            <img className="h-16 w-auto" src="/kmaritime-logo.png" alt="KMaritime Logo" />
+            <img className="h-16 w-auto" src="/kmaritime-logo.png" alt="MaritimeDesk Logo" />
           </div>
           <div className="space-y-2">
-            <CardTitle>K-Maritime Yönetim Sistemine Hoşgeldiniz</CardTitle>
+            <CardTitle>Maritime Desk Yönetim Sistemine Hoşgeldiniz</CardTitle>
             <CardDescription>Lütfen email adresinizi ve şifrenizi girin.</CardDescription>
           </div>
         </CardHeader>

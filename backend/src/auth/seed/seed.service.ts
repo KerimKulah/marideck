@@ -53,6 +53,7 @@ export class SeedService implements OnModuleInit {
                 email: adminEmail,
                 password: await bcrypt.hash('admin123', 10),
                 roles: [adminRole],
+                phone: '1234567890',
             });
 
             await this.userRepository.save(user);

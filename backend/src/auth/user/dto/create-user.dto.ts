@@ -27,6 +27,11 @@ export class CreateUserDto {
 
     @ApiProperty()
     @IsString()
+    @IsNotEmpty({ message: 'Phone cannot be empty' })
+    phone: string;
+
+    @ApiProperty()
+    @IsString()
     @IsNotEmpty({ message: 'Confirm password cannot be empty' })
     confirmPassword: string;
 

@@ -55,6 +55,7 @@ interface User {
     isActive: boolean;
     createdAt: Date;
     updatedAt: Date;
+    phone: string;
 }
 
 interface AuthState {

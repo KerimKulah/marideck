@@ -1,6 +1,6 @@
 "use client"
 
-import { Search, Plus, MoreHorizontal, Ship, Clock, Anchor, LocationEditIcon, Locate, MapPin, MapPinned, Circle, Edit, Trash, AlertTriangle, ChevronDown, ShipIcon, Calendar, MapPinnedIcon, X, Eye } from "lucide-react"
+import { Search, Plus, MoreHorizontal, Ship, Clock, Anchor, LocationEditIcon, Locate, MapPin, MapPinned, Circle, Edit, Trash, AlertTriangle, ChevronDown, ShipIcon, Calendar, MapPinnedIcon, X, Eye, Copy } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -12,7 +12,7 @@ import ShipStatsCards from '@/components/ship-stats-cards';
 import { ShipAddOrEditModal } from "@/components/ship-addoredit-modal"
 import { useSelector, useDispatch } from "react-redux"
 import { RootState, AppDispatch } from "@/redux/store"
-import { getShips, setPage, setLimit, setSearchQuery, deleteShip, removeShipOptimistic } from "@/redux/slices/shipSlice"
+import { getShips, setPage, setLimit, setSearchQuery, deleteShip, removeShipOptimistic, clearError } from "@/redux/slices/shipSlice"
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination"
 import { MiniLoading } from "@/components/ui/mini-loading"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
@@ -23,6 +23,7 @@ import tr from 'react-phone-input-2/lang/tr.json'
 import { Globe } from "lucide-react"
 import VesselLocationModal from "@/components/vessel-location-modal"
 import { ShipDetailsModal } from "@/components/ship-details-modal"
+import { AisLookup } from "@/ais/ais-lookup"
 
 const CountryCell = ({ countryCode }: { countryCode?: string }) => {
     if (!countryCode) return <div className="flex items-center gap-2"><Globe className="h-4 w-4 text-muted-foreground" />-</div>;
@@ -50,34 +51,34 @@ const CountryCell = ({ countryCode }: { countryCode?: string }) => {
 };
 
 enum Status {
-    Beklemede, // 1, 7
-    Limanda, // 5
-    Yolda, // 0, 8, 11, 12	
-    Demirde, // 1
-    Gecikmeli, // 2, 3, 4, 6
-    Acil, // 14
-    Bilinimiyor // 15, 9, 10, 13
+    Beklemede = "Beklemede", // 1, 7
+    Limanda = "Limanda", // 5
+    Yolda = "Yolda", // 0, 8, 11, 12	
+    Demirde = "Demirde", // 1
+    Gecikmeli = "Gecikmeli", // 2, 3, 4, 6
+    Acil = "Acil", // 14
+    Bilinimiyor = "Bilinimiyor" // 15, 9, 10, 13
 }
 
 const statusColors = {
-    [Status.Beklemede]: "bg-gray-100 text-blue-800",
+    [Status.Beklemede]: "bg-gray-100 text-yellow-800",
     [Status.Limanda]: "bg-green-100 text-green-800",
     [Status.Yolda]: "bg-green-100 text-green-800",
-    [Status.Demirde]: "bg-green-100 text-green-800",
-    [Status.Gecikmeli]: "bg-green-100 text-green-800",
-    [Status.Acil]: "bg-green-100 text-green-800",
-    [Status.Bilinimiyor]: "bg-green-100 text-green-800"
-}
+    [Status.Demirde]: "bg-yellow-100 text-yellow-800",
+    [Status.Gecikmeli]: "bg-orange-100 text-orange-800",
+    [Status.Acil]: "bg-red-100 text-red-800",
+    [Status.Bilinimiyor]: "bg-gray-200 text-gray-800"
+};
 
 const statusIcons = {
-    [Status.Beklemede]: <Circle className="h-4 w-4 text-yellow-500 animate-pulse" />,
-    [Status.Limanda]: <Circle className="h-4 w-4 text-green-500" />,
-    [Status.Yolda]: <Circle className="h-4 w-4 text-green-500 animate-pulse" />,
-    [Status.Demirde]: <Circle className="h-4 w-4 text-green-500 animate-pulse" />,
-    [Status.Gecikmeli]: <Circle className="h-4 w-4 text-red-500 animate-pulse" />,
-    [Status.Acil]: <Circle className="h-4 w-4 text-red-500 animate-pulse" />,
-    [Status.Bilinimiyor]: <Circle className="h-4 w-4 text-black" />
-}
+    [Status.Beklemede]: <Circle fill="yellow" color="yellow" className="h-4 w-4 animate-pulse" />,
+    [Status.Limanda]: <Circle fill="green" color="green" className="h-4 w-4" />,
+    [Status.Yolda]: <Circle fill="green" color="green" className="h-4 w-4 animate-pulse" />,
+    [Status.Demirde]: <Circle fill="orange" color="orange" className="h-4 w-4" />,
+    [Status.Gecikmeli]: <Circle fill="orange" color="orange" className="h-4 w-4 animate-pulse" />,
+    [Status.Acil]: <Circle fill="red" color="red" className="h-4 w-4 animate-pulse" />,
+    [Status.Bilinimiyor]: <Circle fill="black" color="black" className="h-4 w-4" />
+};
 
 const formatDate = (dateString: string) => {
     const date = new Date(dateString)
@@ -90,6 +91,11 @@ const formatDate = (dateString: string) => {
         hour12: false
     })
 }
+
+const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    toast.success("Panoya kopyalandı");
+};
 
 export default function ShipsPage() {
     const dispatch = useDispatch<AppDispatch>();
@@ -107,6 +113,7 @@ export default function ShipsPage() {
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
     const [shipToDelete, setShipToDelete] = useState<string | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
+    const [isAisLookupOpen, setIsAisLookupOpen] = useState(false);
 
     const [shipDetailsModal, setShipDetailsModal] = useState({
         isOpen: false,
@@ -125,13 +132,12 @@ export default function ShipsPage() {
         dispatch(getShips({ page, limit, search: searchQuery }));
     }, [dispatch, page, limit, searchQuery]);
 
-    // toast'ı dependency array'den çıkar
     useEffect(() => {
         if (error) {
-            toast(error);
+            toast.error(error);
+            dispatch(clearError());
         }
-    }, [error]); // toast'ı buradan kaldır
-
+    }, [error, dispatch]);
 
     const handleSearchChange = useMemo(
         () => debounce((value: string) => {
@@ -195,15 +201,26 @@ export default function ShipsPage() {
 
     const handleShipAddSuccess = () => {
         dispatch(getShips({ page, limit, search: searchQuery }));
+        setIsAisLookupOpen(false);
     };
 
-    if (error) {
-        return (
-            <div className="text-red-500 text-center p-4">
-                {error}
-            </div>
-        );
-    }
+    const handleAisShipFound = (shipData: any) => {
+        // Map the AIS data to match your ship model if necessary
+        const mappedShipData = {
+            name: shipData.name,
+            imoNumber: shipData.imo,
+            mmsiNumber: shipData.mmsi,
+            callSign: shipData.callSign,
+            type: shipData.type,
+            flag: shipData.flag,
+            // Add other mappings as needed
+            ...shipData
+        };
+
+        // Open the AddOrEditModal with the ship data
+        handleOpenShipAddOrEditModal(mappedShipData);
+        setIsAisLookupOpen(false);
+    };
 
     return (
         <div className="grid space-y-4">
@@ -233,8 +250,11 @@ export default function ShipsPage() {
                         <DropdownMenuItem onClick={() => handleOpenShipAddOrEditModal(null)}>
                             El ile Ekle
                         </DropdownMenuItem>
-                        <DropdownMenuItem>
-                            AIS Verisi ile Ekle
+                        <DropdownMenuItem onSelect={(e) => {
+                            e.preventDefault();
+                            setIsAisLookupOpen(true);
+                        }}>
+                            AIS ile Ara
                         </DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
@@ -274,8 +294,36 @@ export default function ShipsPage() {
                                     {/* IMO / MMSI */}
                                     <TableCell>
                                         <div className="flex flex-col">
-                                            <span className="text-sm">IMO: {ship.imoNumber}</span>
-                                            <span className="text-sm">MMSI: {ship.mmsiNumber}</span>
+                                            <div className="flex items-center gap-1">
+                                                <span className="text-sm">IMO: {ship.imoNumber}</span>
+                                                <Tooltip>
+                                                    <TooltipTrigger asChild>
+                                                        <Copy onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            copyToClipboard(ship.imoNumber);
+                                                        }} className="h-3 w-3" />
+                                                    </TooltipTrigger>
+                                                    <TooltipContent>
+                                                        <p>Kopyala</p>
+                                                    </TooltipContent>
+                                                </Tooltip>
+                                            </div>
+                                            <div className="flex items-center gap-1">
+                                                <span className="text-sm">MMSI: {ship.mmsiNumber ? ship.mmsiNumber : '-'}</span>
+                                                {ship.mmsiNumber && (
+                                                    <Tooltip>
+                                                        <TooltipTrigger asChild>
+                                                            <Copy onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                copyToClipboard(ship.mmsiNumber);
+                                                            }} className="h-3 w-3" />
+                                                        </TooltipTrigger>
+                                                        <TooltipContent>
+                                                            <p>Kopyala</p>
+                                                        </TooltipContent>
+                                                    </Tooltip>
+                                                )}
+                                            </div>
                                         </div>
                                     </TableCell>
                                     {/* gemi adı */}
@@ -304,7 +352,7 @@ export default function ShipsPage() {
                                     {/* durum */}
                                     <TableCell>
                                         <Badge className={statusColors[ship.status as keyof typeof statusColors] || ''}>
-                                            <Circle color="green" fill="green" className="h-4 w-4 animate-pulse" /> {ship.status}
+                                            {statusIcons[ship.status as keyof typeof statusIcons]} {ship.status}
                                         </Badge>
                                     </TableCell>
                                     {/* son güncelleme */}
@@ -334,7 +382,7 @@ export default function ShipsPage() {
                                             </DropdownMenuTrigger>
                                             <DropdownMenuContent>
                                                 <DropdownMenuItem onClick={() => handleOpenShipDetailsModal(ship)}><Eye className="mr-2 h-4 w-4" />Detayları Göster</DropdownMenuItem>
-                                                <DropdownMenuItem onClick={() => handleOpenShipAddOrEditModal(ship)}><Edit className="mr-2 h-4 w-4" />Gemi Bilgilerini Güncelle</DropdownMenuItem>
+                                                <DropdownMenuItem onClick={() => handleOpenShipAddOrEditModal(ship)}><Edit className="mr-2 h-4 w-4" />Bilgileri El ile Güncelle</DropdownMenuItem>
                                                 <DropdownMenuItem onClick={() => handleDeleteShip(ship.id)} className="text-red-600 focus:text-red-600"><X color="red" className="mr-2 h-4 w-4" />Gemiyi Takipten Çıkart</DropdownMenuItem>
                                             </DropdownMenuContent>
                                         </DropdownMenu>
@@ -357,7 +405,7 @@ export default function ShipsPage() {
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent>
-                            {[5, 10, 20, 50].map((limitOption) => (
+                            {[5, 10].map((limitOption) => (
                                 <DropdownMenuItem
                                     key={limitOption}
                                     onClick={() => handleLimitChange(limitOption)}
@@ -535,6 +583,22 @@ export default function ShipsPage() {
                 ship={shipAddOrEditModal.ship}
                 onSuccess={handleShipAddSuccess}
             />
+
+            <Dialog open={isAisLookupOpen} onOpenChange={setIsAisLookupOpen}>
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle>AIS ile Gemi Arama</DialogTitle>
+                        <DialogDescription>
+                            MMSI numarası ile gemiyi arayın ve otomatik olarak ekleyin.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <AisLookup
+                        isOpen={isAisLookupOpen}
+                        onClose={() => setIsAisLookupOpen(false)}
+                        onShipFound={handleAisShipFound}
+                    />
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }

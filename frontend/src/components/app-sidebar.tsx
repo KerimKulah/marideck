@@ -14,42 +14,42 @@ const data = {
   navMain: [
     {
       title: "Gösterge Paneli",
-      url: "/dashboard",
+      url: "/",
       icon: IconDashboard,
     },
     {
       title: "Müşteriler",
-      url: "/dashboard/customers",
+      url: "/customers",
       icon: IconUsers,
     },
     {
       title: "Takip Edilen Gemiler",
-      url: "/dashboard/ships",
+      url: "/ships",
       icon: IconShip,
     },
     {
       title: "Operasyonlar",
-      url: "/dashboard/operations",
+      url: "/operations",
       icon: IconAnchor,
     },
     {
       title: "Belgeler",
-      url: "/dashboard/documents",
+      url: "/documents",
       icon: IconFileWord,
     },
     {
       title: "Finans & Faturalar",
-      url: "/dashboard/finance",
+      url: "/finance",
       icon: IconChartBar,
     },
     {
       title: "Görevler",
-      url: "/dashboard/tasks",
+      url: "/tasks",
       icon: IconClipboardList,
     },
     {
       title: "Çalışanlar",
-      url: "/dashboard/personnel",
+      url: "/personnel",
       icon: IconUsers,
     },
 
@@ -57,7 +57,7 @@ const data = {
   ],
   navSecondary: [
     {
-      title: "Ayarlar",
+      title: "Ayarları",
       url: "",
       icon: IconSettings,
     },
@@ -75,7 +75,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   const navSecondaryItems = React.useMemo(() =>
     data.navSecondary.map(item =>
-      item.title === "Ayarlar"
+      item.title === "Ayarları"
         ? {
           ...item,
           onClick: () => setIsSettingsOpen(true),

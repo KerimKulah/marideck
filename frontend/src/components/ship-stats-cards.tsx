@@ -1,14 +1,5 @@
 import React from 'react';
-import {
-    Ship,
-    TrendingUp,
-    UserCheck,
-    LoaderCircle,
-    Clock,
-    MoveRight,
-    AlertTriangle,
-    AlarmClockOff,
-} from 'lucide-react';
+import { Ship, Clock, MoveRight, AlarmClockOff } from 'lucide-react';
 
 // Örnek data - gerçek uygulamada Redux store'dan gelecek
 const statsData = {
@@ -19,21 +10,15 @@ const statsData = {
     lastWeekAdded: 5,
 };
 
-const StatCard = ({ title, value, icon: Icon, trend, trendValue, bgColor, iconColor }: any) => (
-    <div className={`rounded-lg border p-5 ${bgColor} hover:shadow-md transition-shadow`}>
+const StatCard = ({ title, value, icon: Icon, bgColor, iconColor, iconClass }: any) => (
+    <div className={`rounded-lg border p-3 ${bgColor} hover:shadow-md transition-shadow`}>
         <div className="flex items-center justify-between">
             <div className="space-y-1">
                 <p className="text-sm text-muted-foreground">{title}</p>
                 <p className="text-2xl font-bold">{value}</p>
-                {trend && (
-                    <div className={`flex items-center text-xs ${trend === 'up' ? 'text-green-600' : 'text-red-600'}`}>
-                        <TrendingUp className="h-3 w-3 mr-1" />
-                        {trendValue}
-                    </div>
-                )}
             </div>
-            <div className={`p-3 rounded-full ${iconColor}`}>
-                <Icon className="h-6 w-6 text-white " />
+            <div className={`p-2 rounded-full ${iconColor}`}>
+                <Icon className={`h-6 w-6 text-white ${iconClass}`} />
             </div>
         </div>
     </div>
@@ -47,8 +32,6 @@ export default function ShipStatsCards() {
                 title="Toplam Gemi"
                 value={statsData.totalCustomers}
                 icon={Ship}
-                trend="up"
-                trendValue="+12 bu ay"
                 bgColor="bg-white"
                 iconColor="bg-black"
             />
@@ -57,9 +40,7 @@ export default function ShipStatsCards() {
             <StatCard
                 title="Beklemede"
                 value={statsData.totalCountries}
-                icon={ Clock}
-                trend="up"
-                trendValue="+2 bu ay"
+                icon={Clock}
                 bgColor="bg-white"
                 iconColor="bg-black"
             />
@@ -69,17 +50,16 @@ export default function ShipStatsCards() {
                 title="Gecikmeli"
                 value={statsData.activeCustomers}
                 icon={AlarmClockOff}
-                trend="up"
-                trendValue="+5 bu hafta"
                 bgColor="bg-white"
                 iconColor="bg-black"
             />
 
             {/* Devam Eden */}
             <StatCard
-                title="Devam Eden"
+                title="Yolda"
                 value={statsData.lastWeekAdded}
-                icon={MoveRight}
+                icon={Clock}
+                iconClass="animate-spin [animation-duration:3s]"
                 bgColor="bg-white"
                 iconColor="bg-black"
             />

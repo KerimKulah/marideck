@@ -16,7 +16,7 @@ import { useSelector } from "react-redux"
 import { RootState } from "@/redux/store"
 import { useEffect, useState, useMemo } from "react"
 import debounce from "lodash/debounce"
-import { getCustomers, setPage, setLimit, setSearchQuery, deleteCustomer } from "@/redux/slices/customerSlice"
+import { getCustomers, setPage, setLimit, setSearchQuery, deleteCustomer, clearError } from "@/redux/slices/customerSlice"
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination"
 import { MiniLoading } from "@/components/ui/mini-loading"
 import { CustomerDetailsModal } from "@/components/customer-details-modal"
@@ -159,6 +159,15 @@ export default function CustomersPage() {
   useEffect(() => {
     dispatch(getCustomers({ page, limit, search: searchQuery }));
   }, [dispatch, page, limit, searchQuery]);
+
+  // Hata yönetimi
+  useEffect(() => {
+    if (error) {
+      toast.error(error);
+      // Hata gösterildikten sonra temizle
+      dispatch(clearError());
+    }
+  }, [error, dispatch]);
 
   // Debounced search function
   const debouncedDispatch = useMemo(
@@ -451,7 +460,7 @@ export default function CustomersPage() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
-              {[5, 10, 20, 50].map((limitOption) => (
+              {[5, 10].map((limitOption) => (
                 <DropdownMenuItem
                   key={limitOption}
                   onClick={() => handleLimitChange(limitOption)}

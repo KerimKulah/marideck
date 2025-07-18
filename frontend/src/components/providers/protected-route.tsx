@@ -18,16 +18,19 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
 
     // Oturum açılmadıysa login sayfasına yönlendir
     useEffect(() => {
-        if (isInitialized && !loading && !isAuthenticated) {
+        if (isInitialized && !isAuthenticated) {
             router.replace("/login");
         }
-    }, [isInitialized, loading, isAuthenticated, router]);
+    }, [isInitialized, isAuthenticated, router]);
 
     // Yükleme ekranı
     if (!isInitialized || loading) {
-        return (
-            <Loading />
-        );
+        return <Loading />;
+    }
+
+    // Eğer kullanıcı giriş yapmamışsa null döndür (yönlendirme yapılacak)
+    if (!isAuthenticated) {
+        return null;
     }
 
     if (error) {

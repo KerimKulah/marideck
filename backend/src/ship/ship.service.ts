@@ -60,14 +60,14 @@ export class ShipService {
 
   // GET ONE
   async findOne(id: number): Promise<Ship> {
-    const ship = await this.shipRepository.findOne({ where: { id }, relations: ['customer'] });
+    const ship = await this.shipRepository.findOne({ where: { id } });
     if (!ship) throw new NotFoundException('Ship not found');
     return ship;
   }
 
   // UPDATE
   async update(id: number, updateShipDto: ShipDto): Promise<{ message: string, data: Ship }> {
-    const ship = await this.shipRepository.findOne({ where: { id }, relations: ['customer'] });
+    const ship = await this.shipRepository.findOne({ where: { id } });
     if (!ship) throw new NotFoundException('Ship not found');
     const updatedShip = this.shipRepository.merge(ship, updateShipDto);
     await this.shipRepository.save(updatedShip);

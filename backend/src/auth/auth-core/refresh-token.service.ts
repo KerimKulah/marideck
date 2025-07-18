@@ -182,10 +182,10 @@ export class RefreshTokenService {
 
         try {
             const result = await this.refreshTokenRepository
-                .createQueryBuilder('token')
+                .createQueryBuilder('refreshToken')
                 .delete()
-                .where('token.expiresAt < :now', { now: new Date() })
-                .orWhere('token.isRevoked = :isRevoked', { isRevoked: true })
+                .where('expiresAt < :now', { now: new Date() })
+                .orWhere('isRevoked = :isRevoked', { isRevoked: true })
                 .execute();
 
             this.logger.log(`Cleanup completed - deleted ${result.affected || 0} tokens`);

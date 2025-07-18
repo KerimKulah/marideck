@@ -54,6 +54,16 @@ export const deleteShip = createAsyncThunk("ship/deleteShip", async (id: string,
     }
 })
 
+// GET SHIP BY MMSI
+export const getShipByMMSI = createAsyncThunk("ship/getShipByMMSI", async (mmsi: string, { rejectWithValue }) => {
+    try {
+        const response = await api.get(`/ship/external/${mmsi}`);
+        return response.data;
+    } catch (error: any) {
+        return rejectWithValue(error.response?.data || { message: "Bilinmeyen hata" });
+    }
+})
+
 interface ShipState {
     ships: any[];
     ship: any | null;

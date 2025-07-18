@@ -1,4 +1,5 @@
-import { IsNotEmpty, IsOptional } from "class-validator";
+import { Type } from "class-transformer";
+import { IsDate, IsDateString, IsNotEmpty, IsOptional } from "class-validator";
 
 export class ShipDto {
 
@@ -21,9 +22,13 @@ export class ShipDto {
     flag?: string;
 
     @IsOptional()
+    @IsDate()
+    @Type(() => Date)
     eta?: Date; // Tahmini varış zamanı
 
     @IsOptional()
+    @IsDate()
+    @Type(() => Date)
     etd?: Date; // Tahmini kalkış zamanı (Eğer veri varsa)
 
     @IsOptional()

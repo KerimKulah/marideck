@@ -17,12 +17,12 @@ import { RootState } from "../redux/store"
 
 const getCurrentMenuItem = (pathname: string) => {
     const navItems = [
-        { title: "Gösterge Paneli", path: "/dashboard" },
-        { title: "Müşteriler", path: "/dashboard/customers" },
-        { title: "Gemi Listesi", path: "/dashboard/ships" },
-        { title: "Operasyonlar", path: "/dashboard/operations" },
-        { title: "Belgeler", path: "/dashboard/documents" },
-        { title: "Finans", path: "/dashboard/finance" },
+        { title: "Gösterge Paneli", path: "/" },
+        { title: "Müşteriler", path: "/customers" },
+        { title: "Gemi Listesi", path: "/ships" },
+        { title: "Operasyonlar", path: "/operations" },
+        { title: "Belgeler", path: "/documents" },
+        { title: "Finans", path: "/finance" },
     ]
 
     // Find exact match first
@@ -34,7 +34,7 @@ const getCurrentMenuItem = (pathname: string) => {
         pathname.startsWith(item.path) && item.path !== '/'
     )
 
-    return partialMatch || { title: "Gösterge Paneli", path: "/dashboard" }
+    return partialMatch || { title: "Gösterge Paneli", path: "/" }
 }
 
 export function Header() {
@@ -91,7 +91,7 @@ export function Header() {
                             <DropdownMenuTrigger asChild>
                                 <Button variant="ghost" className="h-9 px-2 gap-2 hover:bg-gray-100">
                                     <Avatar className="h-8 w-8">
-                                        <AvatarImage src={`http://localhost:3000/${user.photo}`} alt="Profile-Photo" />
+                                        <AvatarImage crossOrigin="anonymous" src={`http://localhost:3000/${user.photo}`} alt="Profile-Photo" />
                                         <AvatarFallback className="rounded-lg">
                                             {user.firstName.split(' ').map((n: string) => n[0]).join('')}
                                             {user.lastName.split(' ').map((n: string) => n[0]).join('')}
@@ -108,7 +108,7 @@ export function Header() {
                                 <DropdownMenuLabel className="p-0 font-normal">
                                     <div className="flex items-center gap-2 p-2">
                                         <Avatar className="h-8 w-8">
-                                            <AvatarImage src={`http://localhost:3000/${user.photo}`} alt="Profile-Photo" />
+                                            <AvatarImage crossOrigin="anonymous" src={`http://localhost:3000/${user.photo}`} alt="Profile-Photo" />
                                             <AvatarFallback className="rounded-lg">
                                                 {user.firstName.split(' ').map((n: string) => n[0]).join('')}
                                                 {user.lastName.split(' ').map((n: string) => n[0]).join('')}
@@ -122,10 +122,12 @@ export function Header() {
                                 </DropdownMenuLabel>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuGroup>
-                                    <DropdownMenuItem>
-                                        <User className="mr-2 h-4 w-4" />
-                                        <Link href="/profile">Profil</Link>
-                                    </DropdownMenuItem>
+                                    <Link href="/profile">
+                                        <DropdownMenuItem>
+                                            <User className="mr-2 h-4 w-4" />
+                                            <span>Profil</span>
+                                        </DropdownMenuItem>
+                                    </Link>
                                     <DropdownMenuItem>
                                         <Settings className="mr-2 h-4 w-4" />
                                         <span>Ayarlar</span>
