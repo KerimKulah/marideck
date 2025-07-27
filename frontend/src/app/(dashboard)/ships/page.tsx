@@ -1,6 +1,6 @@
 "use client"
 
-import { Search, Plus, MoreHorizontal, Ship, Clock, Anchor, LocationEditIcon, Locate, MapPin, MapPinned, Circle, Edit, Trash, AlertTriangle, ChevronDown, ShipIcon, Calendar, MapPinnedIcon, X, Eye, Copy } from "lucide-react"
+import { Search, Plus, MoreHorizontal, Ship, Clock, Anchor, LocationEditIcon, Locate, MapPin, MapPinned, Circle, Edit, Trash, AlertTriangle, ChevronDown, ShipIcon, Calendar, MapPinnedIcon, X, Eye, Copy, Filter } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -226,7 +226,7 @@ export default function ShipsPage() {
         <div className="grid space-y-4">
             <ShipStatsCards />
             <div className="flex flex-col sm:flex-row gap-3 sm:items-center justify-between">
-                <div className="relative w-full sm:max-w-md">
+                <div className="relative w-full">
                     <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                     <Input
                         type="search"
@@ -239,6 +239,10 @@ export default function ShipsPage() {
                         }}
                     />
                 </div>
+                <Button variant="outline" className="py-4 w-full sm:w-auto">
+                    <Filter className="mr-2 h-4 w-4" />
+                    <span>Filtrele</span>
+                </Button>
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                         <Button className="w-full sm:w-auto">
@@ -254,7 +258,10 @@ export default function ShipsPage() {
                             e.preventDefault();
                             setIsAisLookupOpen(true);
                         }}>
-                            AIS ile Ara
+                            MMSI ile Ekle (Beta)
+                        </DropdownMenuItem>
+                        <DropdownMenuItem disabled>
+                            IMO ile Ekle (Yakında)
                         </DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
@@ -587,7 +594,10 @@ export default function ShipsPage() {
             <Dialog open={isAisLookupOpen} onOpenChange={setIsAisLookupOpen}>
                 <DialogContent className="sm:max-w-md">
                     <DialogHeader>
-                        <DialogTitle>AIS ile Gemi Arama</DialogTitle>
+                        <div className="flex items-center gap-2">
+                            <Ship className="h-5 w-5 text-primary" />
+                            <DialogTitle>MMSI ile Gemi Arama</DialogTitle>
+                        </div>
                         <DialogDescription>
                             MMSI numarası ile gemiyi arayın ve otomatik olarak ekleyin.
                         </DialogDescription>

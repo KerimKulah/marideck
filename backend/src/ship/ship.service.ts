@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { ShipDto } from './dto/ship.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Ship } from './entities/ship.entity';
@@ -13,10 +13,43 @@ export class ShipService {
 
   // CREATE
   async create(createShipDto: ShipDto): Promise<{ message: string, data: Ship }> {
-    const ship = this.shipRepository.create(createShipDto);
-    await this.shipRepository.save(ship);
-    return { message: 'Ship created successfully', data: ship };
+    // Query builder ile soft delete dahil arama yapılıyor
+    const existingShip = await this.shipRepository
+      .createQueryBuilder('ship')
+      .withDeleted()
+      .where('ship.imoNumber = :imoNumber', { imoNumber: createShipDto.imoNumber })
+      .orWhere('ship.mmsiNumber = :mmsiNumber', { mmsiNumber: createShipDto.mmsiNumber })
+      .orWhere('ship.callsign = :callsign', { callsign: createShipDto.callsign })
+      .getOne();
+
+    if (existingShip) {
+      if (existingShip.deletedAt) {
+        // Soft-deleted ise restore et ama deletedAt dışında güncelle
+        const { deletedAt, id, ...rest } = existingShip;
+        Object.assign(existingShip, createShipDto);
+        existingShip.deletedAt = null; // restore için null yap
+
+        const savedShip = await this.shipRepository.save(existingShip);
+        return { message: 'Ship restored successfully', data: savedShip };
+      }
+
+      // Çakışan alanı tespit et
+      const conflictField = (() => {
+        if (existingShip.imoNumber === createShipDto.imoNumber) return 'IMO number';
+        if (existingShip.mmsiNumber === createShipDto.mmsiNumber) return 'MMSI number';
+        if (existingShip.callsign === createShipDto.callsign) return 'callsign';
+        return 'unique identifier';
+      })();
+
+      throw new ConflictException(`Ship with this ${conflictField} already exists`);
+    }
+
+    // Yeni kayıt oluştur
+    const newShip = this.shipRepository.create(createShipDto);
+    const savedShip = await this.shipRepository.save(newShip);
+    return { message: 'Ship created successfully', data: savedShip };
   }
+
 
   // GET ALL
   async findAll(page?: number, limit?: number, search?: string): Promise<{

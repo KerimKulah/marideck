@@ -8,13 +8,11 @@ import { UseGuards } from '@nestjs/common';
 import { JwtGuard } from 'src/auth/common/guards/JwtGuard';
 import { RolesGuard } from 'src/auth/common/guards/RolesGuard';
 import { Roles } from 'src/auth/common/decorators/roles.decorator';
-import { ApiBearerAuth } from '@nestjs/swagger';
 
 @Controller('customer')
 @UseFilters(ExceptionFilterImp)
 @UseGuards(JwtGuard, RolesGuard)
 @Roles('admin', 'employee')
-@ApiBearerAuth('jwt')
 export class CustomerController {
   constructor(private readonly customerService: CustomerService) { }
 
@@ -45,12 +43,5 @@ export class CustomerController {
   @HttpCode(200)
   async delete(@Param('id', ParseIntPipe) id: number) {
     return await this.customerService.delete(id);
-  }
-
-  // NOT : Bunu böyle yapmak yerine create kısmında kullanıcı soft delete ise restore edilecek şekilde yapabilirim.
-  @Put(':id/restore')
-  @HttpCode(200)
-  async restore(@Param('id', ParseIntPipe) id: number) {
-    return await this.customerService.restore(id);
   }
 }

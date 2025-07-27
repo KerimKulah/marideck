@@ -5,7 +5,6 @@ import { ExceptionFilterImp } from '../filters/exception-filter';
 import { JwtGuard } from '../auth/common/guards/JwtGuard';
 import { RolesGuard } from '../auth/common/guards/RolesGuard';
 import { Roles } from '../auth/common/decorators/roles.decorator';
-import { ApiBearerAuth } from '@nestjs/swagger';
 import { Ship } from './entities/ship.entity';
 import { Put } from '@nestjs/common';
 
@@ -13,7 +12,6 @@ import { Put } from '@nestjs/common';
 @UseFilters(ExceptionFilterImp)
 @UseGuards(JwtGuard, RolesGuard)
 @Roles('admin', 'employee')
-@ApiBearerAuth('jwt')
 export class ShipController {
   constructor(private readonly shipService: ShipService) { }
 

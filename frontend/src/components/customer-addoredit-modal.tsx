@@ -273,7 +273,7 @@ export function CustomerAddOrEditModal({ isOpen, onClose, customer, onSuccess }:
                                                 defaultValue={field.value || ""}
                                             >
                                                 <SelectTrigger className="w-full">
-                                                    <SelectValue placeholder="-" />
+                                                    <SelectValue placeholder="Müşteri türü seçiniz" />
                                                 </SelectTrigger>
                                                 <SelectContent>
                                                     {Object.values(CustomerType).map((type) => (
@@ -336,7 +336,7 @@ export function CustomerAddOrEditModal({ isOpen, onClose, customer, onSuccess }:
                                         <FormControl>
                                             <ReactFlagsSelect
                                                 className="my-custom-flags-select"
-                                                placeholder="-"
+                                                placeholder="Ülke seçiniz"
                                                 onSelect={field.onChange}
                                                 selected={field.value || ""}
                                                 searchable={true}

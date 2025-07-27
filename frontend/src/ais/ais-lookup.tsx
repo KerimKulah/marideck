@@ -41,11 +41,7 @@ export function AisLookup({ onShipFound, onClose, isOpen = true }: AisLookupProp
     if (!isOpen) return null;
 
     return (
-        <div className="space-y-4 p-4 border rounded-lg bg-card">
-            <div className="flex items-center gap-2 mb-4">
-                <Ship className="h-5 w-5 text-primary" />
-                <h3 className="font-medium">AIS ile Gemi Arama</h3>
-            </div>
+        <div className="space-y-4 bg-card">
 
             <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">

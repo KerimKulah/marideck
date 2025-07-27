@@ -1,16 +1,14 @@
 import { Controller, Post, Body, Req, Get, UseGuards, HttpStatus, HttpCode, Param, Put, Res, ParseIntPipe, UnauthorizedException } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { Request } from 'express';
-import { CurrentUser } from 'src/auth/common/decorators/currentuser.decorator';
+import { CurrentUserId } from 'src/auth/common/decorators/currentuser.decorator';
 import { JwtGuard } from '../common/guards/JwtGuard';
 import { LoginDto } from './dto/login-dto';
 import { LoginResponseDto } from './dto/login-response.dto';
-import { RegisterDto } from './dto/register-dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { ChangeEmailDto } from './dto/change-email.dto';
 import { Response } from 'express';
 import { Roles } from 'src/auth/common/decorators/roles.decorator';
-import { ApiBearerAuth } from '@nestjs/swagger';
 import { RolesGuard } from 'src/auth/common/guards/RolesGuard';
 import { UserService } from 'src/auth/user/user.service';
 import { UserDto } from 'src/auth/user/dto/user.dto';
@@ -19,7 +17,6 @@ import { RefreshAccessDto } from './dto/refresh-access.dto';
 import { RefreshAccessRequestDto } from './dto/refresh-access-request.dto';
 
 @Controller('auth')
-@ApiBearerAuth('jwt')
 export class AuthController {
   constructor(private readonly authService: AuthService, private readonly userService: UserService, private readonly refreshTokenService: RefreshTokenService) { }
 
@@ -78,9 +75,9 @@ export class AuthController {
   JWT'yi DECODE EDER, PAYLOAD SUB(ID) İLE GÜNCEL KULLANICI BİLGİLERINI ALIR
   */
   @UseGuards(JwtGuard)
-  @Get('current-user')
-  async getCurrentUser(@CurrentUser() userPayload): Promise<UserDto> {
-    const userDto = await this.userService.getUserDto(userPayload.id);
+  @Get('current-user') 
+  async getCurrentUser(@CurrentUserId() userId: number): Promise<UserDto> {
+    const userDto = await this.userService.getUserDto(userId);
     return userDto;
   }
 
@@ -110,9 +107,9 @@ export class AuthController {
   */
   @Post('logout-all')
   @UseGuards(JwtGuard)
-  async logoutAllDevices(@CurrentUser() userPayload, @Res({ passthrough: true }) res: Response): Promise<{ message: string }> {
+  async logoutAllDevices(@CurrentUserId() userId: number, @Res({ passthrough: true }) res: Response): Promise<{ message: string }> {
 
-    const user = await this.userService.findOne(userPayload.id);
+    const user = await this.userService.findOne(userId);
 
     const response = await this.authService.logoutAllDevices(user);
 
@@ -139,16 +136,16 @@ export class AuthController {
   //ChangePassword
   @Put('change-password')
   @UseGuards(JwtGuard)
-  async changePassword(@CurrentUser() userPayload, @Body() changePasswordDto: ChangePasswordDto): Promise<{ message: string }> {
-    const user = await this.userService.findOne(userPayload.id);
+  async changePassword(@CurrentUserId() userId: number, @Body() changePasswordDto: ChangePasswordDto): Promise<{ message: string }> {
+    const user = await this.userService.findOne(userId);
     return this.authService.changePassword(user, changePasswordDto);
   }
 
   //ChangeEmail
   @Put('change-email')
   @UseGuards(JwtGuard)
-  async changeEmail(@CurrentUser() userPayload, @Body() changeEmailDto: ChangeEmailDto): Promise<{ message: string }> {
-    const user = await this.userService.findOne(userPayload.id);
+  async changeEmail(@CurrentUserId() userId: number, @Body() changeEmailDto: ChangeEmailDto): Promise<{ message: string }> {
+    const user = await this.userService.findOne(userId);
     return this.authService.changeEmail(user, changeEmailDto);
   }
 

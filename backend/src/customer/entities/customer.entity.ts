@@ -48,7 +48,7 @@ export class Customer {
     @UpdateDateColumn({ type: 'timestamptz' })
     updatedAt: Date;
 
-    @DeleteDateColumn({ type: 'timestamptz' })
-    deletedAt?: Date;
-}
+    @DeleteDateColumn({ type: 'timestamptz', nullable: true })
+    deletedAt: Date | null;
 
+}

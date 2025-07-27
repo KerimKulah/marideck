@@ -1,9 +1,7 @@
-// SAFE DELETE YAPILMIŞ MAİL TEKRA KAYDOLURKEN HATA GELİYOR ONA BAKILACAK
-// AKTİF OPERASYON? gibi bir boolean eklenebilir.
 
 "use client"
 
-import { Search, Plus, Building2, User, Mail, Phone, Globe, Calendar, MoreHorizontal, ChevronDown, PhoneCall, MessageCircle, Copy, Edit, Trash, Eye, AlertTriangle } from "lucide-react"
+import { Search, Plus, Building2, User, Mail, Phone, Globe, Calendar, MoreHorizontal, ChevronDown, PhoneCall, MessageCircle, Copy, Edit, Trash, Eye, AlertTriangle, Filter } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, } from "@/components/ui/table"
@@ -25,6 +23,7 @@ import tr from 'react-phone-input-2/lang/tr.json'
 import ReactCountryFlag from "react-country-flag"
 import CustomerStatsCards from "@/components/customer-stats-cards"
 import { toast } from "sonner"
+import { CardHeader } from "@/components/ui/card"
 
 
 const formatDate = (dateString: string) => {
@@ -232,7 +231,7 @@ export default function CustomersPage() {
       {/* Arama ve Yeni Müşteri Ekle Butonu */}
       <div className="flex flex-col sm:flex-row gap-3 sm:items-center justify-between">
         {/* Arama Inputu */}
-        <div className="relative w-full sm:max-w-md">
+        <div className="relative w-full ">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             type="search"
@@ -242,6 +241,12 @@ export default function CustomersPage() {
             onChange={(e) => setSearchInput(e.target.value)}
           />
         </div>
+
+        <Button variant="outline" className=" py-4 w-full sm:w-auto">
+          <Filter className="mr-2 h-4 w-4" />
+          <span>Filtrele</span>
+        </Button>
+
         {/* Yeni Müşteri Ekle Butonu */}
         <Button onClick={handleAddCustomer} className="w-full sm:w-auto">
           <Plus className="mr-2 h-4 w-4" />

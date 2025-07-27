@@ -51,6 +51,9 @@ export class Ship {
     deadweight?: number; // Deadweight tonaj (DWT) 
 
     @Column({ nullable: true, type: 'float' })
+    netTonnage?: number; // Net tonaj (NT)
+
+    @Column({ nullable: true, type: 'float' })
     draft?: number; // Draft (su çekimi)
 
     @Column({ nullable: true, type: 'float' })
@@ -65,6 +68,6 @@ export class Ship {
     @UpdateDateColumn({ type: 'timestamptz' })
     updatedAt: Date;
 
-    @DeleteDateColumn({ type: 'timestamptz' })
-    deletedAt?: Date;
+    @DeleteDateColumn({ type: 'timestamptz', nullable: true })
+    deletedAt: Date | null;
 }

@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { Customer } from './entities/customer.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Brackets, Repository, WhereExpressionBuilder } from 'typeorm';
@@ -58,11 +58,31 @@ export class CustomerService {
         return customer;
     }
 
-    // CREATE (Eğer eklenecek müşteri soft delete ise restore yapması lazım)
     async create(customerDto: CustomerDto): Promise<{ message: string, data: Customer }> {
-        const customer = this.customerRepo.create(customerDto);
-        await this.customerRepo.save(customer);
-        return { message: 'Customer created successfully', data: customer };
+        const existingCustomer = await this.customerRepo.findOne({
+            where: { email: customerDto.email },
+            withDeleted: true,
+        });
+
+        if (existingCustomer) {
+            if (existingCustomer.deletedAt) {
+                // Soft-deleted kaydı restore et, deletedAt'i null yap ve diğer alanları güncelle
+                existingCustomer.deletedAt = null;
+
+                // deletedAt ve id'yi yanlışlıkla overwrite etmemek için spread yapabiliriz
+                const { deletedAt, id, ...rest } = existingCustomer;
+                Object.assign(existingCustomer, customerDto);
+
+                const savedCustomer = await this.customerRepo.save(existingCustomer);
+                return { message: 'Customer restored successfully', data: savedCustomer };
+            }
+            throw new ConflictException('Customer with this email already exists');
+        }
+
+        // Yeni müşteri oluştur ve kaydet
+        const newCustomer = this.customerRepo.create(customerDto);
+        const savedCustomer = await this.customerRepo.save(newCustomer);
+        return { message: 'Customer created successfully', data: savedCustomer };
     }
 
     // UPDATE

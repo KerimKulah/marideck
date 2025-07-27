@@ -9,6 +9,8 @@ import { CustomerModule } from './customer/customer.module';
 import { ShipModule } from './ship/ship.module';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
+import { OperationModule } from './operation/operation.module';
+import { OperationLogModule } from './operation-log/operation-log.module';
 
 @Module({
   imports: [
@@ -26,7 +28,7 @@ import { join } from 'path';
     }),
 
     // Modules  
-    AuthModule, CustomerModule, ShipModule,
+    AuthModule, CustomerModule, ShipModule, OperationModule, OperationLogModule,
 
     // Configs etc.
     ConfigModule.forRoot({ isGlobal: true }),
@@ -49,6 +51,8 @@ import { join } from 'path';
         },
       },
     }),
+
+ 
   ]
 })
 export class AppModule {

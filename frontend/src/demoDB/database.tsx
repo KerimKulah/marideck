@@ -187,8 +187,105 @@ export const ships = [
 
 export const operations = [
     {
-        id: 1,
-        ship_id: 1,
-        status: "devam"
+        "name": "Akdeniz Limanı Operasyonu",
+        "type": "Yükleme",
+        "details": "Konşimento numarası 123456 ile konteyner yükleme işlemi",
+        "port": "İzmir Limanı",
+        "customer": { "id": 5 },
+        "users": [{ "id": 2 }, { "id": 7 }],
+        "ship": { "id": 3 },
+        "operationLogs": [{ "id": 10 }, { "id": 11 }],
+        "startDate": "2025-07-20T08:00:00Z",
+        "endDate": "2025-07-22T18:00:00Z",
+        "status": "Aktif",
+        "cargoType": "Konteyner",
+        "cargoDetails": "Elektronik ürünler, 100 adet",
+        "createdAt": "2025-07-18T10:15:00Z",
+        "updatedAt": "2025-07-19T12:00:00Z",
+        "deletedAt": null
+    },
+    {
+        "name": "Konteyner Boşaltma",
+        "type": "Boşaltma",
+        "details": "Roro gemisinden konteyner boşaltma işlemi gerçekleştiriliyor",
+        "port": "İstanbul Limanı",
+        "customer": { "id": 12 },
+        "users": [{ "id": 4 }],
+        "ship": { "id": 8 },
+        "operationLogs": [],
+        "startDate": "2025-08-01T06:30:00Z",
+        "endDate": "2025-08-01T14:00:00Z",
+        "status": "Tamamlandı",
+        "cargoType": "Roro",
+        "cargoDetails": "Otomobiller, 50 adet",
+        "createdAt": "2025-07-30T09:00:00Z",
+        "updatedAt": "2025-08-01T15:00:00Z",
+        "deletedAt": null
+    },
+    {
+        "name": "Deniz Yakıt İkmal Operasyonu",
+        "type": "Yakıt İkmal",
+        "details": "Geminin deniz yakıtı ikmali yapılacak",
+        "port": "Mersin Limanı",
+        "customer": { "id": 7 },
+        "users": [{ "id": 1 }, { "id": 3 }, { "id": 5 }],
+        "ship": { "id": 15 },
+        "operationLogs": [{ "id": 101 }, { "id": 102 }, { "id": 103 }],
+        "startDate": "2025-06-10T12:00:00Z",
+        "endDate": "2025-06-10T18:00:00Z",
+        "status": "İptal Edildi",
+        "cargoType": "Yakıt",
+        "cargoDetails": "Dizel, 20000 litre",
+        "createdAt": "2025-06-05T08:00:00Z",
+        "updatedAt": "2025-06-09T17:00:00Z",
+        "deletedAt": "2025-06-11T10:00:00Z"
     }
 ]
+
+
+const operationlogs = [
+    {
+        "id": 10,
+        "operation": { "id": 1 },
+        "user": { "id": 2 },
+        "log": "Operasyon başladı",
+        "createdAt": "2025-07-20T08:00:00Z"
+    },
+    {
+        "id": 11,
+        "operation": { "id": 1 },
+        "user": { "id": 7 },
+        "log": "Operasyon tamamlandı",
+        "createdAt": "2025-07-22T18:00:00Z"
+    },
+    {
+        "id": 101,
+        "operation": { "id": 2 },
+        "user": { "id": 4 },
+        "log": "Operasyon başladı",
+        "createdAt": "2025-08-01T06:30:00Z"
+    },
+    {
+        "id": 102,
+        "operation": { "id": 2 },
+        "user": { "id": 8 },
+        "log": "Operasyon tamamlandı",
+        "createdAt": "2025-08-01T14:00:00Z"
+    },
+    {
+        "id": 103,
+        "operation": { "id": 3 },
+        "user": { "id": 1 },
+        "log": "Operasyon başladı",
+        "createdAt": "2025-06-10T12:00:00Z"
+    },
+    {
+        "id": 104,
+        "operation": { "id": 3 },
+        "user": { "id": 15 },
+        "log": "Operasyon tamamlandı",
+        "createdAt": "2025-06-10T18:00:00Z"
+    }
+]
+
+

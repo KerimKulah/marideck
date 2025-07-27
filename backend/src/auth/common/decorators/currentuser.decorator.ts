@@ -1,8 +1,8 @@
 import { createParamDecorator, ExecutionContext } from '@nestjs/common';
 
-export const CurrentUser = createParamDecorator(
+export const CurrentUserId = createParamDecorator(
     (_data: unknown, ctx: ExecutionContext) => {
         const request = ctx.switchToHttp().getRequest();
-        return request.user; // JWT’den gelen payload, örn: { id, email, roles, fullName } 
+        return request.user?.id;// JWT’den gelen payload, { id } 
     },
 );

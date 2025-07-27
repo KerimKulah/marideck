@@ -7,14 +7,12 @@ import { Roles } from 'src/auth/common/decorators/roles.decorator';
 import { UseGuards } from '@nestjs/common';
 import { JwtGuard } from 'src/auth/common/guards/JwtGuard';
 import { RolesGuard } from 'src/auth/common/guards/RolesGuard';
-import { ApiBearerAuth } from '@nestjs/swagger';
 import { UpdateUserRoleDto } from './dto/update-user-role.dto';
 import { UserDto } from './dto/user.dto';
 
 @Controller('users')
 @UseGuards(JwtGuard, RolesGuard)
 @Roles('admin')
-@ApiBearerAuth('jwt')
 export class UserController {
   constructor(private readonly userService: UserService) { }
 

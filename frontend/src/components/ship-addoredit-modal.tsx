@@ -38,6 +38,7 @@ const formSchema = z.object({
     builtYear: z.coerce.number().optional(),
     grossTonnage: z.coerce.number().optional(),
     deadweight: z.coerce.number().optional(),
+    netTonnage: z.coerce.number().optional(),
     draft: z.coerce.number().optional(),
     length: z.coerce.number().optional(),
     beam: z.coerce.number().optional(),
@@ -77,6 +78,7 @@ interface Ship {
     builtYear?: number;
     grossTonnage?: number;
     deadweight?: number;
+    netTonnage?: number;
     draft?: number;
     notes?: string;
     length?: number;
@@ -99,7 +101,7 @@ enum ShipType {
 
     // Yük Gemileri (AIS codes 70-79)
     GeneralCargo = "Genel Yük(Kargo) Gemisi",  // 70 
-    ContainerShip = "Konteynerli Gemisi",     // 71 
+    ContainerShip = "Konteyner Gemisi",     // 71 
     BulkCarrier = "Dökme(Bulk) Yük Gemisi",         // 72 
     RefrigeratedCargo = "Soğutmalı Yük Gemisi",  // 73 
     VehicleCarrier = "Araç Gemisi",   // 74
@@ -161,6 +163,7 @@ export function ShipAddOrEditModal({ isOpen, onClose, ship, onSuccess }: ShipAdd
             builtYear: undefined,
             grossTonnage: undefined,
             deadweight: undefined,
+            netTonnage: undefined,
             draft: undefined,
             length: undefined,
             beam: undefined,
@@ -202,6 +205,7 @@ export function ShipAddOrEditModal({ isOpen, onClose, ship, onSuccess }: ShipAdd
                     builtYear: ship.builtYear || undefined,
                     grossTonnage: ship.grossTonnage || undefined,
                     deadweight: ship.deadweight || undefined,
+                    netTonnage: ship.netTonnage || undefined,
                     draft: ship.draft || undefined,
                     length: ship.length || undefined,
                     beam: ship.beam || undefined,
@@ -223,6 +227,7 @@ export function ShipAddOrEditModal({ isOpen, onClose, ship, onSuccess }: ShipAdd
                     builtYear: undefined,
                     grossTonnage: undefined,
                     deadweight: undefined,
+                    netTonnage: undefined,
                     draft: undefined,
                     length: undefined,
                     beam: undefined,
@@ -419,14 +424,14 @@ export function ShipAddOrEditModal({ isOpen, onClose, ship, onSuccess }: ShipAdd
                                 name="flag"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel className="mb-2.5">
+                                        <FormLabel className="mb-3">
                                             <FlagIcon className="h-4 w-4 text-muted-foreground" />
                                             Bayrak
                                         </FormLabel>
                                         <FormControl>
                                             <ReactFlagsSelect
                                                 className="my-custom-flags-select"
-                                                placeholder="-"
+                                                placeholder="Bayrak seçiniz"
                                                 onSelect={field.onChange}
                                                 selected={field.value || ""}
                                                 searchable={true}
@@ -645,6 +650,26 @@ export function ShipAddOrEditModal({ isOpen, onClose, ship, onSuccess }: ShipAdd
                                                         type="number"
                                                         min="0"
                                                         placeholder="Deadweight giriniz"
+                                                        {...field}
+                                                        onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : undefined)}
+                                                    />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+
+                                    <FormField
+                                        control={form.control}
+                                        name="netTonnage"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Net Tonaj (NT)</FormLabel>
+                                                <FormControl>
+                                                    <Input
+                                                        type="number"
+                                                        min="0"
+                                                        placeholder="Net tonaj giriniz"
                                                         {...field}
                                                         onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : undefined)}
                                                     />

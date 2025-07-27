@@ -41,7 +41,7 @@ export class User {
     @Column({ default: true })
     isActive: boolean;
 
-    @DeleteDateColumn({ type: 'timestamptz' })
-    deletedAt?: Date;
+    @DeleteDateColumn({ type: 'timestamptz', nullable: true })
+    deletedAt: Date | null;
 }
 

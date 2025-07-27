@@ -3,7 +3,37 @@ import { Button } from "@/components/ui/button";
 import { Ship as ShipIcon, Flag, Calendar, Circle, CalendarClock, StickyNote, Ruler, Anchor, MapPin, Clock, AlertTriangle, FlagIcon } from "lucide-react";
 import tr from 'react-phone-input-2/lang/tr.json';
 import ReactCountryFlag from "react-country-flag";
+import { Badge } from "@/components/ui/badge";
 
+enum Status {
+    Beklemede = "Beklemede", // 1, 7
+    Limanda = "Limanda", // 5
+    Yolda = "Yolda", // 0, 8, 11, 12	
+    Demirde = "Demirde", // 1
+    Gecikmeli = "Gecikmeli", // 2, 3, 4, 6
+    Acil = "Acil", // 14
+    Bilinimiyor = "Bilinimiyor" // 15, 9, 10, 13
+}
+
+const statusColors = {
+    [Status.Beklemede]: "bg-gray-100 text-yellow-800",
+    [Status.Limanda]: "bg-green-100 text-green-800",
+    [Status.Yolda]: "bg-green-100 text-green-800",
+    [Status.Demirde]: "bg-yellow-100 text-yellow-800",
+    [Status.Gecikmeli]: "bg-orange-100 text-orange-800",
+    [Status.Acil]: "bg-red-100 text-red-800",
+    [Status.Bilinimiyor]: "bg-gray-200 text-gray-800"
+};
+
+const statusIcons = {
+    [Status.Beklemede]: <Circle fill="yellow" color="yellow" className="h-3 w-3 animate-pulse" />,
+    [Status.Limanda]: <Circle fill="green" color="green" className="h-3 w-3" />,
+    [Status.Yolda]: <Circle fill="green" color="green" className="h-3 w-3 animate-pulse" />,
+    [Status.Demirde]: <Circle fill="orange" color="orange" className="h-3 w-3" />,
+    [Status.Gecikmeli]: <Circle fill="orange" color="orange" className="h-3 w-3 animate-pulse" />,
+    [Status.Acil]: <Circle fill="red" color="red" className="h-3 w-3 animate-pulse" />,
+    [Status.Bilinimiyor]: <Circle fill="black" color="black" className="h-3 w-3" />
+};
 
 interface ShipDetailsModalProps {
     isOpen: boolean;
@@ -102,10 +132,10 @@ export const ShipDetailsModal = ({ isOpen, onClose, ship }: ShipDetailsModalProp
                             <span className="px-2 py-0.5 bg-blue-50 text-blue-500 rounded-full text-xs">
                                 {ship.type || 'Tip belirtilmemiş'}
                             </span>
-                            <span className="flex items-center gap-1 px-2 py-0.5 bg-muted text-muted-foreground rounded-full text-xs">
-                                <Circle color="green" fill="green" className="h-2 w-2 text-muted-foreground animate-pulse" />
+                            <Badge className={`flex items-center gap-1 text-xs ${statusColors[ship.status as keyof typeof statusColors] || 'bg-gray-200 text-gray-800'}`}>
+                                {statusIcons[ship.status as keyof typeof statusIcons] || <Circle className="h-3 w-3" />}
                                 {ship.status || 'Durum belirtilmemiş'}
-                            </span>
+                            </Badge>
                         </div>
                     </div>
                 </div>

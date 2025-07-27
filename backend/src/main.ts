@@ -4,7 +4,6 @@ import { ValidationPipe } from '@nestjs/common';
 import helmet from 'helmet';
 import * as compression from 'compression';
 import * as cookieParser from 'cookie-parser';
-import { SwaggerConfig } from './config/swagger.config';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -16,9 +15,6 @@ async function bootstrap() {
   app.use(cookieParser());
   app.use(helmet());
   app.use(compression());
-
-  // Swagger config
-  SwaggerConfig(app);
 
   // Validation pipe
   app.useGlobalPipes(

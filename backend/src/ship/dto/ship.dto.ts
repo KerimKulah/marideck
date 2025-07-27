@@ -50,6 +50,9 @@ export class ShipDto {
     deadweight?: number; // Deadweight tonaj (DWT)
 
     @IsOptional()
+    netTonnage?: number; // Net tonaj (NT)
+
+    @IsOptional()
     draft?: number; // Draft (su çekimi)
 
     @IsOptional()
