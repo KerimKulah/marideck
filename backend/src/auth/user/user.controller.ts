@@ -1,4 +1,4 @@
-import { Controller, Post, Body, HttpCode, Delete, Param, ParseIntPipe, Get, Put } from '@nestjs/common';
+import { Controller, Post, Body, HttpCode, Delete, Param, ParseIntPipe, Get, Put, Query } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { User } from './entities/user.entity';
@@ -30,11 +30,25 @@ export class UserController {
     return this.userService.delete(id);
   }
 
-  // GET ALL USER DTO
+  // GET ALL USER DTO with pagination and search
   @Get()
   @HttpCode(200)
-  async findAll(): Promise<UserDto[]> {
-    return this.userService.findAll();
+  async findAll(
+    @Query('page') page?: number,
+    @Query('limit') limit?: number,
+    @Query('search') search?: string
+  ): Promise<{
+    users: UserDto[];
+    usersCount: number;
+    page?: number;
+    limit?: number;
+    totalPages?: number;
+  }> {
+    // Convert string query params to numbers if they exist
+    const pageNumber = page ? Number(page) : undefined;
+    const limitNumber = limit ? Number(limit) : undefined;
+
+    return this.userService.findAll(pageNumber, limitNumber, search);
   }
 
   //GET USER

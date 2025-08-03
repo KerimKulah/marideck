@@ -55,7 +55,7 @@ export function NavSecondary({
           <Image src="/kmaritime-logo.png" alt="Logo" width={15} height={15} quality={90} />
           <span className="text-xs font-bold">MARITIME DESK (BETA)</span>
         </div>
-        <span className="text-xs text-gray-600">Maritime Yönetim Sistemi</span>
+        <span className="text-xs text-gray-600">Denizcilik Yönetim Sistemi</span>
       </div>
     </SidebarGroup>
   )

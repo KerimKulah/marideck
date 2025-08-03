@@ -2,7 +2,7 @@ import { Injectable, BadRequestException, NotFoundException, ConflictException, 
 import { CreateUserDto } from './dto/create-user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './entities/user.entity';
-import { In, Repository } from 'typeorm';
+import { In, Repository, Brackets } from 'typeorm';
 import { Role } from 'src/auth/role/entities/role.entity';
 import * as bcrypt from 'bcrypt';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -69,14 +69,69 @@ export class UserService {
     }
   }
 
-  // GET ALL USERS
-  async findAll(): Promise<UserDto[]> {
+  // GET ALL USERS (with pagination and search)
+  async findAll(
+    page?: number,
+    limit?: number,
+    search?: string
+  ): Promise<{
+    users: UserDto[];
+    usersCount: number;
+    page?: number;
+    limit?: number;
+    totalPages?: number;
+  }> {
     try {
-      return await this.userRepository.find({ relations: ['roles'] })
-        .then(users => users.map(user => {
-          const { password, ...userDto } = user;
-          return userDto;
-        }));
+      const queryBuilder = this.userRepository
+        .createQueryBuilder('user')
+        .leftJoinAndSelect('user.roles', 'roles');
+
+      if (search) {
+        const searchTerm = `%${search}%`;
+        queryBuilder.where(
+          new Brackets((qb) => {
+            qb.where('user.firstName ILIKE :search', { search: searchTerm })
+              .orWhere('user.lastName ILIKE :search', { search: searchTerm })
+              .orWhere('user.email ILIKE :search', { search: searchTerm });
+          })
+        );
+      }
+
+      queryBuilder.orderBy('user.createdAt', 'DESC');
+
+      // Apply pagination if both page and limit are provided
+      if (page != null && limit != null) {
+        queryBuilder.skip((page - 1) * limit).take(limit);
+      }
+
+      const [users, usersCount] = await queryBuilder.getManyAndCount();
+
+      // Convert to DTOs and remove passwords
+      const userDtos = users.map(user => {
+        const { password, ...userDto } = user;
+        return userDto;
+      });
+
+      const result: {
+        users: UserDto[];
+        usersCount: number;
+        page?: number;
+        limit?: number;
+        totalPages?: number;
+      } = {
+        users: userDtos,
+        usersCount,
+      };
+
+      // Add pagination info if pagination is used
+      if (page != null && limit != null) {
+        result.page = page;
+        result.limit = limit;
+        result.totalPages = Math.ceil(usersCount / limit);
+      }
+
+      return result;
+
     } catch (error) {
       this.logger.error(`Failed to retrieve users: ${error.message}`, error.stack);
       throw new InternalServerErrorException('Failed to retrieve users');

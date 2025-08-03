@@ -49,7 +49,7 @@ const data = {
     },
     {
       title: "Çalışanlar",
-      url: "/personnel",
+      url: "/personnels",
       icon: IconUsers,
     },
 

@@ -231,7 +231,7 @@ export default function OperationsPage() {
 
             {/* Main Content */}
 
-            <Tabs value={selectedTab} onValueChange={handleTabChange} className="w-full">
+            <Tabs value={selectedTab} onValueChange={handleTabChange} className="overflow-x-auto">
                 <TabsList>
                     <TabsTrigger value="my-operations">Operasyonlarım</TabsTrigger>
                     <TabsTrigger value="all">Tüm Operasyonlar</TabsTrigger>
@@ -351,14 +351,17 @@ export default function OperationsPage() {
             {/* Modals */}
             <OperationAddOrEditModal
                 open={isAddModalOpen}
-                onOpenChange={setIsAddModalOpen}
+                onOpenChange={(open) => {
+                    setIsAddModalOpen(open);
+                    if (!open) {
+                        setSelectedOperation(null);
+                    }
+                }}
                 operation={selectedOperation}
-                // ships={ships}
-                // customers={customers}
-                users={users}
                 onSuccess={() => {
                     dispatch(getOperations({ page, limit, search: searchTerm }));
                     setSelectedOperation(null);
+                    setIsAddModalOpen(false);
                 }}
             />
 
