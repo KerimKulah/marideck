@@ -200,8 +200,8 @@ export default function OperationsPage() {
     }
 
     return (
-        <div className="grid space-y-4">
-            <OperationStatsCards />
+        <div className="grid space-y-4 overflow-x-auto">
+            {/* <OperationStatsCards /> */}
             {/* Arama ve Yeni Operasyon Ekle Butonu */}
             <div className="flex flex-col sm:flex-row gap-3 sm:items-center justify-between">
                 {/* Arama Inputu */}
@@ -240,7 +240,7 @@ export default function OperationsPage() {
             </Tabs>
 
             <div className="rounded-lg border overflow-x-auto">
-                <Table>
+                <Table className="w-full min-w-[700px] sm:min-w-full">
                     <TableHeader>
                         <TableRow>
                             <TableHead>Operasyon</TableHead>

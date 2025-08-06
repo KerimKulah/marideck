@@ -5,12 +5,13 @@ import ProtectedRoute from "@/components/providers/protected-route";
 import { AppSidebar } from "@/components/app-sidebar";
 import { SidebarInset } from "@/components/ui/sidebar";
 import { Header } from "@/components/header";
-import ChatbotButton from "@/components/chatbot/ChatbotButton";
+import { ChatbotButton } from "@/components/chatbot/ChatbotButton";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
     return (
         <>
             <InitUser>
+                <ChatbotButton />
                 <ProtectedRoute>
                     <SidebarProvider>
                         <AppSidebar />
