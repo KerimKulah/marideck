@@ -1,7 +1,7 @@
 
 "use client"
 
-import { Search, Plus, Building2, User, Mail, Phone, Globe, Calendar, MoreHorizontal, ChevronDown, PhoneCall, MessageCircle, Copy, Edit, Trash, Eye, AlertTriangle, Filter } from "lucide-react"
+import { Search, Plus, Building2, User, Mail, Phone, Globe, Calendar, MoreHorizontal, ChevronDown, PhoneCall, MessageCircle, Copy, Edit, Trash, Eye, AlertTriangle, Filter, Tags, Tag, Briefcase } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, } from "@/components/ui/table"
@@ -23,7 +23,6 @@ import tr from 'react-phone-input-2/lang/tr.json'
 import ReactCountryFlag from "react-country-flag"
 import CustomerStatsCards from "@/components/customer-stats-cards"
 import { toast } from "sonner"
-import { CardHeader } from "@/components/ui/card"
 
 
 const formatDate = (dateString: string) => {
@@ -307,7 +306,7 @@ export default function CustomersPage() {
                   {/* Müşteri Türü */}
                   <TableCell className="min-w-[200px]">
                     <div className="flex items-center gap-2">
-                      <User className="h-4 w-4 text-muted-foreground" />
+                      <Briefcase className="h-4 w-4 text-muted-foreground" />
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <span>

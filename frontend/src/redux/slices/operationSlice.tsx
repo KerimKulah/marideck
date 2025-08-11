@@ -67,7 +67,7 @@ export const deleteOperation = createAsyncThunk("operation/deleteOperation", asy
 
 // OPERATION LOG THUNKS
 
-export const createOperationLog = createAsyncThunk("operation/createOperationLog", async (logData: { operationId: number; description: string }, { rejectWithValue }) => {
+export const createOperationLog = createAsyncThunk("operation/createOperationLog", async (logData: { operationId: number; description: string; createdById?: number }, { rejectWithValue }) => {
     try {
         const response = await api.post("/operation-log", logData);
         return response.data;

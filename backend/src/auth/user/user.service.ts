@@ -23,7 +23,7 @@ export class UserService {
   // CREATE USER
   @Transactional()
   async create(createUserDto: CreateUserDto): Promise<{ message: string }> {
-    let { firstName, lastName, email, password, confirmPassword } = createUserDto;
+    let { firstName, lastName, email, password, confirmPassword, phone } = createUserDto;
     email = email.toLowerCase();
 
     this.logger.debug(`User creation requested for: ${this.maskEmail(email)}`);
@@ -50,6 +50,7 @@ export class UserService {
         firstName,
         lastName,
         email,
+        phone,
         password: await bcrypt.hash(password, 10),
         roles: [role],
       });

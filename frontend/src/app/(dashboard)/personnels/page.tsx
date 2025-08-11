@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { AppDispatch } from "@/redux/store"
 import { useDispatch } from "react-redux"
 import { useSelector } from "react-redux"
@@ -18,12 +17,28 @@ import { Pagination, PaginationContent, PaginationItem, PaginationLink, Paginati
 import { MiniLoading } from "@/components/ui/mini-loading"
 import { toast } from "sonner"
 import { format } from "date-fns"
+import { PersonnelAddOrEditModal } from "@/components/personnel-addoredit-modal"
+import { PersonnelViewModal } from "@/components/personnel-view-modal"
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+
+
+const normalizePhone = (phone: string) => {
+    // eğer 0 yoksa başlangıçta 0 eklemeli ve x xxx xxx xx xx formatına göre döndürmeli
+    if (!phone.startsWith('0')) {
+        phone = '0' + phone;
+    }
+    return phone.replace(/\D/g, '').replace(/^(\d{1})(\d{3})(\d{3})(\d{2})(\d{2})$/, '$1 $2 $3 $4 $5');
+}
 
 export default function PersonnelsPage() {
     const dispatch = useDispatch<AppDispatch>();
     const { users, loading, error, page, limit, totalPages, searchQuery, totalUsers } = useSelector((state: RootState) => state.user);
     const [searchInput, setSearchInput] = useState(searchQuery);
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+    const [isAddEditModalOpen, setIsAddEditModalOpen] = useState(false);
+    const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+    const [selectedUser, setSelectedUser] = useState<any>(null);
+    const [modalMode, setModalMode] = useState<'add' | 'edit'>('add');
     const [userToDelete, setUserToDelete] = useState<string | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
 
@@ -48,9 +63,30 @@ export default function PersonnelsPage() {
     };
 
     // Handle delete user
+    const handleViewUser = (user: any) => {
+        setSelectedUser(user);
+        setIsViewModalOpen(true);
+    };
+
+    const handleEditUser = (user: any) => {
+        setSelectedUser(user);
+        setModalMode('edit');
+        setIsAddEditModalOpen(true);
+    };
+
+    const handleAddUser = () => {
+        setSelectedUser(null);
+        setModalMode('add');
+        setIsAddEditModalOpen(true);
+    };
+
     const handleDeleteUser = (userId: string) => {
         setUserToDelete(userId);
         setIsDeleteDialogOpen(true);
+    };
+
+    const handleUserSuccess = () => {
+        dispatch(getUsers({ page, limit, search: searchQuery }));
     };
 
     const confirmDelete = async () => {
@@ -103,22 +139,15 @@ export default function PersonnelsPage() {
     }
 
     return (
-        <div className="p-6 space-y-6">
-            <div className="flex justify-between items-center">
-                <h1 className="text-2xl font-bold">Personel Yönetimi</h1>
-                <Button onClick={() => { }}>
-                    <UserPlus className="mr-2 h-4 w-4" />
-                    Yeni Personel Ekle
-                </Button>
-            </div>
-
-            <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2">
-                    <div className="relative">
-                        <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+        <div className="grid space-y-4 overflow-x-auto p-6">
+            <div className="flex flex-col sm:flex-row gap-3 sm:items-center justify-between">
+                <div className="flex flex-col sm:flex-row gap-3 w-full">
+                    {/* Search Input */}
+                    <div className="relative w-full">
+                        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                         <Input
                             placeholder="Personel ara..."
-                            className="pl-8 w-[300px]"
+                            className="pl-9 w-full"
                             value={searchInput}
                             onChange={(e) => {
                                 setSearchInput(e.target.value);
@@ -127,8 +156,13 @@ export default function PersonnelsPage() {
                         />
                     </div>
                 </div>
+                <Button onClick={handleAddUser} className="whitespace-nowrap">
+                    <UserPlus className="mr-2 h-4 w-4" />
+                    Yeni Personel Ekle
+                </Button>
             </div>
 
+            {/* Users Table */}
             <div className="rounded-md border">
                 <Table>
                     <TableHeader>
@@ -139,7 +173,7 @@ export default function PersonnelsPage() {
                             <TableHead>Rol</TableHead>
                             <TableHead>Durum</TableHead>
                             <TableHead>Oluşturulma Tarihi</TableHead>
-                            <TableHead className="text-right">İşlemler</TableHead>
+                            <TableHead className="w-[50px]"></TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -154,7 +188,7 @@ export default function PersonnelsPage() {
                         ) : users.length === 0 ? (
                             <TableRow>
                                 <TableCell colSpan={7} className="h-24 text-center">
-                                    Kayıtlı personel bulunamadı.
+                                    Kayıt bulunamadı.
                                 </TableCell>
                             </TableRow>
                         ) : (
@@ -163,26 +197,31 @@ export default function PersonnelsPage() {
                                     <TableCell className="font-medium">
                                         <div className="flex items-center gap-2">
                                             <User className="h-4 w-4 text-muted-foreground" />
-                                            {`${user.firstName} ${user.lastName}`}
+                                            {user.firstName} {user.lastName}
                                         </div>
                                     </TableCell>
-                                    <TableCell>{user.email || '-'}</TableCell>
-                                    <TableCell>{user.phone || '-'}</TableCell>
+                                    <TableCell>{user.email}</TableCell>
+                                    <TableCell>{normalizePhone(user.phone) || '-'}</TableCell>
                                     <TableCell>
-                                        <span className="px-2 py-1 bg-secondary text-secondary-foreground rounded-md text-xs">
-                                            {user.roles[0].name === 'admin' ? 'Yönetici' : 'Personel'}
+                                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                            user.roles?.[0]?.name === 'admin' 
+                                                ? 'bg-purple-100 text-purple-800' 
+                                                : 'bg-blue-100 text-blue-800'
+                                        }`}>
+                                            {user.roles?.[0]?.name === 'admin' ? 'Yönetici' : 'Kullanıcı'}
                                         </span>
                                     </TableCell>
                                     <TableCell>
-                                        <span className={`px-2 py-1 rounded-md text-xs ${user.isActive
-                                                ? 'bg-green-100 text-green-800'
+                                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                            user.isActive 
+                                                ? 'bg-green-100 text-green-800' 
                                                 : 'bg-red-100 text-red-800'
-                                            }`}>
+                                        }`}>
                                             {user.isActive ? 'Aktif' : 'Pasif'}
                                         </span>
                                     </TableCell>
                                     <TableCell>{formatDate(user.createdAt)}</TableCell>
-                                    <TableCell className="text-right">
+                                    <TableCell>
                                         <DropdownMenu>
                                             <DropdownMenuTrigger asChild>
                                                 <Button variant="ghost" className="h-8 w-8 p-0">
@@ -191,17 +230,17 @@ export default function PersonnelsPage() {
                                                 </Button>
                                             </DropdownMenuTrigger>
                                             <DropdownMenuContent align="end">
-                                                <DropdownMenuItem onClick={() => { }}>
+                                                <DropdownMenuItem onClick={() => handleViewUser(user)}>
                                                     <Eye className="mr-2 h-4 w-4" />
                                                     Görüntüle
                                                 </DropdownMenuItem>
-                                                <DropdownMenuItem onClick={() => { }}>
+                                                <DropdownMenuItem onClick={() => handleEditUser(user)}>
                                                     <Edit className="mr-2 h-4 w-4" />
                                                     Düzenle
                                                 </DropdownMenuItem>
-                                                <DropdownMenuItem
+                                                <DropdownMenuItem 
                                                     className="text-red-600"
-                                                    onClick={() => handleDeleteUser(user.id)}
+                                                    onClick={() => handleDeleteUser(user.id.toString())}
                                                 >
                                                     <Trash className="mr-2 h-4 w-4" />
                                                     Sil
@@ -216,74 +255,102 @@ export default function PersonnelsPage() {
                 </Table>
             </div>
 
+            {/* Pagination */}
             {totalPages > 1 && (
-                <div className="flex items-center justify-end space-x-2 py-4">
-                    <Pagination>
+                <div className="flex items-center justify-between px-2">
+                    <div className="text-sm text-muted-foreground">
+                        Toplam {totalUsers} kayıttan {users.length} tanesi gösteriliyor
+                    </div>
+                    <Pagination className="ml-auto">
                         <PaginationContent>
                             <PaginationItem>
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => handlePageChange(page - 1)}
-                                    disabled={page === 1 || loading}
-                                >
-                                    Önceki
-                                </Button>
+                                <PaginationPrevious 
+                                    href="#" 
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        if (page > 1) handlePageChange(page - 1);
+                                    }}
+                                    className={page === 1 ? 'pointer-events-none opacity-50' : ''}
+                                />
                             </PaginationItem>
-
+                            
                             {getPageNumbers().map((pageNum) => (
                                 <PaginationItem key={pageNum}>
                                     <PaginationLink
                                         href="#"
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            if (pageNum !== page) handlePageChange(pageNum);
+                                        }}
                                         isActive={pageNum === page}
-                                        onClick={() => handlePageChange(pageNum)}
                                     >
                                         {pageNum}
                                     </PaginationLink>
                                 </PaginationItem>
                             ))}
-
+                            
                             <PaginationItem>
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => handlePageChange(page + 1)}
-                                    disabled={page === totalPages || loading}
-                                >
-                                    Sonraki
-                                </Button>
+                                <PaginationNext 
+                                    href="#"
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        if (page < totalPages) handlePageChange(page + 1);
+                                    }}
+                                    className={page === totalPages ? 'pointer-events-none opacity-50' : ''}
+                                />
                             </PaginationItem>
                         </PaginationContent>
                     </Pagination>
                 </div>
             )}
 
+            {/* Add/Edit Modal */}
+            <PersonnelAddOrEditModal
+                isOpen={isAddEditModalOpen}
+                onClose={() => setIsAddEditModalOpen(false)}
+                personnel={selectedUser}
+                onSuccess={handleUserSuccess}
+            />
+
+            {/* View Modal */}
+            <PersonnelViewModal
+                isOpen={isViewModalOpen}
+                onClose={() => setIsViewModalOpen(false)}
+                personnel={selectedUser}
+            />
+
+            {/* Delete Confirmation Dialog */}
             <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>Personeli Sil</DialogTitle>
                         <DialogDescription>
-                            Bu işlem geri alınamaz. Bu personeli silmek istediğinize emin misiniz?
+                            Bu işlem geri alınamaz. Personeli silmek istediğinize emin misiniz?
                         </DialogDescription>
                     </DialogHeader>
                     <DialogFooter>
-                        <Button
-                            variant="outline"
+                        <Button 
+                            variant="outline" 
                             onClick={() => setIsDeleteDialogOpen(false)}
                             disabled={isDeleting}
                         >
                             İptal
                         </Button>
-                        <Button
-                            variant="destructive"
+                        <Button 
+                            variant="destructive" 
                             onClick={confirmDelete}
                             disabled={isDeleting}
                         >
-                            {isDeleting ? 'Siliniyor...' : 'Sil'}
+                            {isDeleting ? (
+                                <div className="flex items-center gap-2">
+                                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                    Siliniyor...
+                                </div>
+                            ) : 'Sil'}
                         </Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
         </div>
-    );
+    )
 }

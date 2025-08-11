@@ -1,6 +1,6 @@
 "use client"
 
-import { Search, Plus, Ship, Users, Clock, AlertCircle, CheckCircle, XCircle, MoreHorizontal, MessageSquare, Package, Info, X, Calendar, Pencil, Filter, User, Mail, Phone } from "lucide-react"
+import { Search, Plus, Ship, Users, Clock, AlertCircle, CheckCircle, XCircle, MoreHorizontal, MessageSquare, Package, Info, X, Calendar, Pencil, Filter, User, Mail, Phone, MessageCircle, Anchor } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -32,6 +32,7 @@ import { OperationAddOrEditModal } from "@/components/operation-addoredit-modal"
 import { OperationDetailsModal } from "@/components/operation-details-modal"
 import { MiniLoading } from "@/components/ui/mini-loading"
 import OperationStatsCards from "@/components/operation-stats-card"
+import { OperationRoom } from "@/components/operation-room"
 
 export interface Operation {
     id: number
@@ -80,6 +81,7 @@ export default function OperationsPage() {
     const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false)
     const [searchTerm, setSearchTerm] = useState("")
     const [selectedTab, setSelectedTab] = useState<'my-operations' | 'all' | 'completed'>('my-operations')
+    const [isOperationRoomOpen, setIsOperationRoomOpen] = useState(false)
 
     // Selectors
     const { operations, loading, totalOperations, page, limit, totalPages } = useSelector(
@@ -268,10 +270,7 @@ export default function OperationsPage() {
                             </TableRow>
                         ) : (
                             filteredOperations.map((operation: Operation) => (
-                                <TableRow key={operation.id} className="cursor-pointer hover:bg-muted/50" onClick={() => {
-                                    setSelectedOperation(operation);
-                                    setIsDetailsModalOpen(true);
-                                }}>
+                                <TableRow key={operation.id} className="hover:bg-muted/50">
                                     <TableCell>
                                         <div className="flex flex-col items-start">
 
@@ -336,6 +335,16 @@ export default function OperationsPage() {
                                                     <Info className="mr-2 h-4 w-4" />
                                                     Detayları Görüntüle
                                                 </DropdownMenuItem>
+                                                <DropdownMenuItem onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setSelectedOperation(operation);
+                                                    setIsOperationRoomOpen(true);
+
+                                                }}>
+                                                    <Anchor className="mr-2 h-4 w-4" />
+                                                    Operasyon Odası
+                                                </DropdownMenuItem>
+
                                             </DropdownMenuContent>
                                         </DropdownMenu>
                                     </TableCell>
@@ -387,6 +396,9 @@ export default function OperationsPage() {
                     }}
                 />
             )}
+
+
+            <OperationRoom open={isOperationRoomOpen} onOpenChange={setIsOperationRoomOpen} operation={selectedOperation} />
         </div>
     )
 }

@@ -349,10 +349,10 @@ export default function ShipsPage() {
                                     <TableCell>
                                         <div className="flex flex-col gap-2">
                                             <div className="flex gap-2">
-                                                <Calendar className="h-4 w-4" /> {ship.eta ? formatDate(ship.eta) : '-'}
+                                                <Calendar className="h-4 w-4" /> ETA: {ship.eta ? formatDate(ship.eta) : '-'}
                                             </div>
                                             <div className="flex gap-2">
-                                                <Calendar className="h-4 w-4" /> {ship.etd ? formatDate(ship.etd) : '-'}
+                                                <Calendar className="h-4 w-4" /> ETD: {ship.etd ? formatDate(ship.etd) : '-'}
                                             </div>
                                         </div>
                                     </TableCell>
