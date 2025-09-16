@@ -47,7 +47,7 @@ const formatPhone = (phoneNumber?: string | null) => {
 };
 
 const CountryCell = ({ countryCode }: { countryCode?: string }) => {
-  if (!countryCode) return <div className="flex items-center gap-2"><Globe className="h-4 w-4 text-muted-foreground" />-</div>;
+  if (!countryCode) return <div className="flex items-center gap-2"><Globe className="h-4 w-4 text-muted-foreground" />Bilinmiyor</div>;
   const flag = <ReactCountryFlag countryCode={countryCode.toUpperCase()} svg style={{ width: '16px', height: '16px' }} />;
   const countryName = tr[countryCode.toLowerCase() as keyof typeof tr] || countryCode;
 
@@ -241,11 +241,6 @@ export default function CustomersPage() {
           />
         </div>
 
-        <Button variant="outline" className=" py-4 w-full sm:w-auto">
-          <Filter className="mr-2 h-4 w-4" />
-          <span>Filtrele</span>
-        </Button>
-
         {/* Yeni Müşteri Ekle Butonu */}
         <Button onClick={handleAddCustomer} className="w-full sm:w-auto">
           <Plus className="mr-2 h-4 w-4" />
@@ -254,204 +249,207 @@ export default function CustomersPage() {
       </div>
 
       {/* Müşteri Tablosu */}
-      <div className="rounded-lg border overflow-x-auto">
-        <Table className="w-full min-w-[700px] sm:min-w-full">
-          {/* Tablo Header */}
-          <TableHeader>
-            <TableRow>
-              <TableHead>Adı Soyadı</TableHead>
-              <TableHead>Müşteri Türü</TableHead>
-              <TableHead>Firma Adı</TableHead>
-              <TableHead>E-posta</TableHead>
-              <TableHead>Telefon</TableHead>
-              <TableHead>Ülke</TableHead>
-              <TableHead>Eklenme Tarihi</TableHead>
-              <TableHead>İşlemler</TableHead>
-            </TableRow>
-          </TableHeader>
+      <div className="rounded-lg border overflow-y-auto">
+        <div className="max-h-[600px] overflow-y-auto ">
+          <Table className="w-full min-w-[700px] sm:min-w-full ">
+            {/* Tablo Header */}
+            <TableHeader>
+              <TableRow>
+                <TableHead>Adı Soyadı</TableHead>
+                <TableHead>Müşteri Türü</TableHead>
+                <TableHead>Firma Adı</TableHead>
+                <TableHead>E-posta</TableHead>
+                <TableHead>Telefon</TableHead>
+                <TableHead>Ülke</TableHead>
+                <TableHead>Eklenme Tarihi</TableHead>
+                <TableHead>İşlemler</TableHead>
+              </TableRow>
+            </TableHeader>
 
-          {/* Tablo Body */}
-          <TableBody>
-            {loading ? (
-              <TableRow>
-                <TableCell colSpan={8} className="h-24">
-                  <MiniLoading />
-                </TableCell>
-              </TableRow>
-            ) : customers?.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
-                  {searchQuery ? 'Arama kriterlerine uygun müşteri bulunamadı.' : 'Henüz müşteri kaydı bulunmuyor.'}
-                </TableCell>
-              </TableRow>
-            ) : (
-              customers?.map((customer) => (
-                <TableRow key={customer.id} className="hover:bg-muted/50">
-                  {/* Yetkili Kişi */}
-                  <TableCell className="min-w-[200px]">
-                    <div className="flex items-center gap-2">
-                      <User className="h-4 w-4 text-muted-foreground" />
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <span>
-                            {customer.name?.length > 15 ? `${customer.name.slice(0, 15)}...` : customer.name}
-                          </span>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>{customer.name}</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </div>
+            {/* Tablo Body */}
+            <TableBody >
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={8} className="h-24">
+                    <MiniLoading />
                   </TableCell>
-                  {/* Müşteri Türü */}
-                  <TableCell className="min-w-[200px]">
-                    <div className="flex items-center gap-2">
-                      <Briefcase className="h-4 w-4 text-muted-foreground" />
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <span>
-                            {customer.customer_type?.length > 15 ? `${customer.customer_type.slice(0, 15)}...` : customer.customer_type}
-                          </span>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>{customer.customer_type}</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </div>
+                </TableRow>
+              ) : customers?.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                    {searchQuery ? 'Arama kriterlerine uygun müşteri bulunamadı.' : 'Henüz müşteri kaydı bulunmuyor.'}
                   </TableCell>
-                  {/* Firma Adı */}
-                  <TableCell className="min-w-[200px]">
-                    <div className="flex items-center gap-2">
-                      <Building2 className="h-4 w-4 text-muted-foreground" />
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <span>
-                            {customer.company ? (
-                              customer.company?.length > 30 ? `${customer.company.slice(0, 25)}...` : customer.company
-                            ) : '-'}
-                          </span>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>{customer.company}</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </div>
-                  </TableCell>
-                  {/* E-posta*/}
-                  <TableCell className="min-w-[200px]">
-                    <div className="flex items-center gap-2">
-                      <Mail className="h-4 w-4 text-muted-foreground" />
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <button className="hover:underline transition-colors cursor-pointer">
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <span className="max-w-[120px]">{customer.email?.length > 25 ? `${customer.email.slice(0, 25)}...` : customer.email}</span>
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p>İletişim seçenekleri için tıklayın</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          </button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="start">
-                          <DropdownMenuItem onClick={() => handleMail(customer.email)} className="gap-2">
-                            <Mail color="blue" className="h-4 w-4" />
-                            Mail Gönder
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={async () => {
+                </TableRow>
+              ) : (
+                customers?.map((customer) => (
+                  <TableRow key={customer.id} className="hover:bg-muted/50">
+                    {/* Yetkili Kişi */}
+                    <TableCell className="min-w-[200px]">
+                      <div className="flex items-center gap-2">
+                        <User className="h-4 w-4 text-muted-foreground" />
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span>
+                              {customer.name?.length > 15 ? `${customer.name.slice(0, 15)}...` : customer.name}
+                            </span>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>{customer.name}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </div>
+                    </TableCell>
+                    {/* Müşteri Türü */}
+                    <TableCell className="min-w-[200px]">
+                      <div className="flex items-center gap-2">
+                        <Briefcase className="h-4 w-4 text-muted-foreground" />
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span>
+                              {customer.customerType ? (customer.customerType?.length > 15 ? `${customer.customerType.slice(0, 15)}...` : customer.customerType) : 'Bilinmiyor'}
+                            </span>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>{customer.customerType ? customer.customerType : 'Bilinmiyor'}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </div>
+                    </TableCell>
+                    {/* Firma Adı */}
+                    <TableCell className="min-w-[200px]">
+                      <div className="flex items-center gap-2">
+                        <Building2 className="h-4 w-4 text-muted-foreground" />
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span>
+                              {customer.company ? (
+                                customer.company?.length > 30 ? `${customer.company.slice(0, 25)}...` : customer.company
+                              ) : 'Bilinmiyor'}
+                            </span>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>{customer.company ? customer.company : 'Bilinmiyor'}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </div>
+                    </TableCell>
+                    {/* E-posta*/}
+                    <TableCell className="min-w-[200px]">
+                      <div className="flex items-center gap-2">
+                        <Mail className="h-4 w-4 text-muted-foreground" />
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <button className="hover:underline transition-colors cursor-pointer">
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <span className="max-w-[120px]">{customer.email?.length > 25 ? `${customer.email.slice(0, 25)}...` : customer.email}</span>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>İletişim seçenekleri için tıklayın</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="start">
+                            <DropdownMenuItem onClick={() => handleMail(customer.email)} className="gap-2">
+                              <Mail color="blue" className="h-4 w-4" />
+                              Mail Gönder
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={async () => {
+                                try {
+                                  await navigator.clipboard.writeText(customer.email);
+                                  toast.success('Mail kopyalandı!');
+                                } catch (error) {
+                                  toast.error('Kopyalama başarısız!');
+                                }
+                              }}
+                              className="gap-2"
+                            >
+                              <Copy color="black" className="h-4 w-4" />
+                              Maili Kopyala
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+                    </TableCell>
+                    {/* Telefon */}
+                    <TableCell className="min-w-[170px]">
+                      <div className="flex items-center gap-2">
+                        <Phone className="h-4 w-4 text-muted-foreground" />
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <button className="hover:underline transition-colors cursor-pointer">
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <span>{formatPhone(customer.phone)}</span>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>İletişim seçenekleri için tıklayın</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="start">
+                            <DropdownMenuItem onClick={() => handlePhoneCall(customer.phone)} className="gap-2">
+                              <PhoneCall color="blue" className="h-4 w-4" />
+                              Telefon Et
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleWhatsappMessage(customer.phone)} className="gap-2">
+                              <img
+                                src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg"
+                                alt="WhatsApp"
+                                className="h-[22px] w-[22px] translate-x-[-3px]"
+                              />
+                              <span className="translate-x-[-7px] cursor-pointer">WhatsApp Mesajı Gönder</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={async () => {
                               try {
-                                await navigator.clipboard.writeText(customer.email);
-                                toast.success('Mail kopyalandı!');
+                                await navigator.clipboard.writeText(customer.phone);
+                                toast.success('Numara kopyalandı!');
                               } catch (error) {
                                 toast.error('Kopyalama başarısız!');
                               }
-                            }}
-                            className="gap-2"
-                          >
-                            <Copy color="black" className="h-4 w-4" />
-                            Maili Kopyala
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-                  </TableCell>
-                  {/* Telefon */}
-                  <TableCell className="min-w-[170px]">
-                    <div className="flex items-center gap-2">
-                      <Phone className="h-4 w-4 text-muted-foreground" />
+                            }} className="gap-2">
+                              <Copy color="black" className="h-4 w-4" />
+                              Numarayı Kopyala
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+                    </TableCell>
+                    {/* Ülke */}
+                    <TableCell >
+                      <CountryCell countryCode={customer.country} />
+                    </TableCell>
+                    {/* Eklenme Tarihi */}
+                    <TableCell>
+                      {formatDate(customer.createdAt)}
+                    </TableCell>
+                    {/* İşlemler */}
+                    <TableCell>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <button className="hover:underline transition-colors cursor-pointer">
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <span>{formatPhone(customer.phone)}</span>
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p>İletişim seçenekleri için tıklayın</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          </button>
+                          <Button variant="ghost" className="h-8 w-8 p-0">
+                            <span className="sr-only">Menüyü aç</span>
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="start">
-                          <DropdownMenuItem onClick={() => handlePhoneCall(customer.phone)} className="gap-2">
-                            <PhoneCall color="blue" className="h-4 w-4" />
-                            Telefon Et
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleWhatsappMessage(customer.phone)} className="gap-2">
-                            <img
-                              src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg"
-                              alt="WhatsApp"
-                              className="h-[22px] w-[22px] translate-x-[-3px]"
-                            />
-                            <span className="translate-x-[-7px] cursor-pointer">WhatsApp Mesajı Gönder</span>
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={async () => {
-                            try {
-                              await navigator.clipboard.writeText(customer.phone);
-                              toast.success('Numara kopyalandı!');
-                            } catch (error) {
-                              toast.error('Kopyalama başarısız!');
-                            }
-                          }} className="gap-2">
-                            <Copy color="black" className="h-4 w-4" />
-                            Numarayı Kopyala
-                          </DropdownMenuItem>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => handleShowDetails(customer)}><Eye /> Detayları Görüntüle</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleEditCustomer(customer)}><Edit /> Düzenle</DropdownMenuItem>
+                          <DropdownMenuItem className="text-destructive" onClick={() => handleDeleteCustomer(customer.id)}><Trash className="text-destructive" /> Sil</DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
-                    </div>
-                  </TableCell>
-                  {/* Ülke */}
-                  <TableCell >
-                    <CountryCell countryCode={customer.country} />
-                  </TableCell>
-                  {/* Eklenme Tarihi */}
-                  <TableCell>
-                    {formatDate(customer.createdAt)}
-                  </TableCell>
-                  {/* İşlemler */}
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="h-8 w-8 p-0">
-                          <span className="sr-only">Menüyü aç</span>
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => handleShowDetails(customer)}><Eye /> Detayları Görüntüle</DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleEditCustomer(customer)}><Edit /> Düzenle</DropdownMenuItem>
-                        <DropdownMenuItem className="text-destructive" onClick={() => handleDeleteCustomer(customer.id)}><Trash className="text-destructive" /> Sil</DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
       </div>
+
       {/* Limit Seçici ve Toplam Kayıt Bilgisi */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
@@ -464,7 +462,7 @@ export default function CustomersPage() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
-              {[5, 10].map((limitOption) => (
+              {[5, 10, 20, 50].map((limitOption) => (
                 <DropdownMenuItem
                   key={limitOption}
                   onClick={() => handleLimitChange(limitOption)}

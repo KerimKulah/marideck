@@ -40,7 +40,7 @@ export class Customer {
     lastTransactionDate?: Date;
 
     @Column({ nullable: true })
-    customer_type?: string;
+    customerType?: string;
 
     @CreateDateColumn({ type: 'timestamptz' })
     createdAt: Date;

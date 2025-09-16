@@ -65,5 +65,5 @@ export class CustomerDto {
     @IsOptional()
     @Transform(({ value }) => normalizeCustomerType(value))
     @IsEnum(CustomerType, { message: 'Geçersiz müşteri tipi' })
-    customer_type?: CustomerType;
+    customerType?: CustomerType;
 }

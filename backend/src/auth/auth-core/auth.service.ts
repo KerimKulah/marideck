@@ -35,15 +35,21 @@ export class AuthService {
       // Mail kontrolü
       const user = await this.userRepository.findOne({ where: { email: loginDto.email }, relations: ['roles'] });
       if (!user) {
-        this.logger.warn(`Login failed - User not found for email: ${loginDto.email}`);
-        throw new UnauthorizedException('Invalid credentials');
+        this.logger.warn(`Giriş başarısız - Kullanıcı Adı veya Şifre Hatalı`);
+        throw new UnauthorizedException('Hatalı Kullanıcı Adı veya Şifre');
       }
 
       // Şifre kontrolü
       const passwordMatches = await bcrypt.compare(loginDto.password, user.password);
       if (!passwordMatches) {
-        this.logger.warn(`Login failed - Invalid password for user: ${user.id}`);
-        throw new UnauthorizedException('Invalid credentials');
+        this.logger.warn(`Giriş başarısız - Kullanıcı Adı veya Şifre Hatalı`);
+        throw new UnauthorizedException('Hatalı Kullanıcı Adı veya Şifre');
+      }
+
+      // Aktif kontrolü
+      if (user.isActive === false) {
+        this.logger.warn(`Giriş başarısız - Kullanıcı Aktif Değil`);
+        throw new UnauthorizedException('Kullanıcı Aktif Değil');
       }
 
       // Access Token olusturma
@@ -55,8 +61,8 @@ export class AuthService {
       // Oluşturulan access token expiration süresini al
       const decoded = this.jwtService.decode(accessToken) as { exp?: number } | null;
       if (!decoded || typeof decoded.exp !== 'number') {
-        this.logger.error(`Invalid token expiration for user: ${user.id}`);
-        throw new Error('Invalid token expiration');
+        this.logger.error(`Giriş başarısız - Geçersiz Token Süresi`);
+        throw new Error('Geçersiz Token Süresi');
       }
 
       // LoginResponseDto oluştur ve return et

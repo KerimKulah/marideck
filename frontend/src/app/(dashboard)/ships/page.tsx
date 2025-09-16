@@ -26,7 +26,7 @@ import { ShipDetailsModal } from "@/components/ship-details-modal"
 import { AisLookup } from "@/ais/ais-lookup"
 
 const CountryCell = ({ countryCode }: { countryCode?: string }) => {
-    if (!countryCode) return <div className="flex items-center gap-2"><Globe className="h-4 w-4 text-muted-foreground" />-</div>;
+    if (!countryCode) return <div className="flex items-center gap-2"><Globe className="h-4 w-4 text-muted-foreground" />Bilinmiyor</div>;
     const flag = <ReactCountryFlag countryCode={countryCode.toUpperCase()} svg style={{ width: '16px', height: '16px' }} />;
     const countryName = tr[countryCode.toLowerCase() as keyof typeof tr] || countryCode;
 
@@ -239,10 +239,7 @@ export default function ShipsPage() {
                         }}
                     />
                 </div>
-                <Button variant="outline" className="py-4 w-full sm:w-auto">
-                    <Filter className="mr-2 h-4 w-4" />
-                    <span>Filtrele</span>
-                </Button>
+
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                         <Button className="w-full sm:w-auto">
@@ -258,10 +255,7 @@ export default function ShipsPage() {
                             e.preventDefault();
                             setIsAisLookupOpen(true);
                         }}>
-                            MMSI ile Ekle (Beta)
-                        </DropdownMenuItem>
-                        <DropdownMenuItem disabled>
-                            IMO ile Ekle (Yakında)
+                            Otomatik Ekle (Test)
                         </DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
@@ -596,10 +590,10 @@ export default function ShipsPage() {
                     <DialogHeader>
                         <div className="flex items-center gap-2">
                             <Ship className="h-5 w-5 text-primary" />
-                            <DialogTitle>MMSI ile Gemi Arama</DialogTitle>
+                            <DialogTitle>IMO/MMSI ile Gemi Arama</DialogTitle>
                         </div>
                         <DialogDescription>
-                            MMSI numarası ile gemiyi arayın ve otomatik olarak ekleyin.
+                            IMO/MMSI numarası ile gemiyi arayın ve otomatik olarak ekleyin.
                         </DialogDescription>
                     </DialogHeader>
                     <AisLookup

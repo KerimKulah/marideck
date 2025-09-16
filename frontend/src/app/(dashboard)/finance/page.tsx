@@ -230,10 +230,7 @@ export default function FinancePage() {
             />
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" className="gap-2">
-              <Filter className="h-4 w-4" />
-              <span>Filtrele</span>
-            </Button>
+    >
             <Button variant="outline" size="icon">
               <RefreshCw className="h-4 w-4" />
             </Button>

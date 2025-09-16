@@ -25,12 +25,12 @@ export function LoginForm({ className, ...props }: React.ComponentProps<"div">) 
     if (isInitialized && isAuthenticated) {
       console.log("Kullanıcı authenticated, dashboard'a yönlendiriliyor");
       router.replace("/");
-    }
+    } 
   }, [isInitialized, isAuthenticated, router]);
 
   // Eğer kullanıcı authenticated ise hiç renderlanma
   if (isAuthenticated) {
-    return (
+    return ( 
       <Loading />
     );
   }

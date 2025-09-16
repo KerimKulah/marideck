@@ -4,7 +4,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Brackets, Repository, WhereExpressionBuilder } from 'typeorm';
 import { CustomerDto } from './dto/customer-dto';
 
-@Injectable()
+@Injectable()  
 export class CustomerService {
 
     constructor(
@@ -24,7 +24,7 @@ export class CustomerService {
                         .orWhere('customer.phone ILIKE :search', { search: `%${search}%` })
                         .orWhere('customer.company ILIKE :search', { search: `%${search}%` })
                         .orWhere('customer.email ILIKE :search', { search: `%${search}%` })
-                        .orWhere('customer.customer_type ILIKE :search', { search: `%${search}%` });
+                        .orWhere('customer.customerType ILIKE :search', { search: `%${search}%` });
                 }),
             );
         }
@@ -58,6 +58,7 @@ export class CustomerService {
         return customer;
     }
 
+    // CREATE
     async create(customerDto: CustomerDto): Promise<{ message: string, data: Customer }> {
         const existingCustomer = await this.customerRepo.findOne({
             where: { email: customerDto.email },
@@ -108,3 +109,4 @@ export class CustomerService {
         return { message: 'Customer restored successfully' };
     }
 }
+

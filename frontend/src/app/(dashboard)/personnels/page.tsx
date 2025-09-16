@@ -1,6 +1,6 @@
 "use client"
 
-import { Search, Plus, User, Mail, Phone, MoreHorizontal, Edit, Trash, Eye, UserPlus } from "lucide-react"
+import { Search, Plus, User, Mail, Phone, MoreHorizontal, Edit, Trash, Eye, UserPlus, ChevronDown, Smartphone } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -20,15 +20,8 @@ import { format } from "date-fns"
 import { PersonnelAddOrEditModal } from "@/components/personnel-addoredit-modal"
 import { PersonnelViewModal } from "@/components/personnel-view-modal"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-
-
-const normalizePhone = (phone: string) => {
-    // eğer 0 yoksa başlangıçta 0 eklemeli ve x xxx xxx xx xx formatına göre döndürmeli
-    if (!phone.startsWith('0')) {
-        phone = '0' + phone;
-    }
-    return phone.replace(/\D/g, '').replace(/^(\d{1})(\d{3})(\d{3})(\d{2})(\d{2})$/, '$1 $2 $3 $4 $5');
-}
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { Info } from "lucide-react"
 
 export default function PersonnelsPage() {
     const dispatch = useDispatch<AppDispatch>();
@@ -60,6 +53,11 @@ export default function PersonnelsPage() {
         if (newPage >= 1 && newPage <= totalPages) {
             dispatch(setPage(newPage));
         }
+    };
+
+    const handleLimitChange = (newLimit: number) => {
+        dispatch(setLimit(newLimit));
+        dispatch(setPage(1));
     };
 
     // Handle delete user
@@ -139,7 +137,22 @@ export default function PersonnelsPage() {
     }
 
     return (
-        <div className="grid space-y-4 overflow-x-auto p-6">
+        <div className="space-y-2">
+            <Alert className="bg-blue-50 border-blue-200">
+                <Info className="h-4 w-4 text-blue-600" />
+                <AlertDescription className="text-blue-700"> 
+                    Bu sayfa Maritime Desk yönetim sistemine erişimi olan personellerin yönetimini sağlar.
+                    Sistemde tanımlı personellerin listesini gösterir ve yeni personel ekleme, düzenleme,
+                    görüntüleme ve silme işlemlerini gerçekleştirmenize olanak tanır.
+                    <br /><br />
+                    <div className="flex items-center gap-2">
+                        <span className="font-medium">ÖNEMLİ:</span> Bu modül sadece Maritime Desk sistemine giriş yapacak
+                        kullanıcıların teknik bilgilerini içerir. Personellerin detaylı özgeçmiş veya kişisel
+                        bilgileri burada tutulamaz.
+                    </div>
+                </AlertDescription>
+            </Alert>
+
             <div className="flex flex-col sm:flex-row gap-3 sm:items-center justify-between">
                 <div className="flex flex-col sm:flex-row gap-3 w-full">
                     {/* Search Input */}
@@ -200,23 +213,31 @@ export default function PersonnelsPage() {
                                             {user.firstName} {user.lastName}
                                         </div>
                                     </TableCell>
-                                    <TableCell>{user.email}</TableCell>
-                                    <TableCell>{normalizePhone(user.phone) || '-'}</TableCell>
                                     <TableCell>
-                                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                            user.roles?.[0]?.name === 'admin' 
-                                                ? 'bg-purple-100 text-purple-800' 
-                                                : 'bg-blue-100 text-blue-800'
-                                        }`}>
-                                            {user.roles?.[0]?.name === 'admin' ? 'Yönetici' : 'Kullanıcı'}
+                                        <div className="flex items-center gap-2">
+                                            <Mail className="text-muted-foreground h-4 w-4" />
+                                            {user.email}
+                                        </div>
+                                    </TableCell>
+                                    <TableCell>
+                                        <div className="flex items-center gap-2">
+                                            <Smartphone className="text-muted-foreground h-4 w-4" />
+                                            {user.phone}
+                                        </div>
+                                    </TableCell>
+                                    <TableCell>
+                                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${user.roles?.[0]?.name === 'admin'
+                                            ? 'bg-purple-100 text-purple-800'
+                                            : 'bg-blue-100 text-blue-800'
+                                            }`}>
+                                            {user.roles?.[0]?.name === 'admin' ? 'Yönetici' : 'Personel'}
                                         </span>
                                     </TableCell>
                                     <TableCell>
-                                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                            user.isActive 
-                                                ? 'bg-green-100 text-green-800' 
-                                                : 'bg-red-100 text-red-800'
-                                        }`}>
+                                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${user.isActive
+                                            ? 'bg-green-100 text-green-800'
+                                            : 'bg-red-100 text-red-800'
+                                            }`}>
                                             {user.isActive ? 'Aktif' : 'Pasif'}
                                         </span>
                                     </TableCell>
@@ -238,7 +259,7 @@ export default function PersonnelsPage() {
                                                     <Edit className="mr-2 h-4 w-4" />
                                                     Düzenle
                                                 </DropdownMenuItem>
-                                                <DropdownMenuItem 
+                                                <DropdownMenuItem
                                                     className="text-red-600"
                                                     onClick={() => handleDeleteUser(user.id.toString())}
                                                 >
@@ -255,55 +276,146 @@ export default function PersonnelsPage() {
                 </Table>
             </div>
 
+            {/* Limit Seçici ve Toplam Kayıt Bilgisi */}
+            <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                    <span className="text-sm text-muted-foreground">Sayfa başına:</span>
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="outline" size="sm" className="w-15">
+                                {limit}
+                                <ChevronDown className="ml-1 h-4 w-4" />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent>
+                            {[5, 10, 20, 30, 50].map((limitOption) => (
+                                <DropdownMenuItem
+                                    key={limitOption}
+                                    onClick={() => handleLimitChange(limitOption)}
+                                    className={limit === limitOption ? "bg-accent" : ""}>
+                                    {limitOption}
+                                </DropdownMenuItem>
+                            ))}
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                </div>
+                <div className="text-sm text-muted-foreground">
+                    Toplam {totalUsers} kayıt
+                </div>
+            </div>
+
             {/* Pagination */}
             {totalPages > 1 && (
-                <div className="flex items-center justify-between px-2">
-                    <div className="text-sm text-muted-foreground">
-                        Toplam {totalUsers} kayıttan {users.length} tanesi gösteriliyor
-                    </div>
-                    <Pagination className="ml-auto">
-                        <PaginationContent>
+                <Pagination>
+                    <PaginationContent>
+                        {/* Previous */}
+                        <PaginationItem>
+                            <PaginationPrevious
+                                href="#"
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    if (page > 1) handlePageChange(page - 1);
+                                }}
+                                aria-disabled={page === 1}
+                                className={page === 1 ? "pointer-events-none opacity-50" : ""}
+                            />
+                        </PaginationItem>
+
+                        {/* First Page */}
+                        <PaginationItem>
+                            <PaginationLink
+                                href="#"
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    handlePageChange(1);
+                                }}
+                                aria-current={1 === page ? "page" : undefined}
+                                className={1 === page ? "font-bold underline" : ""}
+                            >
+                                1
+                            </PaginationLink>
+                        </PaginationItem>
+
+                        {/* Left Ellipsis */}
+                        {page > 3 && (
                             <PaginationItem>
-                                <PaginationPrevious 
-                                    href="#" 
-                                    onClick={(e) => {
-                                        e.preventDefault();
-                                        if (page > 1) handlePageChange(page - 1);
-                                    }}
-                                    className={page === 1 ? 'pointer-events-none opacity-50' : ''}
-                                />
+                                <span className="px-2">...</span>
                             </PaginationItem>
-                            
-                            {getPageNumbers().map((pageNum) => (
-                                <PaginationItem key={pageNum}>
-                                    <PaginationLink
-                                        href="#"
-                                        onClick={(e) => {
-                                            e.preventDefault();
-                                            if (pageNum !== page) handlePageChange(pageNum);
-                                        }}
-                                        isActive={pageNum === page}
-                                    >
-                                        {pageNum}
-                                    </PaginationLink>
-                                </PaginationItem>
-                            ))}
-                            
+                        )}
+
+                        {/* Middle Pages */}
+                        {Array.from(
+                            { length: Math.min(3, totalPages - 2) },
+                            (_, i) => {
+                                let pageNumber;
+                                if (page <= 3) {
+                                    pageNumber = i + 2;
+                                } else if (page >= totalPages - 2) {
+                                    pageNumber = totalPages - 3 + i;
+                                } else {
+                                    pageNumber = page - 1 + i;
+                                }
+
+                                if (pageNumber > 1 && pageNumber < totalPages) {
+                                    return (
+                                        <PaginationItem key={pageNumber}>
+                                            <PaginationLink
+                                                href="#"
+                                                onClick={(e) => {
+                                                    e.preventDefault();
+                                                    handlePageChange(pageNumber);
+                                                }}
+                                                aria-current={pageNumber === page ? "page" : undefined}
+                                                className={pageNumber === page ? "font-bold underline" : ""}
+                                            >
+                                                {pageNumber}
+                                            </PaginationLink>
+                                        </PaginationItem>
+                                    );
+                                }
+                                return null;
+                            }
+                        )}
+
+                        {/* Right Ellipsis */}
+                        {page < totalPages - 2 && totalPages > 5 && (
                             <PaginationItem>
-                                <PaginationNext 
+                                <span className="px-2">...</span>
+                            </PaginationItem>
+                        )}
+
+                        {/* Last Page */}
+                        {totalPages > 1 && (
+                            <PaginationItem>
+                                <PaginationLink
                                     href="#"
                                     onClick={(e) => {
                                         e.preventDefault();
-                                        if (page < totalPages) handlePageChange(page + 1);
+                                        handlePageChange(totalPages);
                                     }}
-                                    className={page === totalPages ? 'pointer-events-none opacity-50' : ''}
-                                />
+                                    aria-current={totalPages === page ? "page" : undefined}
+                                    className={totalPages === page ? "font-bold underline" : ""}
+                                >
+                                    {totalPages}
+                                </PaginationLink>
                             </PaginationItem>
-                        </PaginationContent>
-                    </Pagination>
-                </div>
-            )}
+                        )}
 
+                        {/* Next */}
+                        <PaginationItem>
+                            <PaginationNext
+                                href="#"
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    if (page < totalPages) handlePageChange(page + 1);
+                                }}
+                                aria-disabled={page === totalPages}
+                                className={page === totalPages ? "pointer-events-none opacity-50" : ""}
+                            />
+                        </PaginationItem>
+                    </PaginationContent>
+                </Pagination>
+            )}
             {/* Add/Edit Modal */}
             <PersonnelAddOrEditModal
                 isOpen={isAddEditModalOpen}
@@ -329,15 +441,15 @@ export default function PersonnelsPage() {
                         </DialogDescription>
                     </DialogHeader>
                     <DialogFooter>
-                        <Button 
-                            variant="outline" 
+                        <Button
+                            variant="outline"
                             onClick={() => setIsDeleteDialogOpen(false)}
                             disabled={isDeleting}
                         >
                             İptal
                         </Button>
-                        <Button 
-                            variant="destructive" 
+                        <Button
+                            variant="destructive"
                             onClick={confirmDelete}
                             disabled={isDeleting}
                         >

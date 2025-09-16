@@ -187,10 +187,6 @@ export default function DocumentsPage() {
                         className="pl-9 w-full"
                     />
                 </div>
-                <Button variant="outline" className="gap-2">
-                    <Filter className="h-4 w-4" />
-                    <span>Filtrele</span>
-                </Button>
             </div>
 
             {/* Tabs */}

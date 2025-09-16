@@ -51,14 +51,14 @@ export class ShipController {
     return await this.shipService.restore(id);
   }
 
-  ////////////////////////////// AIS //////////////////////////// 
-  @Get('external/:mmsi')
-  async getExternalShip(@Param('mmsi') mmsi: string) {
+  ////////////////////////////// AIS ////////////////////////////  
+  @Get('ais/mmsi/:mmsi')
+  async getAisShip(@Param('mmsi') mmsi: string) {
     const url = `${process.env.AIS_API_URL}/${mmsi}`;
     const response = await fetch(url);
 
     if (!response.ok) {
-      throw new HttpException('VesselFinder API error', response.status);
+      throw new HttpException('Gemi bulunamadı', response.status);
     }
 
     const data = await response.json();
@@ -82,6 +82,18 @@ export class ShipController {
     };
 
     return shipDto;
+  }
+
+  @Get('ais/imo/:imo')
+  async getShipByImo(@Param('imo') imo: string) {
+    const mmsi = await getMmsiFromMarineTraffic(imo);
+
+    if (!mmsi) {
+      throw new HttpException('Gemi bulunamadı', 404);
+    }
+
+    // MMSI controller’ı kullanarak aynı veriyi üretelim (code reuse için)
+    return this.getAisShip(mmsi);
   }
 }
 
@@ -158,3 +170,15 @@ function typeFormat(type: string): string {
   return "Bilinmiyor";
 }
 
+
+async function getMmsiFromMarineTraffic(imo: string): Promise<string | null> {
+  const url = `https://www.marinetraffic.com/en/ais/details/ships/imo:${imo}/`;
+
+  const response = await fetch(url, { redirect: "manual" });
+  const location = response.headers.get("location");
+
+  if (!location) return null;
+
+  const match = location.match(/mmsi:(\d+)/);
+  return match ? match[1] : null;
+}

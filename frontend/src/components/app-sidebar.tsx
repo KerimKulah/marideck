@@ -1,10 +1,10 @@
 "use client"
 
 import * as React from "react"
-import { IconAnchor, IconChartBar, IconCommand, IconDashboard, IconFileWord, IconHelp, IconSettings, IconShip, IconUsers, IconClipboardList } from "@tabler/icons-react"
+import { IconAnchor, IconChartBar, IconDashboard, IconFileWord, IconHelp, IconSettings, IconShip, IconUsers, IconClipboardList, IconCalendar, IconTarget } from "@tabler/icons-react"
 import { NavMain } from "@/components/nav-main"
 import { NavSecondary } from "@/components/nav-secondary"
-import { Sidebar, SidebarContent, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarSeparator } from "@/components/ui/sidebar"
+import { Sidebar, SidebarContent, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar"
 import Image from 'next/image';
 import { useSelector } from "react-redux"
 import { RootState } from "@/redux/store"
@@ -23,14 +23,14 @@ const data = {
       icon: IconUsers,
     },
     {
-      title: "Takip Edilen Gemiler",
+      title: "Gemiler",
       url: "/ships",
       icon: IconShip,
     },
     {
       title: "Operasyonlar",
       url: "/operations",
-      icon: IconAnchor,
+      icon: IconTarget,
     },
     {
       title: "Belgeler",
@@ -48,11 +48,20 @@ const data = {
       icon: IconClipboardList,
     },
     {
-      title: "Çalışanlar",
+      title: "Ekip",
       url: "/personnels",
       icon: IconUsers,
     },
-
+    {
+      title: "Takvim",
+      url: "/calendar",
+      icon: IconCalendar,
+    },
+    {
+      title: "Limanlar",
+      url: "/ports",
+      icon: IconAnchor,
+    },
 
   ],
   navSecondary: [

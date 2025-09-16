@@ -9,7 +9,7 @@ export class ExceptionFilterImp implements ExceptionFilter {
         const request = ctx.getRequest<Request>();
 
         let status = HttpStatus.INTERNAL_SERVER_ERROR;
-        let message: any = 'Internal server error';
+        let message: any = 'Beklenmedik bir sunucu sorunu oluştu';
 
         if (exception instanceof HttpException) {
             status = exception.getStatus();

@@ -150,26 +150,6 @@ export default function OperationsPage() {
         }
     }
 
-    // Handle page change
-    const handlePageChange = (newPage: number) => {
-        dispatch(getOperations({
-            page: newPage,
-            limit,
-            search: searchTerm
-        }))
-    }
-
-    // Handle operation update
-    const handleOperationUpdate = (updatedOperation: Operation) => {
-        setSelectedOperation(updatedOperation)
-        // Refresh the operations list
-        dispatch(getOperations({
-            page,
-            limit,
-            search: searchTerm
-        }))
-    }
-
     // Get status badge
     const getStatusBadge = (status: string) => {
         switch (status) {
@@ -218,11 +198,6 @@ export default function OperationsPage() {
                     />
                 </div>
 
-                <Button variant="outline" className=" py-4 w-full sm:w-auto">
-                    <Filter className="mr-2 h-4 w-4" />
-                    <span>Filtrele</span>
-                </Button>
-
                 {/* Yeni Operasyon Ekle Butonu */}
                 <Button onClick={() => setIsAddModalOpen(true)} className="w-full sm:w-auto">
                     <Plus className="mr-2 h-4 w-4" />
@@ -258,13 +233,13 @@ export default function OperationsPage() {
                     <TableBody>
                         {loading ? (
                             <TableRow>
-                                <TableCell colSpan={7} className="text-center py-8">
+                                <TableCell colSpan={8} className="text-center py-8">
                                     <MiniLoading />
                                 </TableCell>
                             </TableRow>
                         ) : filteredOperations.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                                <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                                     {searchTerm ? 'Aramanızla eşleşen operasyon bulunamadı' : 'Henüz operasyon bulunmuyor'}
                                 </TableCell>
                             </TableRow>
@@ -398,7 +373,22 @@ export default function OperationsPage() {
             )}
 
 
-            <OperationRoom open={isOperationRoomOpen} onOpenChange={setIsOperationRoomOpen} operation={selectedOperation} />
+            <OperationRoom
+                open={isOperationRoomOpen}
+                onOpenChange={setIsOperationRoomOpen}
+                operation={selectedOperation}
+                onOperationUpdate={(updatedOperation) => {
+                    // Update the selected operation in the state
+                    setSelectedOperation(updatedOperation);
+
+                    // Also update the operations list
+                    dispatch(getOperations({
+                        page,
+                        limit,
+                        search: searchTerm
+                    }));
+                }}
+            />
         </div>
     )
 }
