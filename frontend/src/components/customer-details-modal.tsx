@@ -1,11 +1,63 @@
-
+"use client"
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Building2, User, Mail, Phone, MapPin, Calendar, Globe, CalendarClock, StickyNote, Ship, IdCard, Anchor } from "lucide-react";
+import { Building2, User, Mail, Phone, MapPin, Calendar, Globe, CalendarClock, StickyNote, Ship, IdCard, Anchor, Activity, ArrowRight } from "lucide-react";
 import 'react-phone-input-2/lib/style.css';
 import tr from 'react-phone-input-2/lang/tr.json';
 import ReactCountryFlag from "react-country-flag";
+import { isActiveOperation } from "@/lib/operation-status";
+import { useEffect } from "react";
+
+// Custom LordIcon component
+declare global {
+    interface Window {
+        loadAnimation?: any;
+    }
+}
+
+interface LordIconProps {
+    src: string;
+    trigger?: string;
+    delay?: string;
+    colors?: string;
+    style?: React.CSSProperties;
+    className?: string;
+}
+
+const LordIcon: React.FC<LordIconProps> = ({
+    src,
+    trigger = 'loop',
+    delay = '2000',
+    colors = 'primary:#121331,secondary:#0473a3',
+    style = {},
+    className = ''
+}) => {
+    useEffect(() => {
+        if (typeof window !== 'undefined' && window.loadAnimation) {
+            window.loadAnimation();
+        }
+    }, [src]);
+
+    // Create the HTML string for the lord-icon
+    const iconHtml = {
+        __html: `
+            <lord-icon
+                src="${src}"
+                trigger="${trigger}"
+                delay="${delay}"
+                colors="${colors}"
+                style="width: 100%; height: 100%; ${Object.entries(style)
+                .map(([key, value]) => `${key}: ${value};`)
+                .join(' ')}"
+                class="${className}">
+            </lord-icon>
+        `
+    };
+
+    return <div dangerouslySetInnerHTML={iconHtml} />;
+};
+
 
 type CustomerDetailsModalProps = {
     isOpen: boolean;
@@ -71,8 +123,14 @@ export const CustomerDetailsModal = ({ isOpen, onClose, customer }: CustomerDeta
 
                 {/* Profil Bölümü */}
                 <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 py-4">
-                    <div className="w-12 h-12 sm:w-16 sm:h-16 bg-black rounded-full flex items-center justify-center flex-shrink-0">
-                        <User className="h-6 w-6 sm:h-8 sm:w-8 text-white" />
+                    <div className="w-12 h-12 sm:w-18 sm:h-18 border rounded-full flex items-center justify-center flex-shrink-0">
+                        <LordIcon
+                            src="https://cdn.lordicon.com/kdduutaw.json"
+                            trigger="hover"
+                            delay="2000"
+                            colors="primary:#121331,secondary:#0672a2"
+                            style={{ width: '50px', height: '50px' }}
+                        />
                     </div>
                     <div className="flex-1 text-center sm:text-left min-w-0">
                         <h3 className="text-base sm:text-lg font-semibold text-foreground break-words">
@@ -122,6 +180,45 @@ export const CustomerDetailsModal = ({ isOpen, onClose, customer }: CustomerDeta
                                 </div>
                             </div>
                             <InfoRow icon={CalendarClock} label="Son İşlem Tarihi" value={formatDate(customer.lastTransactionDate)} />
+                            <div className="flex items-start gap-3 py-2">
+                                <Activity className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground mt-0.5 flex-shrink-0" />
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-xs sm:text-sm text-muted-foreground mb-2">Operasyon Durumu</p>
+                                    <div className="flex items-center gap-2">
+                                        {(() => {
+                                            const hasActiveOperations = customer.operations?.some((operation: any) =>
+                                                isActiveOperation(operation.status)
+                                            ) || false;
+
+                                            return (
+                                                <>
+                                                    <div className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium ${hasActiveOperations
+                                                        ? 'bg-green-100 text-green-800 border border-green-200'
+                                                        : 'bg-yellow-100 text-yellow-800 border border-yellow-200'
+                                                        }`}>
+                                                        <span className="w-2 h-2 rounded-full bg-current"></span>
+                                                        {hasActiveOperations ? 'Aktif Operasyon' : 'Operasyon Yok'}
+                                                    </div>
+                                                    {hasActiveOperations && (
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            className="h-6 w-6 p-0 hover:bg-blue-50 hover:text-blue-700 transition-colors"
+                                                            title="Operasyona git"
+                                                            onClick={() => {
+                                                                // TODO: Navigate to operations page with customer filter
+                                                                console.log('Navigate to operations for customer:', customer.id);
+                                                            }}
+                                                        >
+                                                            <ArrowRight className="h-3 w-3" />
+                                                        </Button>
+                                                    )}
+                                                </>
+                                            );
+                                        })()}
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -153,7 +250,7 @@ export const CustomerDetailsModal = ({ isOpen, onClose, customer }: CustomerDeta
                             <InfoRow icon={IdCard} label="Vergi Numarası" value={customer.taxNumber} />
                             <InfoRowLarge icon={MapPin} label="Adres" value={customer.address} />
                             <InfoRowLarge icon={StickyNote} label="Notlar" value={customer.notes} />
-                            <InfoRowLarge icon={Anchor} label="Geçmiş İşlemler" value="-" />
+                            <InfoRowLarge icon={Anchor} label="Geçmiş İşlemler" value="Geçmiş İşlem Bulunamadı" />
                         </div>
                     </div>
                 </div>

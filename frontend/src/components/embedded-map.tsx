@@ -42,7 +42,7 @@ export const EmbeddedMap = () => {
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <style>
         body { margin: 0; padding: 0; font-family: Arial, sans-serif; }
-        #map-container { width: 100%; height: 300px; }
+        #map-container { width: 100%; height: 500px; }
       </style>
     </head>
     <body>
@@ -50,7 +50,7 @@ export const EmbeddedMap = () => {
         <script type="text/javascript">
           // Map appearance
           var width="100%";          // width in pixels or percentage
-          var height="300";         // height in pixels
+          var height="500";         // height in pixels
           var latitude="40.1553";   // center latitude (Çanakkale)
           var longitude="26.4142";  // center longitude (Çanakkale)
           var zoom="8";             // initial zoom level
@@ -65,7 +65,7 @@ export const EmbeddedMap = () => {
 
     return (
         <div className="col-span-3 bg-white rounded-lg border shadow p-4 pt-6">
-            <div className="relative bg-gray-50 overflow-hidden" style={{ height: '300px' }}>
+            <div className="relative bg-gray-50 overflow-hidden" style={{ height: '450px' }}>
                 {loading && (
                     <div className="absolute inset-0 flex items-center justify-center bg-white bg-opacity-90 z-10">
                         <div className="text-center">
@@ -94,9 +94,12 @@ export const EmbeddedMap = () => {
                     allowFullScreen
                     scrolling="no"
                 />
-                <div className="absolute -top-1 left-0 flex items-center gap-2 z-22">
-                    <MapIcon className="h-5 w-5" />
-                    <h1 className="font-semibold">Gemi Trafiği Haritası</h1>
+                <div className="absolute -top-1 left-0 right-0 flex flex-col z-22">
+                    <div className="flex items-center gap-2 mb-2">
+                        <MapIcon className="h-5 w-5" />
+                        <h1 className="font-semibold">Gemi Trafiği Haritası</h1>
+                    </div>
+                    <div className="h-[1px] w-full bg-border"></div>
                 </div>
                 <div className="absolute top-0 left-0 right-0 h-8 bg-white z-20"></div>
             </div>

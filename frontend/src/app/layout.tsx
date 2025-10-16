@@ -24,7 +24,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     <html lang="tr">
       <body>
         <StoreProvider>
-          <Toaster />
+          <Toaster position="top-center" />
           {children}
         </StoreProvider>
       </body>

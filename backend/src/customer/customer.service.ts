@@ -3,19 +3,23 @@ import { Customer } from './entities/customer.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Brackets, Repository, WhereExpressionBuilder } from 'typeorm';
 import { CustomerDto } from './dto/customer-dto';
+import { OperationStatus } from '../operation/enums/operation-status.enum';
 
-@Injectable()  
+@Injectable()
 export class CustomerService {
 
     constructor(
         @InjectRepository(Customer) private readonly customerRepo: Repository<Customer>) { }
 
     // GET ALL 
-    async findAll(page?: number, limit?: number, search?: string): Promise<{
+    async findAll(page?: number, limit?: number, search?: string, sortBy?: string, sortOrder?: 'ASC' | 'DESC'): Promise<{
         customers: Customer[], customersCount: number, page?: number, limit?: number, totalPages?: number
     }> {
 
-        const queryBuilder = this.customerRepo.createQueryBuilder('customer');
+        const queryBuilder = this.customerRepo.createQueryBuilder('customer')
+            .leftJoinAndSelect('customer.operations', 'operations', 'operations.status IN (:...activeStatuses)', {
+                activeStatuses: [OperationStatus.PLANNED, OperationStatus.IN_PROGRESS]
+            });
 
         if (search) {
             queryBuilder.andWhere(
@@ -29,7 +33,17 @@ export class CustomerService {
             );
         }
 
-        queryBuilder.orderBy('customer.createdAt', 'DESC');
+        // Sorting
+        if (sortBy && sortOrder) {
+            const allowedSortFields = ['name', 'company', 'email', 'country', 'createdAt'];
+            if (allowedSortFields.includes(sortBy)) {
+                queryBuilder.orderBy(`customer.${sortBy}`, sortOrder);
+            } else {
+                queryBuilder.orderBy('customer.createdAt', 'DESC');
+            }
+        } else {
+            queryBuilder.orderBy('customer.createdAt', 'DESC');
+        }
 
         if (page != null && limit != null) {
             queryBuilder.skip((page - 1) * limit).take(limit);
@@ -107,6 +121,50 @@ export class CustomerService {
         if (!customer) throw new NotFoundException('Customer not found');
         await this.customerRepo.restore(customer.id);
         return { message: 'Customer restored successfully' };
+    }
+
+    // GET CUSTOMER STATISTICS
+    async getCustomerStatistics(): Promise<{
+        totalCustomers: number;
+        uniqueCountries: number;
+        customersWithActiveOperations: number;
+        customersAddedThisWeek: number;
+    }> {
+        // Toplam müşteri sayısı
+        const totalCustomers = await this.customerRepo.count();
+
+        // Farklı ülke sayısı (sadece gerçek ülke adları, NULL ve "Bilinmiyor" hariç)
+        const uniqueCountries = await this.customerRepo
+            .createQueryBuilder('customer')
+            .select('COUNT(DISTINCT customer.country)', 'count')
+            .where('customer.country IS NOT NULL AND customer.country != \'Bilinmiyor\'')
+            .getRawOne();
+
+        // Aktif operasyonu olan müşteri sayısı
+        const customersWithActiveOperations = await this.customerRepo
+            .createQueryBuilder('customer')
+            .leftJoin('customer.operations', 'operations', 'operations.status IN (:...activeStatuses)', {
+                activeStatuses: [OperationStatus.PLANNED, OperationStatus.IN_PROGRESS]
+            })
+            .where('operations.id IS NOT NULL')
+            .getCount();
+
+        // Bu hafta eklenen müşteri sayısı
+        const startOfWeek = new Date();
+        startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay()); // Pazartesi
+        startOfWeek.setHours(0, 0, 0, 0);
+
+        const customersAddedThisWeek = await this.customerRepo
+            .createQueryBuilder('customer')
+            .where('customer.createdAt >= :startOfWeek', { startOfWeek })
+            .getCount();
+
+        return {
+            totalCustomers,
+            uniqueCountries: parseInt(uniqueCountries.count) || 0,
+            customersWithActiveOperations,
+            customersAddedThisWeek
+        };
     }
 }
 

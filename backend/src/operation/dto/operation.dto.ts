@@ -1,5 +1,6 @@
 
-import { IsNotEmpty, IsString, IsNumber, IsDate, IsOptional } from "class-validator";
+import { IsNotEmpty, IsString, IsNumber, IsDate, IsOptional, IsEnum } from "class-validator";
+import { OperationStatus } from "../enums/operation-status.enum";
 
 export class OperationDto {
 
@@ -40,8 +41,8 @@ export class OperationDto {
     endDate: Date;
 
     @IsNotEmpty({ message: 'Durum zorunlu' })
-    @IsString()
-    status: string;
+    @IsEnum(OperationStatus, { message: 'Geçersiz durum değeri' })
+    status: OperationStatus;
 
     @IsOptional()
     @IsString()

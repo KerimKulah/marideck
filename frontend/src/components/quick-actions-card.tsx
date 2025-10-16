@@ -17,7 +17,7 @@ export function QuickActionsCard() {
 
     const quickActions: QuickAction[] = [
         {
-            title: "Gemi Ekle", 
+            title: "Gemi Ekle",
             icon: <Ship className="h-4 w-4" />,
             onClick: () => router.push("/ships/add"),
             variant: "default"
@@ -37,16 +37,20 @@ export function QuickActionsCard() {
     ]
 
     return (
-        <Card className="h-full max-h-[293px]">
-            <CardHeader className="pb-2">
-                <CardTitle className="text-lg">Hızlı İşlemler</CardTitle>
+        <Card className="h-full">
+            <CardHeader>
+                <div className="flex items-center space-x-2">
+                    <Zap className="h-5 w-5 text-primary" />
+                    <CardTitle className="text-lg">Hızlı İşlemler</CardTitle>
+                </div>
+                <div className="h-[1px] w-full bg-border mt-3" />
             </CardHeader>
-            <CardContent className="space-y-2 p-4 pt-0">
+            <CardContent className="space-y-2">
                 {quickActions.map((action, index) => (
                     <Button
                         key={index}
                         variant={action.variant}
-                        className="w-full justify-start gap-2"
+                        className="w-full justify-start items-center gap-2"
                         onClick={action.onClick}
                     >
                         {action.icon}

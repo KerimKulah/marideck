@@ -3,6 +3,7 @@ import { Customer } from "src/customer/entities/customer.entity";
 import { OperationLog } from "src/operation-log/entities/operation-log.entity";
 import { Ship } from "src/ship/entities/ship.entity";
 import { Entity, PrimaryGeneratedColumn, Column, DeleteDateColumn, CreateDateColumn, UpdateDateColumn, ManyToOne, ManyToMany, OneToMany, JoinTable } from "typeorm";
+import { OperationStatus } from "../enums/operation-status.enum";
 
 @Entity()
 export class Operation {
@@ -41,8 +42,12 @@ export class Operation {
     @Column({ type: 'timestamptz' })
     endDate: Date;
 
-    @Column()
-    status: string;
+    @Column({
+        type: 'enum',
+        enum: OperationStatus,
+        default: OperationStatus.PLANNED
+    })
+    status: OperationStatus;
 
     @Column({ nullable: true })
     cargoType?: string;

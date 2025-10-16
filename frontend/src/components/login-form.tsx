@@ -25,12 +25,12 @@ export function LoginForm({ className, ...props }: React.ComponentProps<"div">) 
     if (isInitialized && isAuthenticated) {
       console.log("Kullanıcı authenticated, dashboard'a yönlendiriliyor");
       router.replace("/");
-    } 
+    }
   }, [isInitialized, isAuthenticated, router]);
 
   // Eğer kullanıcı authenticated ise hiç renderlanma
   if (isAuthenticated) {
-    return ( 
+    return (
       <Loading />
     );
   }
@@ -81,7 +81,7 @@ export function LoginForm({ className, ...props }: React.ComponentProps<"div">) 
                 <Input
                   id="email"
                   type="email"
-                  placeholder="personel@kmaritime.com"
+                  placeholder="personel@maritimedesk.com"
                   required
                   value={email}
                   onChange={(e) => handleInputChange(e, setEmail)}
@@ -91,13 +91,6 @@ export function LoginForm({ className, ...props }: React.ComponentProps<"div">) 
               <div className="grid gap-3">
                 <div className="flex items-center">
                   <Label htmlFor="password">Şifre</Label>
-                  <a
-                    href="#"
-                    className="ml-auto inline-block text-sm underline-offset-4 hover:underline"
-                    onClick={(e) => e.preventDefault()}
-                  >
-                    Şifrenizi mi unuttunuz?
-                  </a>
                 </div>
                 <Input
                   id="password"

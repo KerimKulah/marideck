@@ -62,11 +62,16 @@ const data = {
       url: "/ports",
       icon: IconAnchor,
     },
-
+    {
+      title: "İnsan Kaynakları",
+      url: "/human-resources",
+      icon: IconUsers,
+    },
+    
   ],
   navSecondary: [
     {
-      title: "Ayarları",
+      title: "Ayarlar",
       url: "",
       icon: IconSettings,
     },
@@ -84,7 +89,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   const navSecondaryItems = React.useMemo(() =>
     data.navSecondary.map(item =>
-      item.title === "Ayarları"
+      item.title === "Ayarlar"
         ? {
           ...item,
           onClick: () => setIsSettingsOpen(true),

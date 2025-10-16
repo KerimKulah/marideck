@@ -1,12 +1,12 @@
 
 "use client"
 
-import { Search, Plus, Building2, User, Mail, Phone, Globe, Calendar, MoreHorizontal, ChevronDown, PhoneCall, MessageCircle, Copy, Edit, Trash, Eye, AlertTriangle, Filter, Tags, Tag, Briefcase } from "lucide-react"
+import { Search, Plus, Building2, User, Mail, Phone, Globe, Calendar, MoreHorizontal, ChevronDown, PhoneCall, MessageCircle, Copy, Edit, Trash, Eye, AlertTriangle, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, } from "@/components/ui/table"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, } from "@/components/ui/dropdown-menu"
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { AppDispatch } from "@/redux/store"
 import { useDispatch } from "react-redux"
@@ -14,7 +14,7 @@ import { useSelector } from "react-redux"
 import { RootState } from "@/redux/store"
 import { useEffect, useState, useMemo } from "react"
 import debounce from "lodash/debounce"
-import { getCustomers, setPage, setLimit, setSearchQuery, deleteCustomer, clearError } from "@/redux/slices/customerSlice"
+import { getCustomers, setPage, setLimit, setSearchQuery, setSortBy, setSortOrder, deleteCustomer, clearError, getCustomerStatistics } from "@/redux/slices/customerSlice"
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination"
 import { MiniLoading } from "@/components/ui/mini-loading"
 import { CustomerDetailsModal } from "@/components/customer-details-modal"
@@ -23,6 +23,7 @@ import tr from 'react-phone-input-2/lang/tr.json'
 import ReactCountryFlag from "react-country-flag"
 import CustomerStatsCards from "@/components/customer-stats-cards"
 import { toast } from "sonner"
+import { isActiveOperation } from "@/lib/operation-status"
 
 
 const formatDate = (dateString: string) => {
@@ -54,19 +55,9 @@ const CountryCell = ({ countryCode }: { countryCode?: string }) => {
   return (
     <div className="flex items-center gap-2 min-w-[120px]">
       {flag}
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <span>
-            {countryName.length > 12 ? `${countryName.slice(0, 12)}...` : countryName}
-          </span>
-        </TooltipTrigger>
-        <TooltipContent>
-          <div className="flex items-center gap-2">
-            {flag}
-            <p >{countryName}</p>
-          </div>
-        </TooltipContent>
-      </Tooltip>
+      <span>
+        {countryName.length > 12 ? `${countryName.slice(0, 12)}...` : countryName}
+      </span>
     </div>
   );
 };
@@ -87,7 +78,25 @@ const handleMail = (email: string) => {
 
 export default function CustomersPage() {
   const dispatch = useDispatch<AppDispatch>();
-  const { customers, loading, error, page, limit, totalPages, searchQuery, totalCustomers } = useSelector((state: RootState) => state.customer);
+  const { customers, loading, error, page, limit, totalPages, searchQuery, totalCustomers, sortBy, sortOrder, statistics, statisticsLoading } = useSelector((state: RootState) => state.customer);
+
+  // Status Badge Component
+  const StatusBadge = ({ customer }: { customer: any }) => {
+    const hasActiveOperations = customer.operations?.some((operation: any) =>
+      isActiveOperation(operation.status)
+    ) || false;
+
+    return (
+      <div className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${hasActiveOperations
+        ? 'bg-green-100 text-green-800 border border-green-200'
+        : 'bg-blue-100 text-blue-800 border border-blue-200'
+        }`}>
+        <span className="w-2 h-2 rounded-full bg-current"></span>
+        {hasActiveOperations ? 'Aktif Operasyon' : 'Operasyon Yok'}
+      </div>
+    );
+  };
+
   const [searchInput, setSearchInput] = useState(searchQuery);
   const [selectedCustomer, setSelectedCustomer] = useState<any | null>(null);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
@@ -155,8 +164,9 @@ export default function CustomersPage() {
 
   // İlk yükleme
   useEffect(() => {
-    dispatch(getCustomers({ page, limit, search: searchQuery }));
-  }, [dispatch, page, limit, searchQuery]);
+    dispatch(getCustomers({ page, limit, search: searchQuery, sortBy, sortOrder }));
+    dispatch(getCustomerStatistics());
+  }, [dispatch, page, limit, searchQuery, sortBy, sortOrder]);
 
   // Hata yönetimi
   useEffect(() => {
@@ -187,6 +197,43 @@ export default function CustomersPage() {
 
   const handleLimitChange = (newLimit: number) => {
     dispatch(setLimit(newLimit));
+  };
+
+  const handleSort = (field: string) => {
+    if (sortBy === field) {
+      // Aynı field'a tıklanırsa order'ı değiştir
+      dispatch(setSortOrder(sortOrder === 'ASC' ? 'DESC' : 'ASC'));
+    } else {
+      // Yeni field seçilirse ASC ile başla
+      dispatch(setSortBy(field));
+      dispatch(setSortOrder('ASC'));
+    }
+  };
+
+  // Client-side sorting for operation status
+  const sortedCustomers = useMemo(() => {
+    if (sortBy === 'operationStatus') {
+      return [...customers].sort((a, b) => {
+        const aHasOperations = a.operations?.some((operation: any) => isActiveOperation(operation.status)) || false;
+        const bHasOperations = b.operations?.some((operation: any) => isActiveOperation(operation.status)) || false;
+
+        if (sortOrder === 'ASC') {
+          return aHasOperations === bHasOperations ? 0 : aHasOperations ? -1 : 1;
+        } else {
+          return aHasOperations === bHasOperations ? 0 : aHasOperations ? 1 : -1;
+        }
+      });
+    }
+    return customers;
+  }, [customers, sortBy, sortOrder]);
+
+  const getSortIcon = (field: string) => {
+    if (sortBy !== field) {
+      return <ArrowUpDown className="h-4 w-4 text-muted-foreground" />;
+    }
+    return sortOrder === 'ASC' ?
+      <ArrowUp className="h-4 w-4 text-blue-600" /> :
+      <ArrowDown className="h-4 w-4 text-blue-600" />;
   };
 
   return (
@@ -255,13 +302,67 @@ export default function CustomersPage() {
             {/* Tablo Header */}
             <TableHeader>
               <TableRow>
-                <TableHead>Adı Soyadı</TableHead>
-                <TableHead>Müşteri Türü</TableHead>
-                <TableHead>Firma Adı</TableHead>
-                <TableHead>E-posta</TableHead>
+                <TableHead>
+                  <Button
+                    variant="ghost"
+                    onClick={() => handleSort('name')}
+                    className="h-auto -ml-3 font-semibold hover:bg-transparent"
+                  >
+                    Adı Soyadı
+                    {getSortIcon('name')}
+                  </Button>
+                </TableHead>
+                <TableHead>
+                  <Button
+                    variant="ghost"
+                    onClick={() => handleSort('company')}
+                    className="h-auto -ml-3 font-semibold hover:bg-transparent"
+                  >
+                    Firma Adı
+                    {getSortIcon('company')}
+                  </Button>
+                </TableHead>
+                <TableHead>
+                  <Button
+                    variant="ghost"
+                    onClick={() => handleSort('email')}
+                    className="h-auto -ml-3 font-semibold hover:bg-transparent"
+                  >
+                    E-posta
+                    {getSortIcon('email')}
+                  </Button>
+                </TableHead>
                 <TableHead>Telefon</TableHead>
-                <TableHead>Ülke</TableHead>
-                <TableHead>Eklenme Tarihi</TableHead>
+                <TableHead>
+                  <Button
+                    variant="ghost"
+                    onClick={() => handleSort('country')}
+                    className="h-auto -ml-3.5 font-semibold hover:bg-transparent"
+                  >
+                    Ülke
+                    {getSortIcon('country')}
+                  </Button>
+                </TableHead>
+                <TableHead>
+                  <Button
+                    variant="ghost"
+                    onClick={() => handleSort('createdAt')}
+                    className="h-auto -ml-3 font-semibold hover:bg-transparent"
+                  >
+                    Eklenme Tarihi
+                    {getSortIcon('createdAt')}
+                  </Button>
+                </TableHead>
+                <TableHead>
+                  <Button
+                    variant="ghost"
+                    onClick={() => handleSort('operationStatus')}
+                    className="h-auto -ml-2.5 font-semibold hover:bg-transparent"
+                  >
+                    Durum
+                    {getSortIcon('operationStatus')}
+                  </Button>
+                </TableHead>
                 <TableHead>İşlemler</TableHead>
               </TableRow>
             </TableHeader>
@@ -274,88 +375,45 @@ export default function CustomersPage() {
                     <MiniLoading />
                   </TableCell>
                 </TableRow>
-              ) : customers?.length === 0 ? (
+              ) : sortedCustomers?.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                     {searchQuery ? 'Arama kriterlerine uygun müşteri bulunamadı.' : 'Henüz müşteri kaydı bulunmuyor.'}
                   </TableCell>
                 </TableRow>
               ) : (
-                customers?.map((customer) => (
+                sortedCustomers?.map((customer) => (
                   <TableRow key={customer.id} className="hover:bg-muted/50">
                     {/* Yetkili Kişi */}
                     <TableCell className="min-w-[200px]">
                       <div className="flex items-center gap-2">
                         <User className="h-4 w-4 text-muted-foreground" />
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <span>
-                              {customer.name?.length > 15 ? `${customer.name.slice(0, 15)}...` : customer.name}
-                            </span>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>{customer.name}</p>
-                          </TooltipContent>
-                        </Tooltip>
+                        <span>
+                          {customer.name?.length > 15 ? `${customer.name.slice(0, 15)}...` : customer.name}
+                        </span>
                       </div>
                     </TableCell>
-                    {/* Müşteri Türü */}
-                    <TableCell className="min-w-[200px]">
-                      <div className="flex items-center gap-2">
-                        <Briefcase className="h-4 w-4 text-muted-foreground" />
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <span>
-                              {customer.customerType ? (customer.customerType?.length > 15 ? `${customer.customerType.slice(0, 15)}...` : customer.customerType) : 'Bilinmiyor'}
-                            </span>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>{customer.customerType ? customer.customerType : 'Bilinmiyor'}</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </div>
-                    </TableCell>
+
                     {/* Firma Adı */}
                     <TableCell className="min-w-[200px]">
                       <div className="flex items-center gap-2">
                         <Building2 className="h-4 w-4 text-muted-foreground" />
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <span>
-                              {customer.company ? (
-                                customer.company?.length > 30 ? `${customer.company.slice(0, 25)}...` : customer.company
-                              ) : 'Bilinmiyor'}
-                            </span>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>{customer.company ? customer.company : 'Bilinmiyor'}</p>
-                          </TooltipContent>
-                        </Tooltip>
+                        <span>
+                          {customer.company ? (
+                            customer.company?.length > 30 ? `${customer.company.slice(0, 25)}...` : customer.company
+                          ) : 'Bilinmiyor'}
+                        </span>
                       </div>
                     </TableCell>
                     {/* E-posta*/}
                     <TableCell className="min-w-[200px]">
                       <div className="flex items-center gap-2">
                         <Mail className="h-4 w-4 text-muted-foreground" />
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <button className="hover:underline transition-colors cursor-pointer">
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <span className="max-w-[120px]">{customer.email?.length > 25 ? `${customer.email.slice(0, 25)}...` : customer.email}</span>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  <p>İletişim seçenekleri için tıklayın</p>
-                                </TooltipContent>
-                              </Tooltip>
-                            </button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="start">
-                            <DropdownMenuItem onClick={() => handleMail(customer.email)} className="gap-2">
-                              <Mail color="blue" className="h-4 w-4" />
-                              Mail Gönder
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
+                        <span className="max-w-[120px]">{customer.email?.length > 15 ? `${customer.email.slice(0, 15)}...` : customer.email}</span>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="ghost"
                               onClick={async () => {
                                 try {
                                   await navigator.clipboard.writeText(customer.email);
@@ -364,58 +422,44 @@ export default function CustomersPage() {
                                   toast.error('Kopyalama başarısız!');
                                 }
                               }}
-                              className="gap-2"
+                              className="h-3 w-3 -ml-2"
                             >
-                              <Copy color="black" className="h-4 w-4" />
-                              Maili Kopyala
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                              <Copy style={{ width: '10px', height: '10px' }} />
+
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Maili kopyala</p>
+                          </TooltipContent>
+                        </Tooltip>
                       </div>
                     </TableCell>
                     {/* Telefon */}
                     <TableCell className="min-w-[170px]">
                       <div className="flex items-center gap-2">
                         <Phone className="h-4 w-4 text-muted-foreground" />
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <button className="hover:underline transition-colors cursor-pointer">
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <span>{formatPhone(customer.phone)}</span>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  <p>İletişim seçenekleri için tıklayın</p>
-                                </TooltipContent>
-                              </Tooltip>
-                            </button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="start">
-                            <DropdownMenuItem onClick={() => handlePhoneCall(customer.phone)} className="gap-2">
-                              <PhoneCall color="blue" className="h-4 w-4" />
-                              Telefon Et
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleWhatsappMessage(customer.phone)} className="gap-2">
-                              <img
-                                src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg"
-                                alt="WhatsApp"
-                                className="h-[22px] w-[22px] translate-x-[-3px]"
-                              />
-                              <span className="translate-x-[-7px] cursor-pointer">WhatsApp Mesajı Gönder</span>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={async () => {
-                              try {
-                                await navigator.clipboard.writeText(customer.phone);
-                                toast.success('Numara kopyalandı!');
-                              } catch (error) {
-                                toast.error('Kopyalama başarısız!');
-                              }
-                            }} className="gap-2">
-                              <Copy color="black" className="h-4 w-4" />
-                              Numarayı Kopyala
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                        <span>{formatPhone(customer.phone)}</span>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              onClick={async () => {
+                                try {
+                                  await navigator.clipboard.writeText(customer.phone);
+                                  toast.success('Numara kopyalandı!');
+                                } catch (error) {
+                                  toast.error('Kopyalama başarısız!');
+                                }
+                              }}
+                              className="h-3 w-3 p-0 -ml-2"
+                            >
+                              <Copy style={{ width: '10px', height: '10px' }} />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Numarayı kopyala</p>
+                          </TooltipContent>
+                        </Tooltip>
                       </div>
                     </TableCell>
                     {/* Ülke */}
@@ -423,8 +467,13 @@ export default function CustomersPage() {
                       <CountryCell countryCode={customer.country} />
                     </TableCell>
                     {/* Eklenme Tarihi */}
-                    <TableCell>
+                    <TableCell className="flex items-center gap-1.5 mt-2">
+                      <Calendar className="h-4 w-4" />
                       {formatDate(customer.createdAt)}
+                    </TableCell>
+                    {/* Durum */}
+                    <TableCell>
+                      <StatusBadge customer={customer} />
                     </TableCell>
                     {/* İşlemler */}
                     <TableCell>
@@ -438,7 +487,10 @@ export default function CustomersPage() {
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem onClick={() => handleShowDetails(customer)}><Eye /> Detayları Görüntüle</DropdownMenuItem>
                           <DropdownMenuItem onClick={() => handleEditCustomer(customer)}><Edit /> Düzenle</DropdownMenuItem>
-                          <DropdownMenuItem className="text-destructive" onClick={() => handleDeleteCustomer(customer.id)}><Trash className="text-destructive" /> Sil</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleMail(customer.email)}><Mail /> Mail Gönder</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handlePhoneCall(customer.phone)}><PhoneCall /> Telefon Et</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleWhatsappMessage(customer.phone)}><MessageCircle /> WhatsApp Mesajı</DropdownMenuItem>
+                          <DropdownMenuItem className="text-destructive hover:!text-destructive" onClick={() => handleDeleteCustomer(customer.id)}><Trash className="text-destructive" /> Sil</DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>

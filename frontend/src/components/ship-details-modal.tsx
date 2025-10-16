@@ -12,7 +12,7 @@ enum Status {
     Demirde = "Demirde", // 1
     Gecikmeli = "Gecikmeli", // 2, 3, 4, 6
     Acil = "Acil", // 14
-    Bilinimiyor = "Bilinimiyor" // 15, 9, 10, 13
+    Bilinmiyor = "Bilinmiyor" // 15, 9, 10, 13
 }
 
 const statusColors = {
@@ -22,7 +22,7 @@ const statusColors = {
     [Status.Demirde]: "bg-yellow-100 text-yellow-800",
     [Status.Gecikmeli]: "bg-orange-100 text-orange-800",
     [Status.Acil]: "bg-red-100 text-red-800",
-    [Status.Bilinimiyor]: "bg-gray-200 text-gray-800"
+    [Status.Bilinmiyor]: "bg-gray-200 text-gray-800"
 };
 
 const statusIcons = {
@@ -32,7 +32,7 @@ const statusIcons = {
     [Status.Demirde]: <Circle fill="orange" color="orange" className="h-3 w-3" />,
     [Status.Gecikmeli]: <Circle fill="orange" color="orange" className="h-3 w-3 animate-pulse" />,
     [Status.Acil]: <Circle fill="red" color="red" className="h-3 w-3 animate-pulse" />,
-    [Status.Bilinimiyor]: <Circle fill="black" color="black" className="h-3 w-3" />
+    [Status.Bilinmiyor]: <Circle fill="black" color="black" className="h-3 w-3" />
 };
 
 interface ShipDetailsModalProps {

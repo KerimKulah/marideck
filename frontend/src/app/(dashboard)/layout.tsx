@@ -13,10 +13,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <InitUser>
                 <ProtectedRoute>
                     <SidebarProvider>
-                        <ChatbotButton />
                         <AppSidebar />
                         <SidebarInset>
-                            <Header />  
+                            <Header />
                             <main className="p-4 md:p-6">
                                 {children}
                             </main>

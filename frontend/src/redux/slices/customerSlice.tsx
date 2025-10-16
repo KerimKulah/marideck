@@ -5,17 +5,21 @@ interface GetCustomersParams {
     page?: number;
     limit?: number;
     search?: string;
+    sortBy?: string;
+    sortOrder?: 'ASC' | 'DESC';
 }
 
 // GET CUSTOMERS WITH PAGINATION AND SEARCH
 export const getCustomers = createAsyncThunk(
     "customer/getCustomers",
-    async ({ page, limit, search }: GetCustomersParams, { rejectWithValue }) => {
+    async ({ page, limit, search, sortBy, sortOrder }: GetCustomersParams, { rejectWithValue }) => {
         try {
             const params = new URLSearchParams();
             if (page) params.append('page', page.toString());
             if (limit) params.append('limit', limit.toString());
             if (search) params.append('search', search);
+            if (sortBy) params.append('sortBy', sortBy);
+            if (sortOrder) params.append('sortOrder', sortOrder);
 
             const response = await api.get(`/customer?${params.toString()}`);
             return response.data; // { customers, customersCount, page, limit, totalPages }
@@ -59,6 +63,32 @@ export const deleteCustomer = createAsyncThunk("customer/deleteCustomer", async 
     }
 })
 
+// GET OPERATION COUNT BY CUSTOMER ID
+export const getOperationCountByCustomerId = createAsyncThunk(
+    "customer/getOperationCountByCustomerId",
+    async (customerId: number, { rejectWithValue }) => {
+        try {
+            const response = await api.get(`/customer/${customerId}/operations/count`);
+            return { customerId, operationCount: response.data.operationCount };
+        } catch (error: any) {
+            return rejectWithValue(error.response?.data || { message: "An error occurred while fetching operation count" });
+        }
+    }
+)
+
+// GET CUSTOMER STATISTICS
+export const getCustomerStatistics = createAsyncThunk(
+    "customer/getCustomerStatistics",
+    async (_, { rejectWithValue }) => {
+        try {
+            const response = await api.get('/customer/stats');
+            return response.data;
+        } catch (error: any) {
+            return rejectWithValue(error.response?.data || { message: "An error occurred while fetching customer statistics" });
+        }
+    }
+)
+
 interface CustomerState {
     customers: any[];
     customer: any | null;
@@ -69,9 +99,19 @@ interface CustomerState {
     totalCustomers: number;
     totalPages: number;
     searchQuery: string;
+    sortBy: string;
+    sortOrder: 'ASC' | 'DESC';
     createLoading: boolean;
     updateLoading: boolean;
     deleteLoading: boolean;
+    operationCounts: { [customerId: number]: number };
+    statistics: {
+        totalCustomers: number;
+        uniqueCountries: number;
+        customersWithActiveOperations: number;
+        customersAddedThisWeek: number;
+    } | null;
+    statisticsLoading: boolean;
 }
 
 const initialState: CustomerState = {
@@ -84,9 +124,14 @@ const initialState: CustomerState = {
     totalCustomers: 0,
     totalPages: 1,
     searchQuery: '',
+    sortBy: 'createdAt',
+    sortOrder: 'DESC',
     createLoading: false,
     updateLoading: false,
     deleteLoading: false,
+    operationCounts: {},
+    statistics: null,
+    statisticsLoading: false,
 };
 
 export const customerSlice = createSlice({
@@ -105,6 +150,14 @@ export const customerSlice = createSlice({
         },
         setSearchQuery: (state, action: PayloadAction<string>) => {
             state.searchQuery = action.payload;
+            state.page = 1;
+        },
+        setSortBy: (state, action: PayloadAction<string>) => {
+            state.sortBy = action.payload;
+            state.page = 1;
+        },
+        setSortOrder: (state, action: PayloadAction<'ASC' | 'DESC'>) => {
+            state.sortOrder = action.payload;
             state.page = 1;
         },
         resetCustomerState: () => initialState,
@@ -219,8 +272,33 @@ export const customerSlice = createSlice({
             state.deleteLoading = false;
             state.error = (action.payload as any)?.message || "Bilinmeyen hata";
         })
+
+        // GET OPERATION COUNT BY CUSTOMER ID
+        builder.addCase(getOperationCountByCustomerId.fulfilled, (state, action) => {
+            const { customerId, operationCount } = action.payload;
+            state.operationCounts[customerId] = operationCount;
+        })
+        builder.addCase(getOperationCountByCustomerId.rejected, (state, action) => {
+            // Hata durumunda operasyon sayısını 0 olarak ayarla
+            const customerId = action.meta.arg;
+            state.operationCounts[customerId] = 0;
+        })
+
+        // GET CUSTOMER STATISTICS
+        builder.addCase(getCustomerStatistics.pending, (state) => {
+            state.statisticsLoading = true;
+            state.error = null;
+        })
+        builder.addCase(getCustomerStatistics.fulfilled, (state, action) => {
+            state.statisticsLoading = false;
+            state.statistics = action.payload;
+        })
+        builder.addCase(getCustomerStatistics.rejected, (state, action) => {
+            state.statisticsLoading = false;
+            state.error = (action.payload as any)?.message || "Failed to fetch customer statistics";
+        })
     }
 });
 
 export default customerSlice.reducer;
-export const { clearError, setPage, setLimit, setSearchQuery, resetCustomerState, addCustomerOptimistic, updateCustomerOptimistic, removeCustomerOptimistic } = customerSlice.actions;
+export const { clearError, setPage, setLimit, setSearchQuery, setSortBy, setSortOrder, resetCustomerState, addCustomerOptimistic, updateCustomerOptimistic, removeCustomerOptimistic } = customerSlice.actions;

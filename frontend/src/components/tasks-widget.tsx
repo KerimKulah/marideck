@@ -69,10 +69,11 @@ export const TasksWidget = () => {
     return (
         <Card className="h-full">
             <CardHeader>
-                <CardTitle className="text-lg font-semibold flex items-center gap-2">
-                    <CheckCircle className="h-5 w-5 text-blue-500" />
-                    Görevlerim
-                </CardTitle>
+                <div className="flex items-center space-x-2">
+                    <CheckCircle className="h-5 w-5 text-primary" />
+                    <CardTitle className="text-lg">Görevler</CardTitle>
+                </div>
+                <div className="h-[1px] w-full bg-border mt-3   " />
             </CardHeader>
             <CardContent>
                 <div className="space-y-2">

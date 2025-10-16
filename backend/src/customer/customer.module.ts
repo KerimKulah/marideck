@@ -5,12 +5,12 @@ import { ExceptionFilterImp } from '../filters/exception-filter';
 import { AuthModule } from '../auth/auth.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Customer } from './entities/customer.entity';
+import { Operation } from '../operation/entities/operation.entity';
 
 @Module({
-  imports: [AuthModule, TypeOrmModule.forFeature([Customer])],
+  imports: [AuthModule, TypeOrmModule.forFeature([Customer, Operation])],
   controllers: [CustomerController],
   providers: [CustomerService, ExceptionFilterImp],
 })
 
-export class CustomerModule {}
- 
+export class CustomerModule { }

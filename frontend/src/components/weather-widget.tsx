@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Cloud, Sun, CloudRain, CloudSnow, Compass, Thermometer, Droplets, Eye, RefreshCw, MapPin, Wind } from 'lucide-react';
 import { Arrow } from '@radix-ui/react-tooltip';
+import { CardHeader, CardTitle } from './ui/card';
 
 interface WeatherData {
     location: string;
@@ -108,19 +109,19 @@ export function WeatherWidget() {
     const getWeatherIcon = (condition: string) => {
         switch (condition) {
             case 'clear':
-                return <Sun className="w-12 h-12" />;
+                return <Sun className="w-10 h-10" />;
             case 'clouds':
-                return <Cloud className="w-12 h-12" />;
+                return <Cloud className="w-10 h-10" />;
             case 'rain':
             case 'drizzle':
-                return <CloudRain className="w-12 h-12" />;
+                return <CloudRain className="w-10 h-10" />;
             case 'snow':
-                return <CloudSnow className="w-12 h-12" />;
+                return <CloudSnow className="w-10 h-10" />;
             case 'mist':
             case 'fog':
-                return <Cloud className="w-12 h-12" />;
+                return <Cloud className="w-10 h-10" />;
             default:
-                return <Sun className="w-12 h-12" />;
+                return <Sun className="w-10 h-10" />;
         }
     };
 
@@ -169,9 +170,15 @@ export function WeatherWidget() {
 
     return (
         <div className="bg-white p-4 rounded-lg border shadow-sm w-full">
+            <div className="pb-3">
+                <div className="flex items-center space-x-2 mt-2">
+                    <Thermometer className="h-5 w-5 text-primary" />
+                    <h2 className="text-lg font-medium">Hava Durumu</h2>
+                </div>
+                <div className="h-[1px] w-full bg-border mt-4" />
+            </div>
             <div className="mb-1">
                 <div className="flex items-center space-x-1 mb-1">
-                    <MapPin className="w-3.5 h-3.5 text-gray-500" />
                     <input
                         type="text"
                         placeholder="Şehir adı..."
@@ -181,19 +188,18 @@ export function WeatherWidget() {
                         aria-label="Şehir adı"
                     />
                 </div>
-                <h2 className="text-sm font-medium text-gray-900">{weather.location}</h2>
                 {error && (
                     <p className="text-red-500 text-[11px] mt-0.5">{error}</p>
                 )}
             </div>
 
-            <div className="border-b pb-2 flex items-center justify-between mb-2">
+            <div className="border-b pb-2 pt-1 flex items-center justify-between">
                 <div className="flex items-center space-x-2">
                     {getWeatherIcon(weather.condition)}
-                    <div>
-                        <div className="text-xl font-bold text-gray-900">{weather.temperature}°C</div>
-                        <div className="text-xs text-gray-600 capitalize">{weather.description}</div>
-                        <div className="text-xs text-gray-500">Hissedilen: {weather.feelsLike}°C</div>
+                    <div className="flex flex-col space-y-0">
+                        <div className="text-sm font-bold text-gray-900">{weather.location} </div>
+                        <div className="text-sm font-bold text-gray-900">{weather.temperature}°C</div>
+                        <div className="text-xs text-gray-600 capitalize">{weather.description}, Hissedilen: {weather.feelsLike}°C </div>
                     </div>
                 </div>
             </div>
@@ -227,10 +233,6 @@ export function WeatherWidget() {
                     <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
                     <span>Güncelle</span>
                 </button>
-            </div>
-
-            <div className="mt-3 text-center text-xs text-black/60">
-                Son güncelleme: {new Date().toLocaleTimeString('tr-TR')}
             </div>
         </div>
     );

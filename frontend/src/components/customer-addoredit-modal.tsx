@@ -237,7 +237,7 @@ export function CustomerAddOrEditModal({ isOpen, onClose, customer, onSuccess }:
                             <div className="border rounded-full p-4">
                                 <LordIcon
                                     src="https://cdn.lordicon.com/kdduutaw.json"
-                                    trigger="loop"
+                                    trigger="hover"
                                     delay="2000"
                                     colors="primary:#121331,secondary:#0672a2"
                                     style={{ width: '100px', height: '100px' }}

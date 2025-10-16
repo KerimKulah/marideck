@@ -21,6 +21,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover"
 import { CalendarIcon, Loader2, Plus, X, ChevronDown, ChevronRight, Ship, User, Package, MapPin, Clock, FileText, Users, Building2, Anchor } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { SelectModal } from "./select-modal"
+import { OperationStatus, getOperationStatusTranslation } from "@/lib/operation-status"
 
 const operationFormSchema = z.object({
     name: z.string().min(1, "Operasyon adı zorunludur"),
@@ -36,7 +37,7 @@ const operationFormSchema = z.object({
     endDate: z.date({
         required_error: "Bitiş tarihi zorunludur",
     }),
-    status: z.string().default("planlanıyor").optional(),
+    status: z.nativeEnum(OperationStatus).default(OperationStatus.PLANNED).optional(),
     cargoType: z.string().optional(),
     cargoDetails: z.string().optional(),
 })
@@ -51,10 +52,10 @@ interface OperationAddOrEditModalProps {
 }
 
 const statusOptions = [
-    { value: "planlanıyor", label: "Planlanıyor", color: "bg-yellow-100 text-yellow-800" },
-    { value: "devam", label: "Devam Ediyor", color: "bg-blue-100 text-blue-800" },
-    { value: "tamamlandı", label: "Tamamlandı", color: "bg-green-100 text-green-800" },
-    { value: "iptal", label: "İptal Edildi", color: "bg-red-100 text-red-800" },
+    { value: OperationStatus.PLANNED, label: getOperationStatusTranslation(OperationStatus.PLANNED), color: "bg-yellow-100 text-yellow-800" },
+    { value: OperationStatus.IN_PROGRESS, label: getOperationStatusTranslation(OperationStatus.IN_PROGRESS), color: "bg-blue-100 text-blue-800" },
+    { value: OperationStatus.COMPLETED, label: getOperationStatusTranslation(OperationStatus.COMPLETED), color: "bg-green-100 text-green-800" },
+    { value: OperationStatus.CANCELLED, label: getOperationStatusTranslation(OperationStatus.CANCELLED), color: "bg-red-100 text-red-800" },
 ]
 
 export function OperationAddOrEditModal({
@@ -613,8 +614,8 @@ export function OperationAddOrEditModal({
                                                             </div>
                                                             {user.roles?.[0]?.name && (
                                                                 <span className={`text-xs px-3 py-1 rounded-full font-medium ${user.roles[0].name === 'admin'
-                                                                        ? 'bg-purple-100 text-purple-700'
-                                                                        : 'bg-gray-100 text-gray-600'
+                                                                    ? 'bg-purple-100 text-purple-700'
+                                                                    : 'bg-gray-100 text-gray-600'
                                                                     }`}>
                                                                     {user.roles[0].name === 'admin' ? 'Yönetici' : 'Personel'}
                                                                 </span>

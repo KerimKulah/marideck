@@ -54,34 +54,60 @@ export class ShipController {
   ////////////////////////////// AIS ////////////////////////////  
   @Get('ais/mmsi/:mmsi')
   async getAisShip(@Param('mmsi') mmsi: string) {
-    const url = `${process.env.AIS_API_URL}/${mmsi}`;
-    const response = await fetch(url);
+    const clickUrl = `${process.env.AIS_API_URL}/click/${mmsi}`;
+    const vi2Url = `${process.env.AIS_API_URL}/vi2/${mmsi}`;
 
-    if (!response.ok) {
-      throw new HttpException('Gemi bulunamadı', response.status);
+    try {
+      // İki isteği paralel yap
+      const [clickRes, vi2Res] = await Promise.allSettled([
+        fetch(clickUrl),
+        fetch(vi2Url),
+      ]);
+
+      if (clickRes.status !== "fulfilled" || !clickRes.value.ok) {
+        throw new HttpException("Gemi bulunamadı", clickRes.status === "fulfilled" ? clickRes.value.status : 500);
+      }
+
+      const clickData = await clickRes.value.json();
+      const vi2Data = vi2Res.status === "fulfilled" && vi2Res.value.ok
+        ? await vi2Res.value.json()
+        : null;
+
+      const shipDto = {
+        // CLICK verileri
+        name: clickData.name ?? null,
+        type: typeFormat(clickData.type),
+        imoNumber: clickData.imo ?? null,
+        mmsiNumber: mmsi,
+        flag: getCountryCode(clickData.country) || null,
+        length: clickData.al ?? null,
+        beam: clickData.aw ?? null,
+        grossTonnage: clickData.gt ?? null,
+        deadweight: clickData.dw ?? null,
+        builtYear: clickData.yt || clickData.y || null,
+        draft: clickData.draught ?? null,
+
+        // VI2 + CLICK birleşimi (rota bilgileri)
+        departurePort: vi2Data?.rpdna ?? null,
+        departureCountry: vi2Data?.rpdco ?? null,
+        departureTime: vi2Data?.rpdatd ? new Date(vi2Data.rpdatd * 1000) : null,
+        destinationPort: vi2Data?.npde ?? clickData?.dest ?? null,
+        eta: vi2Data?.npe
+          ? new Date(vi2Data.npe * 1000)
+          : clickData?.etaTS
+            ? new Date(clickData.etaTS * 1000)
+            : null,
+
+        status: mapAisStatusToEnum(clickData.ss, clickData.r, clickData['.ns'], clickData.etaTS),
+      };
+
+      return shipDto;
+    } catch (error) {
+      throw new HttpException(
+        `AIS verisi alınamadı: ${(error as Error).message}`,
+        500,
+      );
     }
-
-    const data = await response.json();
-
-    const shipDto = {
-      name: data.name,
-      type: typeFormat(data.type),
-      imoNumber: data.imo,
-      mmsiNumber: mmsi,
-      flag: getCountryCode(data.country) || '',
-      length: data.al,
-      beam: data.aw,
-      grossTonnage: data.gt,
-      deadweight: data.dw,
-      builtYear: data.yt,
-      draft: data.draught,
-      eta: data.etaTS ? new Date(data.etaTS * 1000) : undefined,
-      departurePort: data.port,
-      destinationPort: data.dest,
-      status: mapAisStatusToEnum(data.ss),
-    };
-
-    return shipDto;
   }
 
   @Get('ais/imo/:imo')
@@ -92,41 +118,49 @@ export class ShipController {
       throw new HttpException('Gemi bulunamadı', 404);
     }
 
-    // MMSI controller’ı kullanarak aynı veriyi üretelim (code reuse için)
+    // MMSI controller'ı kullanarak aynı veriyi üretelim (code reuse için)
     return this.getAisShip(mmsi);
   }
 }
 
-function mapAisStatusToEnum(ss: number): string {
-  switch (ss) {
-    case 1:
-      return "Demirde";
-    case 5:
-      return "Limanda";
-    case 0:
-    case 8:
-    case 11:
-    case 12:
-      return "Yolda";
-    case 14:
-      return "Acil";
-    case 2:
-    case 3:
-    case 4:
-    case 6:
-      return "Gecikmeli";
-    case 9:
-    case 10:
-    case 15:
-    default:
-      return "Bilinimiyor";
+// AIS status to enum - Yeni kurallara göre
+function mapAisStatusToEnum(ss: number, r?: number, ns?: number, etaTS?: number): string {
+  const speed = ss; // ss = speed (hız)
+  const currentTime = Math.floor(Date.now() / 1000); // Unix timestamp
+
+  // Kural 1: Eğer hız (ss) ≥ 3 knot ise → "Yolda"
+  if (speed >= 3) {
+    return "Yolda";
   }
+
+  // Kural 2: Eğer hız < 0.5 knot ve (r = 1 veya r = 2 veya .ns = 1) ise → "Demirde"
+  if (speed < 0.5 && (r === 1 || r === 2 || ns === 1)) {
+    return "Demirde";
+  }
+
+  // Kural 3: Eğer hız < 0.5 knot ve (r = 5 veya .ns = 5) ise → "Limanda"
+  if (speed < 0.5 && (r === 5 || ns === 5)) {
+    return "Limanda";
+  }
+
+  // Kural 4: Eğer hız 0.5 ≤ ss < 3 ise → "Beklemede"
+  if (speed >= 0.5 && speed < 3) {
+    return "Beklemede";
+  }
+
+  // Kural 5: Eğer ETA (etaTS) geçmişteyse ve gemi hâlâ yolda görünüyorsa → "Gecikmeli"
+  if (etaTS && etaTS < currentTime && speed >= 0.5) {
+    return "Gecikmeli";
+  }
+
+  // Kural 6: Diğer tüm durumlar → "Bilinmiyor"
+  return "Bilinmiyor";
 }
 
 var countries = require("i18n-iso-countries");
 
 function cleanCountryName(countryStr: string): string {
-  return countryStr.split('(')[0].trim();
+  return countryStr?.split('(')[0].trim() ?? '';
 }
 
 function getCountryCode(countryName: string): string | undefined {
@@ -137,48 +171,58 @@ function getCountryCode(countryName: string): string | undefined {
 function typeFormat(type: string): string {
   if (!type) return "Bilinmiyor";
 
-  const t = type.toLowerCase();
+  const t = type.toLowerCase().replace(/\s+/g, '');
 
-  if (t.includes("passenger")) return "Passenger";
-  if (t.includes("general")) return "GeneralCargo";
-  if (t.includes("container")) return "ContainerShip";
-  if (t.includes("bulk")) return "BulkCarrier";
-  if (t.includes("refrigerated")) return "RefrigeratedCargo";
-  if (t.includes("vehicle")) return "VehicleCarrier";
-  if (t.includes("ro-ro")) return "RoRoCargo";
-  if (t.includes("oil")) return "OilTanker";
-  if (t.includes("gas")) return "GasTanker";
-  if (t.includes("lpg")) return "LPGTanker";
-  if (t.includes("lng")) return "LNGTanker";
-  if (t.includes("tanker")) return "OtherTanker";
-  if (t.includes("fishing")) return "Fishing";
-  if (t.includes("tug")) return "Romorkor";
-  if (t.includes("pilot")) return "Kılavuz";
-  if (t.includes("search")) return "SearchAndRescue";
-  if (t.includes("law")) return "LawEnforcement";
-  if (t.includes("port")) return "PortTender";
-  if (t.includes("anti")) return "AntiPollution";
-  if (t.includes("diving")) return "DalgıçDestek";
-  if (t.includes("military")) return "Askeri";
-  if (t.includes("dredging")) return "Dredging";
-  if (t.includes("sailing")) return "Sailing";
-  if (t.includes("yacht")) return "Yacht";
-  if (t.includes("research") || t.includes("survey")) return "ResearchSurvey";
-  if (t.includes("medical")) return "Medical";
-  if (t.includes("noncombatant")) return "Noncombatant";
+  const map: Record<string, string> = {
+    passenger: "Passenger",
+    general: "GeneralCargo",
+    container: "ContainerShip",
+    bulk: "BulkCarrier",
+    refrigerated: "RefrigeratedCargo",
+    vehicle: "VehicleCarrier",
+    'ro-ro': "RoRoCargo",
+    oil: "OilTanker",
+    gas: "GasTanker",
+    lpg: "LPGTanker",
+    lng: "LNGTanker",
+    tanker: "OtherTanker",
+    fishing: "Fishing",
+    tug: "Romorkor",
+    pilot: "Kılavuz",
+    search: "SearchAndRescue",
+    law: "LawEnforcement",
+    port: "PortTender",
+    anti: "AntiPollution",
+    diving: "DalgıçDestek",
+    military: "Askeri",
+    dredging: "Dredging",
+    sailing: "Sailing",
+    yacht: "Yacht",
+    research: "ResearchSurvey",
+    survey: "ResearchSurvey",
+    medical: "Medical",
+    noncombatant: "Noncombatant",
+  };
+
+  for (const key in map) {
+    if (t.includes(key)) return map[key];
+  }
 
   return "Bilinmiyor";
 }
 
-
 async function getMmsiFromMarineTraffic(imo: string): Promise<string | null> {
   const url = `https://www.marinetraffic.com/en/ais/details/ships/imo:${imo}/`;
 
-  const response = await fetch(url, { redirect: "manual" });
-  const location = response.headers.get("location");
+  try {
+    const response = await fetch(url, { redirect: "manual" });
+    const location = response.headers.get("location");
 
-  if (!location) return null;
+    if (!location) return null;
 
-  const match = location.match(/mmsi:(\d+)/);
-  return match ? match[1] : null;
+    const match = location.match(/mmsi:(\d+)/);
+    return match ? match[1] : null;
+  } catch {
+    return null;
+  }
 }

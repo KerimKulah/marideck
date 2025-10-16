@@ -13,6 +13,7 @@ import {
     Phone
 } from 'lucide-react';
 import { useSelector } from 'react-redux';
+import { RootState } from '@/redux/store';
 
 // Custom LordIcon component
 declare global {
@@ -35,7 +36,7 @@ interface LordIconProps {
 
 const LordIcon: React.FC<LordIconProps> = ({
     src,
-    trigger = 'loop',
+    trigger = 'hover',
     delay = '1000',
     colors = 'primary:#121331,secondary:#0672a4',
     style = {},
@@ -67,46 +68,42 @@ const LordIcon: React.FC<LordIconProps> = ({
     return <div dangerouslySetInnerHTML={iconHtml} />;
 };
 
-// Örnek data - gerçek uygulamada Redux store'dan gelecek
-const statsData = {
-    totalCustomers: 247,
-    totalCompanies: 189,
-    totalCountries: 23,
-    newThisMonth: 12,
-    activeCustomers: 198,
-    lastWeekAdded: 5,
-    emailContacts: 234,
-    phoneContacts: 241
-};
+export default function CustomerStatsCards() {
+    const { statistics, statisticsLoading } = useSelector((state: RootState) => state.customer);
 
-const StatCard = ({ title, value, icon: Icon, iconType, trend, trendValue, bgColor, iconColor, trigger, colors }: any) => (
-    <div className={`rounded-lg border p-3 ${bgColor} `}>
-        <div className="flex items-center justify-between">
-            <div className="space-y-1">
-                <p className="text-sm text-muted-foreground">{title}</p>
-                <p className="text-2xl font-bold">{value}</p>
-            </div>
-            <div className={`p-2 rounded-full ${iconColor} flex items-center justify-center`} style={{ width: '48px', height: '48px' }}>
-                {iconType === 'lordicon' ? (
-                    <div className="w-full h-full flex items-center justify-center">
-                        <LordIcon
-                            src={Icon}
-                            trigger={trigger}
-                            delay={title === 'Toplam Müşteri' ? '1000' : '2000'}
-                            colors={colors}
-                            style={{ width: '60px', height: '60px' }}
-                        />
-                    </div>
-                ) : (
-                    <Icon className="h-6 w-6 text-white" />
-                )}
+    // Loading state için fallback değerler
+    const statsData = {
+        totalCustomers: statistics?.totalCustomers || 0,
+        totalCountries: statistics?.uniqueCountries || 0,
+        activeCustomers: statistics?.customersWithActiveOperations || 0,
+        lastWeekAdded: statistics?.customersAddedThisWeek || 0
+    };
+
+    const StatCard = ({ title, value, icon: Icon, iconType, trend, trendValue, bgColor, iconColor, trigger, colors }: any) => (
+        <div className={`rounded-lg border p-3 ${bgColor} `}>
+            <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                    <p className="text-sm text-muted-foreground">{title}</p>
+                    <p className="text-2xl font-bold">{value}</p>
+                </div>
+                <div className={`p-2 rounded-full ${iconColor} flex items-center justify-center`} style={{ width: '48px', height: '48px' }}>
+                    {iconType === 'lordicon' ? (
+                        <div className="w-full h-full flex items-center justify-center">
+                            <LordIcon
+                                src={Icon}
+                                trigger={trigger}
+                                delay={title === 'Toplam Müşteri' ? '1000' : '2000'}
+                                colors={colors}
+                                style={{ width: '60px', height: '60px' }}
+                            />
+                        </div>
+                    ) : (
+                        <Icon className="h-6 w-6 text-white" />
+                    )}
+                </div>
             </div>
         </div>
-    </div>
-);
-
-export default function CustomerStatsCards() {
-    const { totalCustomers } = useSelector((state: any) => state.customer);
+    );
 
     return (
         <>
@@ -124,7 +121,7 @@ export default function CustomerStatsCards() {
                 {/* Toplam Müşteri */}
                 <StatCard
                     title="Toplam Müşteri"
-                    value={totalCustomers}
+                    value={statsData.totalCustomers}
                     icon="https://cdn.lordicon.com/yisvhhtw.json"
                     iconType="lordicon"
                     trend="up"
@@ -147,7 +144,7 @@ export default function CustomerStatsCards() {
 
                 {/* Aktif Müşteri */}
                 <StatCard
-                    title="İşlem Bekleyen Müşteri"
+                    title="Aktif Operasyonlar"
                     value={statsData.activeCustomers}
                     icon="https://cdn.lordicon.com/pfvaixkr.json"
                     iconType="lordicon"

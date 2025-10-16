@@ -1,4 +1,5 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, DeleteDateColumn, Index, OneToMany } from "typeorm";
+import { Operation } from "../../operation/entities/operation.entity";
 
 
 @Entity()
@@ -50,5 +51,8 @@ export class Customer {
 
     @DeleteDateColumn({ type: 'timestamptz', nullable: true })
     deletedAt: Date | null;
+
+    @OneToMany(() => Operation, operation => operation.customer)
+    operations: Operation[];
 
 }

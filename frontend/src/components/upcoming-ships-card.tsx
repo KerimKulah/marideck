@@ -49,10 +49,11 @@ export function UpcomingShipsCard() {
         return (
             <Card className="border-red-200">
                 <CardHeader className="pb-3">
-                    <CardTitle className="flex items-center gap-2 text-red-600">
-                        <Ship className="h-5 w-5" />
-                        <span>Yaklaşan Gemiler</span>
-                    </CardTitle>
+                    <div className="flex items-center space-x-2">
+                        <Ship className="h-5 w-5 text-red-600" />
+                        <CardTitle className="text-lg">Yaklaşan Gemiler</CardTitle>
+                    </div>
+                    <div className="h-[1px] w-full bg-border mt-3" />
                 </CardHeader>
                 <CardContent>
                     <p className="text-sm text-red-500">Veri yüklenirken bir hata oluştu: {error}</p>
@@ -64,13 +65,14 @@ export function UpcomingShipsCard() {
     return (
         <Card className="h-full">
             <CardHeader className="pb-3">
-                <CardTitle className="flex items-center gap-2">
-                    <Ship className="h-5 w-5 text-blue-600" />
-                    <span>Yaklaşan Gemiler</span>
+                <div className="flex items-center space-x-2">
+                    <Ship className="h-5 w-5 text-primary" />
+                    <CardTitle className="text-lg">Yaklaşan Gemiler</CardTitle>
                     <Badge variant="outline" className="ml-auto">
                         {loading ? '...' : upcomingShips.length}
                     </Badge>
-                </CardTitle>
+                </div>
+                <div className="h-[1px] w-full bg-border mt-3" />
             </CardHeader>
             <CardContent>
                 {loading ? (

@@ -17,8 +17,20 @@ export class CustomerController {
   constructor(private readonly customerService: CustomerService) { }
 
   @Get()
-  async findAll(@Query('page', ParseIntPipe) page?: number, @Query('limit', ParseIntPipe) limit?: number, @Query('search') search?: string) {
-    return this.customerService.findAll(page, limit, search);
+  async findAll(
+    @Query('page', ParseIntPipe) page?: number,
+    @Query('limit', ParseIntPipe) limit?: number,
+    @Query('search') search?: string,
+    @Query('sortBy') sortBy?: string,
+    @Query('sortOrder') sortOrder?: 'ASC' | 'DESC'
+  ) {
+    return this.customerService.findAll(page, limit, search, sortBy, sortOrder);
+  }
+
+  @Get('stats')
+  @HttpCode(200)
+  async getStatistics() {
+    return await this.customerService.getCustomerStatistics();
   }
 
   @Get(':id')

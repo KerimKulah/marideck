@@ -33,12 +33,13 @@ import { OperationDetailsModal } from "@/components/operation-details-modal"
 import { MiniLoading } from "@/components/ui/mini-loading"
 import OperationStatsCards from "@/components/operation-stats-card"
 import { OperationRoom } from "@/components/operation-room"
+import { OperationStatus, getOperationStatusTranslation } from "@/lib/operation-status"
 
 export interface Operation {
     id: number
     name: string
     type: string
-    status: 'planlanıyor' | 'devam' | 'tamamlandı' | 'iptal'
+    status: OperationStatus
     startDate: string
     endDate: string
     details: string
@@ -118,7 +119,7 @@ export default function OperationsPage() {
                 const isAssignedToMe = user?.id && operation.users.some((u: any) => u.id === user.id);
                 if (!isAssignedToMe) return false;
             } else if (selectedTab === 'completed') {
-                if (operation.status !== 'tamamlandı') return false;
+                if (operation.status !== OperationStatus.COMPLETED) return false;
             }
 
             return true;
@@ -151,30 +152,31 @@ export default function OperationsPage() {
     }
 
     // Get status badge
-    const getStatusBadge = (status: string) => {
+    const getStatusBadge = (status: OperationStatus) => {
+        const translation = getOperationStatusTranslation(status);
         switch (status) {
-            case 'planlanıyor':
-                return <Badge variant="outline">Planlanıyor</Badge>
-            case 'devam':
-                return <Badge className="bg-blue-500">Devam Ediyor</Badge>
-            case 'tamamlandı':
-                return <Badge className="bg-green-500">Tamamlandı</Badge>
-            case 'iptal':
-                return <Badge variant="destructive">İptal Edildi</Badge>
+            case OperationStatus.PLANNED:
+                return <Badge variant="outline">{translation}</Badge>
+            case OperationStatus.IN_PROGRESS:
+                return <Badge className="bg-blue-500">{translation}</Badge>
+            case OperationStatus.COMPLETED:
+                return <Badge className="bg-green-500">{translation}</Badge>
+            case OperationStatus.CANCELLED:
+                return <Badge variant="destructive">{translation}</Badge>
             default:
-                return <Badge variant="outline">{status}</Badge>
+                return <Badge variant="outline">{translation}</Badge>
         }
     }
 
-    const getStatusVariant = (status: string) => {
+    const getStatusVariant = (status: OperationStatus) => {
         switch (status) {
-            case 'planlanıyor':
+            case OperationStatus.PLANNED:
                 return 'outline';
-            case 'devam':
+            case OperationStatus.IN_PROGRESS:
                 return 'default';
-            case 'tamamlandı':
+            case OperationStatus.COMPLETED:
                 return 'secondary';
-            case 'iptal':
+            case OperationStatus.CANCELLED:
                 return 'destructive';
             default:
                 return 'outline';
@@ -282,7 +284,7 @@ export default function OperationsPage() {
                                     <TableCell>{format(new Date(operation.endDate), 'dd.MM.yyyy')}</TableCell>
                                     <TableCell>
                                         <Badge variant={getStatusVariant(operation.status)}>
-                                            {operation.status}
+                                            {getOperationStatusTranslation(operation.status)}
                                         </Badge>
                                     </TableCell>
                                     <TableCell>

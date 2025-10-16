@@ -57,7 +57,7 @@ enum Status {
     Demirde = "Demirde", // 1
     Gecikmeli = "Gecikmeli", // 2, 3, 4, 6
     Acil = "Acil", // 14
-    Bilinimiyor = "Bilinimiyor" // 15, 9, 10, 13
+    Bilinmiyor = "Bilinmiyor" // 15, 9, 10, 13
 }
 
 const statusColors = {
@@ -67,7 +67,7 @@ const statusColors = {
     [Status.Demirde]: "bg-yellow-100 text-yellow-800",
     [Status.Gecikmeli]: "bg-orange-100 text-orange-800",
     [Status.Acil]: "bg-red-100 text-red-800",
-    [Status.Bilinimiyor]: "bg-gray-200 text-gray-800"
+    [Status.Bilinmiyor]: "bg-gray-200 text-gray-800"
 };
 
 const statusIcons = {
@@ -77,7 +77,7 @@ const statusIcons = {
     [Status.Demirde]: <Circle fill="orange" color="orange" className="h-4 w-4" />,
     [Status.Gecikmeli]: <Circle fill="orange" color="orange" className="h-4 w-4 animate-pulse" />,
     [Status.Acil]: <Circle fill="red" color="red" className="h-4 w-4 animate-pulse" />,
-    [Status.Bilinimiyor]: <Circle fill="black" color="black" className="h-4 w-4" />
+    [Status.Bilinmiyor]: <Circle fill="black" color="black" className="h-4 w-4" />
 };
 
 const formatDate = (dateString: string) => {
@@ -88,7 +88,8 @@ const formatDate = (dateString: string) => {
         year: 'numeric',
         hour: '2-digit',
         minute: '2-digit',
-        hour12: false
+        hour12: false,
+        timeZone: 'Europe/Istanbul' // Türkiye saati
     })
 }
 
@@ -205,19 +206,31 @@ export default function ShipsPage() {
     };
 
     const handleAisShipFound = (shipData: any) => {
-        // Map the AIS data to match your ship model if necessary
+        // Backend controller'daki yapıya göre mapping
+        // ID eklemiyoruz çünkü bu yeni gemi ekleme işlemi
         const mappedShipData = {
+            // id: undefined, // Açıkça ID'yi undefined yapıyoruz
             name: shipData.name,
-            imoNumber: shipData.imo,
-            mmsiNumber: shipData.mmsi,
+            imoNumber: shipData.imoNumber?.toString(),
+            mmsiNumber: shipData.mmsiNumber,
             callSign: shipData.callSign,
             type: shipData.type,
             flag: shipData.flag,
-            // Add other mappings as needed
-            ...shipData
+            length: shipData.length,
+            beam: shipData.beam,
+            grossTonnage: shipData.grossTonnage,
+            deadweight: shipData.deadweight,
+            builtYear: shipData.builtYear,
+            draft: shipData.draft,
+            eta: shipData.eta,
+            etd: shipData.etd,
+            departurePort: shipData.departurePort,
+            destinationPort: shipData.destinationPort,
+            status: shipData.status,
+            notes: `AIS'den otomatik eklenen gemi - ${new Date().toLocaleString('tr-TR')}`
         };
 
-        // Open the AddOrEditModal with the ship data
+        // Open the AddOrEditModal with the ship data (yeni gemi olarak)
         handleOpenShipAddOrEditModal(mappedShipData);
         setIsAisLookupOpen(false);
     };
@@ -230,7 +243,7 @@ export default function ShipsPage() {
                     <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                     <Input
                         type="search"
-                        placeholder="Gemi veya IMO no ile ara..."
+                        placeholder="Gemi adı, IMO veya MMSI no ile ara..."
                         className="w-full pl-9 pr-4 py-2 text-sm sm:text-base"
                         value={searchInput}
                         onChange={(e) => {
@@ -255,7 +268,7 @@ export default function ShipsPage() {
                             e.preventDefault();
                             setIsAisLookupOpen(true);
                         }}>
-                            Otomatik Ekle (Test)
+                            Otomatik Ekle (Beta)
                         </DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
@@ -269,7 +282,7 @@ export default function ShipsPage() {
                             <TableHead>Gemi Adı</TableHead>
                             <TableHead>Tipi</TableHead>
                             <TableHead>Bayrak</TableHead>
-                            <TableHead>ETA / ETD</TableHead>
+                            <TableHead>ETA</TableHead>
                             <TableHead>Durum</TableHead>
                             <TableHead className="w-20">Son Güncelleme</TableHead>
                             <TableHead className="text-center">Konum</TableHead>
@@ -290,8 +303,8 @@ export default function ShipsPage() {
                                 </TableCell>
                             </TableRow>
                         ) : (
-                            ships.map((ship) => (
-                                <TableRow key={ship.id}>
+                            ships.map((ship, index) => (
+                                <TableRow key={ship.id || ship.imoNumber || ship.mmsiNumber || `ship-${index}`}>
                                     {/* IMO / MMSI */}
                                     <TableCell>
                                         <div className="flex flex-col">
@@ -344,9 +357,6 @@ export default function ShipsPage() {
                                         <div className="flex flex-col gap-2">
                                             <div className="flex gap-2">
                                                 <Calendar className="h-4 w-4" /> ETA: {ship.eta ? formatDate(ship.eta) : '-'}
-                                            </div>
-                                            <div className="flex gap-2">
-                                                <Calendar className="h-4 w-4" /> ETD: {ship.etd ? formatDate(ship.etd) : '-'}
                                             </div>
                                         </div>
                                     </TableCell>

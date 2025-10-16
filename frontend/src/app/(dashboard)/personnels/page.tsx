@@ -1,6 +1,6 @@
 "use client"
 
-import { Search, Plus, User, Mail, Phone, MoreHorizontal, Edit, Trash, Eye, UserPlus, ChevronDown, Smartphone } from "lucide-react"
+import { Search, Plus, User, Mail, Phone, MoreHorizontal, Edit, Trash, Eye, UserPlus, ChevronDown, Smartphone, Lock } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -140,7 +140,7 @@ export default function PersonnelsPage() {
         <div className="space-y-2">
             <Alert className="bg-blue-50 border-blue-200">
                 <Info className="h-4 w-4 text-blue-600" />
-                <AlertDescription className="text-blue-700"> 
+                <AlertDescription className="text-blue-700">
                     Bu sayfa Maritime Desk yönetim sistemine erişimi olan personellerin yönetimini sağlar.
                     Sistemde tanımlı personellerin listesini gösterir ve yeni personel ekleme, düzenleme,
                     görüntüleme ve silme işlemlerini gerçekleştirmenize olanak tanır.
@@ -259,6 +259,10 @@ export default function PersonnelsPage() {
                                                     <Edit className="mr-2 h-4 w-4" />
                                                     Düzenle
                                                 </DropdownMenuItem>
+                                                <DropdownMenuItem>
+                                                    <Lock className="mr-2 h-4 w-4" />
+                                                    Şifresini Sıfırla
+                                                </DropdownMenuItem>
                                                 <DropdownMenuItem
                                                     className="text-red-600"
                                                     onClick={() => handleDeleteUser(user.id.toString())}
@@ -266,6 +270,7 @@ export default function PersonnelsPage() {
                                                     <Trash className="mr-2 h-4 w-4" />
                                                     Sil
                                                 </DropdownMenuItem>
+
                                             </DropdownMenuContent>
                                         </DropdownMenu>
                                     </TableCell>
