@@ -1,9 +1,61 @@
+"use client"
+
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Ship as ShipIcon, Flag, Calendar, Circle, CalendarClock, StickyNote, Ruler, Anchor, MapPin, Clock, AlertTriangle, FlagIcon } from "lucide-react";
+import { Ship as ShipIcon, Flag, Calendar, Circle, CalendarClock, StickyNote, Ruler, Anchor, MapPin, Clock, AlertTriangle, FlagIcon, Hash, Radio, Phone, Navigation, Waves, Weight, Calendar as CalendarIcon, MapPin as PortIcon, Compass } from "lucide-react";
 import tr from 'react-phone-input-2/lang/tr.json';
 import ReactCountryFlag from "react-country-flag";
 import { Badge } from "@/components/ui/badge";
+import { useEffect } from "react";
+
+// Custom LordIcon component
+declare global {
+    interface Window {
+        loadAnimation?: any;
+    }
+}
+
+interface LordIconProps {
+    src: string;
+    trigger?: string;
+    delay?: string;
+    colors?: string;
+    style?: React.CSSProperties;
+    className?: string;
+}
+
+const LordIcon: React.FC<LordIconProps> = ({
+    src,
+    trigger = 'loop',
+    delay = '2000',
+    colors = 'primary:#121331,secondary:#0473a3',
+    style = {},
+    className = ''
+}) => {
+    useEffect(() => {
+        if (typeof window !== 'undefined' && window.loadAnimation) {
+            window.loadAnimation();
+        }
+    }, [src]);
+
+    // Create the HTML string for the lord-icon
+    const iconHtml = {
+        __html: `
+                <lord-icon
+                    src="${src}"
+                    trigger="${trigger}"
+                    delay="${delay}"
+                    colors="${colors}"
+                    style="width: 100%; height: 100%; ${Object.entries(style)
+                .map(([key, value]) => `${key}: ${value};`)
+                .join(' ')}"
+                    class="${className}">
+                </lord-icon>
+            `
+    };
+
+    return <div dangerouslySetInnerHTML={iconHtml} />;
+};
 
 enum Status {
     Beklemede = "Beklemede", // 1, 7
@@ -46,6 +98,7 @@ interface ShipDetailsModalProps {
         name?: string;
         type?: string;
         flag?: string;
+        image?: string;
         eta?: Date | string;
         etd?: Date | string;
         departurePort?: string;
@@ -82,6 +135,15 @@ export const ShipDetailsModal = ({ isOpen, onClose, ship }: ShipDetailsModalProp
             hour: '2-digit',
             minute: '2-digit'
         });
+    };
+
+    // Image URL helper - local images için backend URL, external için olduğu gibi kullan
+    const getImageUrl = (imageUrl?: string | null) => {
+        if (!imageUrl) return null;
+        if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+            return imageUrl;
+        }
+        return `http://localhost:3000${imageUrl}`;
     };
 
     const InfoRow = ({ icon: Icon, label, value }: { icon: React.ElementType; label: string; value?: string | number | null }) => (
@@ -121,8 +183,18 @@ export const ShipDetailsModal = ({ isOpen, onClose, ship }: ShipDetailsModalProp
 
                 {/* Gemi Profil Bölümü */}
                 <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 py-4">
-                    <div className="w-16 h-16 sm:w-20 sm:h-20 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0">
-                        <ShipIcon className="h-8 w-8 sm:h-10 sm:w-10 text-primary" />
+                    <div className="w-50 h-30  border flex items-center justify-center flex-shrink-0 overflow-hidden rounded-lg">
+                        {getImageUrl(ship.image) ? (
+                            <img src={getImageUrl(ship.image)!} alt={ship.name || 'Gemi Fotoğrafı'} className="w-50 h-30 object-contain rounded-lg" />
+                        ) : (
+                            <LordIcon
+                                src="https://cdn.lordicon.com/gynikalk.json"
+                                trigger="hover"
+                                delay="2000"
+                                colors="primary:#121331,secondary:#0473a3"
+                                style={{ width: '50px', height: '50px' }}
+                            />
+                        )}
                     </div>
                     <div className="flex-1 text-center sm:text-left min-w-0">
                         <h3 className="text-lg sm:text-xl font-semibold text-foreground break-words">
@@ -148,9 +220,9 @@ export const ShipDetailsModal = ({ isOpen, onClose, ship }: ShipDetailsModalProp
                         </h3>
                         <hr className="my-2" />
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <InfoRow icon={ShipIcon} label="IMO Numarası" value={ship.imoNumber} />
-                            <InfoRow icon={ShipIcon} label="MMSI Numarası" value={ship.mmsiNumber} />
-                            <InfoRow icon={ShipIcon} label="Çağrı İşareti" value={ship.callsign} />
+                            <InfoRow icon={Hash} label="IMO Numarası" value={ship.imoNumber} />
+                            <InfoRow icon={Radio} label="MMSI Numarası" value={ship.mmsiNumber} />
+                            <InfoRow icon={Phone} label="Çağrı İşareti" value={ship.callsign} />
 
                             <div className="flex items-start gap-3 py-2">
                                 <FlagIcon className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground mt-0.5 flex-shrink-0" />
@@ -183,10 +255,10 @@ export const ShipDetailsModal = ({ isOpen, onClose, ship }: ShipDetailsModalProp
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <InfoRow icon={Ruler} label="Uzunluk" value={ship.length ? `${ship.length} m` : undefined} />
                             <InfoRow icon={Ruler} label="Genişlik (Beam)" value={ship.beam ? `${ship.beam} m` : undefined} />
-                            <InfoRow icon={Ruler} label="Su Çekimi (Draft)" value={ship.draft ? `${ship.draft} m` : undefined} />
-                            <InfoRow icon={Anchor} label="Brüt Tonaj" value={ship.grossTonnage ? `${ship.grossTonnage} GT` : undefined} />
-                            <InfoRow icon={Anchor} label="Deadweight" value={ship.deadweight ? `${ship.deadweight} DWT` : undefined} />
-                            <InfoRow icon={Calendar} label="İnşa Yılı" value={ship.builtYear} />
+                            <InfoRow icon={Waves} label="Su Çekimi (Draft)" value={ship.draft ? `${ship.draft} m` : undefined} />
+                            <InfoRow icon={Weight} label="Brüt Tonaj" value={ship.grossTonnage ? `${ship.grossTonnage} GT` : undefined} />
+                            <InfoRow icon={Weight} label="Deadweight" value={ship.deadweight ? `${ship.deadweight} DWT` : undefined} />
+                            <InfoRow icon={CalendarIcon} label="İnşa Yılı" value={ship.builtYear} />
                         </div>
                     </div>
 
@@ -197,10 +269,9 @@ export const ShipDetailsModal = ({ isOpen, onClose, ship }: ShipDetailsModalProp
                         </h3>
                         <hr className="my-2" />
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <InfoRow icon={MapPin} label="Kalkış Limanı" value={ship.departurePort} />
-                            <InfoRow icon={MapPin} label="Varış Limanı" value={ship.destinationPort} />
-                            <InfoRow icon={CalendarClock} label="Tahmini Kalkış (ETD)" value={formatDate(ship.etd)} />
-                            <InfoRow icon={CalendarClock} label="Tahmini Varış (ETA)" value={formatDate(ship.eta)} />
+                            <InfoRow icon={PortIcon} label="Kalkış Limanı" value={ship.departurePort} />
+                            <InfoRow icon={Compass} label="Varış Limanı" value={ship.destinationPort} />
+                            <InfoRow icon={Clock} label="Tahmini Varış (ETA)" value={formatDate(ship.eta)} />
                         </div>
                     </div>
 

@@ -16,6 +16,9 @@ export class ShipDto {
     name?: string;
 
     @IsOptional()
+    image?: string;
+
+    @IsOptional()
     type?: string;
 
     @IsOptional()

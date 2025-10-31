@@ -2,6 +2,9 @@
 
 import React, { useEffect } from 'react';
 import Script from 'next/script';
+import { useDispatch, useSelector } from 'react-redux';
+import { AppDispatch, RootState } from '@/redux/store';
+import { getShipStatistics } from '@/redux/slices/shipSlice';
 
 // Custom LordIcon component
 declare global {
@@ -51,14 +54,13 @@ const LordIcon: React.FC<LordIconProps> = ({
     return <div dangerouslySetInnerHTML={iconHtml} />;
 };
 
-// Örnek data - gerçek uygulamada Redux store'dan gelecek
-const statsData = {
-    totalShips: 247,
-    beklemede: 23,
-    gecikmeli: 12,
-    yolda: 198,
-    demirde: 5,
-};
+const mapStatus = (byStatus?: Record<string, number>) => ({
+    totalShips: undefined as number | undefined,
+    beklemede: byStatus?.['Beklemede'] ?? 0,
+    gecikmeli: byStatus?.['Gecikmeli'] ?? 0,
+    yolda: byStatus?.['Yolda'] ?? 0,
+    demirde: byStatus?.['Demirde'] ?? 0,
+});
 
 const StatCard = ({ title, value, icon, iconType, bgColor, iconColor, trigger, colors, delay = '1000' }: any) => (
     <div className={`rounded-lg border p-3 ${bgColor} transition-shadow`}>
@@ -87,6 +89,15 @@ const StatCard = ({ title, value, icon, iconType, bgColor, iconColor, trigger, c
 );
 
 export default function ShipStatsCards() {
+    const dispatch = useDispatch<AppDispatch>();
+    const { statistics, statisticsLoading } = useSelector((state: RootState) => state.ship);
+
+    useEffect(() => {
+        dispatch(getShipStatistics());
+    }, [dispatch]);
+
+    const stats = mapStatus(statistics?.byStatus);
+    const total = statistics?.totalShips ?? 0;
     return (
         <>
             <Script
@@ -102,7 +113,7 @@ export default function ShipStatsCards() {
                 {/* Toplam Gemi */}
                 <StatCard
                     title="Toplam Gemi"
-                    value={statsData.totalShips}
+                    value={total}
                     icon="https://cdn.lordicon.com/prjriwwv.json"
                     iconType="lordicon"
                     bgColor="bg-white"
@@ -114,7 +125,7 @@ export default function ShipStatsCards() {
                 {/* Beklemede */}
                 <StatCard
                     title="Beklemede"
-                    value={statsData.beklemede}
+                    value={stats.beklemede}
                     icon="https://cdn.lordicon.com/ybkyryaa.json"
                     iconType="lordicon"
                     bgColor="bg-white"
@@ -126,7 +137,7 @@ export default function ShipStatsCards() {
                 {/* Gecikmeli */}
                 <StatCard
                     title="Gecikmeli"
-                    value={statsData.gecikmeli}
+                    value={stats.gecikmeli}
                     icon="https://cdn.lordicon.com/psyssele.json"
                     iconType="lordicon"
                     bgColor="bg-white"
@@ -138,7 +149,7 @@ export default function ShipStatsCards() {
                 {/* Yolda */}
                 <StatCard
                     title="Yolda"
-                    value={statsData.yolda}
+                    value={stats.yolda}
                     icon="https://cdn.lordicon.com/umnbegnd.json"
                     iconType="lordicon"
                     bgColor="bg-white"
@@ -150,7 +161,7 @@ export default function ShipStatsCards() {
                 {/* Demirde */}
                 <StatCard
                     title="Demirde"
-                    value={statsData.demirde}
+                    value={stats.demirde}
                     icon="https://cdn.lordicon.com/chdqxbbu.json"
                     iconType="lordicon"
                     bgColor="bg-white"

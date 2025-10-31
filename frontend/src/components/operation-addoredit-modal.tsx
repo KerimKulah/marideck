@@ -37,7 +37,7 @@ const operationFormSchema = z.object({
     endDate: z.date({
         required_error: "Bitiş tarihi zorunludur",
     }),
-    status: z.nativeEnum(OperationStatus).default(OperationStatus.PLANNED).optional(),
+    status: z.nativeEnum(OperationStatus),
     cargoType: z.string().optional(),
     cargoDetails: z.string().optional(),
 })
@@ -92,7 +92,7 @@ export function OperationAddOrEditModal({
                 userId: userIds,
                 startDate: operation.startDate ? new Date(operation.startDate) : new Date(),
                 endDate: operation.endDate ? new Date(operation.endDate) : new Date(),
-                status: operation.status || "planlanıyor",
+                status: operation.status || OperationStatus.PLANNED,
                 cargoType: operation.cargoType || "",
                 cargoDetails: operation.cargoDetails || "",
             })
@@ -114,7 +114,7 @@ export function OperationAddOrEditModal({
             userId: [],
             startDate: new Date(),
             endDate: new Date(),
-            status: "planlanıyor",
+            status: OperationStatus.PLANNED,
             cargoType: "",
             cargoDetails: "",
         },
@@ -208,7 +208,7 @@ export function OperationAddOrEditModal({
             userId: [],
             startDate: new Date(),
             endDate: new Date(),
-            status: "planlanıyor",
+            status: OperationStatus.PLANNED,
             cargoType: "",
             cargoDetails: "",
         })
@@ -566,7 +566,7 @@ export function OperationAddOrEditModal({
                                 <div className="space-y-4">
                                     <div className="flex items-center gap-2 text-lg font-semibold text-gray-800 pb-2 border-b border-gray-200">
                                         <Users className="h-5 w-5 text-blue-600" />
-                                        Atanan Kullanıcılar
+                                        Atanan Çalışanlar
                                         <span className="text-sm font-normal text-gray-500">
                                             ({selectedUserIds.length} seçili)
                                         </span>

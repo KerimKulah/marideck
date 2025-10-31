@@ -43,8 +43,7 @@ export const useAisShipData = (onDataLoaded: (data: any) => void) => {
         } catch (err) {
             console.error('Error fetching ship data:', err as any);
             const errorMessage = (err as any).message || 'Bilinmeyen bir hata oluştu';
-            setError(`Gemi bilgileri alınamadı: ${errorMessage}`);
-            toast(`Gemi bilgileri alınamadı: ${errorMessage}`);
+            toast(`Gemi bilgileri alınamadı`);
         } finally {
             setIsLoading(false);
         }

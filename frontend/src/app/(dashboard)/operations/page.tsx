@@ -1,6 +1,6 @@
 "use client"
 
-import { Search, Plus, Ship, Users, Clock, AlertCircle, CheckCircle, XCircle, MoreHorizontal, MessageSquare, Package, Info, X, Calendar, Pencil, Filter, User, Mail, Phone, MessageCircle, Anchor } from "lucide-react"
+import { Search, Plus, Ship, Users, Clock, AlertCircle, CheckCircle, XCircle, MoreHorizontal, MessageSquare, Package, Info, X, Calendar, Pencil, Filter, User, Mail, Phone, MessageCircle, Anchor, Briefcase, List } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -20,7 +20,6 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useState, useEffect, useMemo } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useDispatch, useSelector } from "react-redux"
 import { AppDispatch, RootState } from "@/redux/store"
 import { getOperations, getOperation, createOperation, updateOperation } from "@/redux/slices/operationSlice"
@@ -109,6 +108,25 @@ export default function OperationsPage() {
         }))
     }, [searchParams, searchTerm, user, dispatch])
 
+    // Calculate operation counts for each tab
+    const tabCounts = useMemo(() => {
+        if (!operations) return { myOperations: 0, all: 0, completed: 0 };
+
+        const myOperations = operations.filter(op =>
+            user?.id && op.users.some((u: any) => u.id === user.id)
+        ).length;
+
+        const completed = operations.filter(op =>
+            op.status === OperationStatus.COMPLETED
+        ).length;
+
+        return {
+            myOperations,
+            all: operations.length,
+            completed
+        };
+    }, [operations, user?.id]);
+
     // Filter operations based on the selected tab
     const filteredOperations = useMemo(() => {
         if (!operations) return []
@@ -184,8 +202,8 @@ export default function OperationsPage() {
     }
 
     return (
-        <div className="grid space-y-4 overflow-x-auto">
-            {/* <OperationStatsCards /> */}
+        <div className="grid space-y-3 overflow-x-auto">
+            <OperationStatsCards operations={operations} userId={user?.id} />
             {/* Arama ve Yeni Operasyon Ekle Butonu */}
             <div className="flex flex-col sm:flex-row gap-3 sm:items-center justify-between">
                 {/* Arama Inputu */}
@@ -203,18 +221,52 @@ export default function OperationsPage() {
                 {/* Yeni Operasyon Ekle Butonu */}
                 <Button onClick={() => setIsAddModalOpen(true)} className="w-full sm:w-auto">
                     <Plus className="mr-2 h-4 w-4" />
-                    <span>Yeni Operasyon</span>
+                    <span>Operasyon Başlat</span>
                 </Button>
             </div>
 
-
             {/* Main Content */}
-
-            <Tabs value={selectedTab} onValueChange={handleTabChange} className="overflow-x-auto">
-                <TabsList>
-                    <TabsTrigger value="my-operations">Operasyonlarım</TabsTrigger>
-                    <TabsTrigger value="all">Tüm Operasyonlar</TabsTrigger>
-                    <TabsTrigger value="completed">Tamamlanan Operasyonlar</TabsTrigger>
+            <Tabs value={selectedTab} onValueChange={handleTabChange} className="w-full">
+                <TabsList className="grid w-full grid-cols-3 bg-muted/50 p-1.5 h-auto gap-1.5 rounded-xl border">
+                    <TabsTrigger
+                        value="my-operations"
+                        className="flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all duration-200 rounded-lg"
+                    >
+                        <Briefcase className="h-4 w-4" />
+                        <span className="hidden sm:inline">Mevcut Operasyonlarım</span>
+                        <span className="sm:hidden">Mevcut</span>
+                        {tabCounts.myOperations > 0 && (
+                            <Badge variant="secondary" className="ml-1 h-5 min-w-5 px-1.5 text-xs font-semibold">
+                                {tabCounts.myOperations}
+                            </Badge>
+                        )}
+                    </TabsTrigger>
+                    <TabsTrigger
+                        value="all"
+                        className="flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all duration-200 rounded-lg"
+                    >
+                        <List className="h-4 w-4" />
+                        <span className="hidden sm:inline">Tüm Operasyonlar</span>
+                        <span className="sm:hidden">Tümü</span>
+                        {tabCounts.all > 0 && (
+                            <Badge variant="secondary" className="ml-1 h-5 min-w-5 px-1.5 text-xs font-semibold">
+                                {tabCounts.all}
+                            </Badge>
+                        )}
+                    </TabsTrigger>
+                    <TabsTrigger
+                        value="completed"
+                        className="flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all duration-200 rounded-lg"
+                    >
+                        <CheckCircle className="h-4 w-4" />
+                        <span className="hidden sm:inline">Tamamlanan Operasyonlar</span>
+                        <span className="sm:hidden">Tamamlanan</span>
+                        {tabCounts.completed > 0 && (
+                            <Badge variant="secondary" className="ml-1 h-5 min-w-5 px-1.5 text-xs font-semibold">
+                                {tabCounts.completed}
+                            </Badge>
+                        )}
+                    </TabsTrigger>
                 </TabsList>
             </Tabs>
 
@@ -330,8 +382,6 @@ export default function OperationsPage() {
                         )}
                     </TableBody>
                 </Table>
-                {/* </CardContent>
-                </Card> */}
             </div>
 
             {/* Modals */}
@@ -351,28 +401,30 @@ export default function OperationsPage() {
                 }}
             />
 
-            {selectedOperation && (
-                <OperationDetailsModal
-                    open={isDetailsModalOpen}
-                    onOpenChange={setIsDetailsModalOpen}
-                    operation={selectedOperation}
-                    onOperationUpdate={(updatedOperation) => {
-                        // Update the operation in the list
-                        const updatedOperations = operations.map(op =>
-                            op.id === updatedOperation.id ? updatedOperation : op
-                        );
-                        dispatch({
-                            type: 'operation/getOperations/fulfilled',
-                            payload: {
-                                operations: updatedOperations,
-                                totalOperations,
-                                page,
-                                limit
-                            }
-                        });
-                    }}
-                />
-            )}
+            {
+                selectedOperation && (
+                    <OperationDetailsModal
+                        open={isDetailsModalOpen}
+                        onOpenChange={setIsDetailsModalOpen}
+                        operation={selectedOperation}
+                        onOperationUpdate={(updatedOperation) => {
+                            // Update the operation in the list
+                            const updatedOperations = operations.map(op =>
+                                op.id === updatedOperation.id ? updatedOperation : op
+                            );
+                            dispatch({
+                                type: 'operation/getOperations/fulfilled',
+                                payload: {
+                                    operations: updatedOperations,
+                                    totalOperations,
+                                    page,
+                                    limit
+                                }
+                            });
+                        }}
+                    />
+                )
+            }
 
 
             <OperationRoom
@@ -391,6 +443,6 @@ export default function OperationsPage() {
                     }));
                 }}
             />
-        </div>
+        </div >
     )
 }

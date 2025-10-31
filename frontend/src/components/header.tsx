@@ -9,7 +9,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem,
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Skeleton } from "@/components/ui/skeleton"
 import { usePathname } from "next/navigation"
-import { useMemo } from "react"
+import { useMemo, useEffect, useState } from "react"
 import { Logout } from "./logout"
 import { useSelector } from "react-redux"
 import Link from "next/link"
@@ -41,6 +41,28 @@ export function Header() {
     const pathname = usePathname() || ''
     const currentPage = useMemo(() => getCurrentMenuItem(pathname), [pathname])
     const { user, loading } = useSelector((state: RootState) => state.auth)
+    const [now, setNow] = useState<Date | null>(null)
+    const [isMounted, setIsMounted] = useState(false)
+
+    useEffect(() => {
+        setIsMounted(true)
+        setNow(new Date())
+        const id = setInterval(() => setNow(new Date()), 60000)
+        return () => clearInterval(id)
+    }, [])
+
+    const formattedNow = useMemo(() => {
+        if (!now) return ''
+        return now.toLocaleString('tr-TR', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false,
+            timeZone: 'Europe/Istanbul'
+        })
+    }, [now])
 
     return (
         <header className="flex h-16 shrink-0 items-center justify-between border-b px-4">
@@ -63,6 +85,12 @@ export function Header() {
 
             {/* Notifications and User Profile */}
             <div className="flex items-center gap-2">
+                {/* Current Date & Time */}
+                {isMounted && (
+                    <div className="hidden md:flex items-center text-sm text-muted-foreground mr-2">
+                        {formattedNow}
+                    </div>
+                )}
                 {/* Notifications Button */}
                 <Button
                     variant="ghost"

@@ -8,6 +8,7 @@ import { useDispatch, useSelector } from "react-redux"
 import { AppDispatch, RootState } from "@/redux/store"
 import { createShip, updateShip } from "@/redux/slices/shipSlice"
 import { toast } from "sonner"
+import api from "@/api/axios"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -76,6 +77,7 @@ const formSchema = z.object({
     mmsiNumber: z.string().optional(),
     callsign: z.string().optional(),
     name: z.string().nonempty({ message: "Gemi adı gerekli" }),
+    image: z.string().optional(),
     type: z.string().nonempty({ message: "Gemi tipi gerekli" }),
     flag: z.string().optional(),
     eta: z.date().nullable().optional(),
@@ -116,6 +118,7 @@ interface Ship {
     mmsiNumber?: string;
     callsign?: string;
     name?: string;
+    image?: string;
     type?: string;
     flag?: string;
     eta?: Date;
@@ -186,12 +189,27 @@ enum ShipType {
     Diger = "Diğer",                      // 99
 }
 
+// Image URL helper - local images için backend URL, external için olduğu gibi kullan
+const getImageUrl = (imageUrl: string | null | undefined) => {
+    if (!imageUrl) return null;
+
+    // Eğer URL http/https ile başlıyorsa, zaten tam URL
+    if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+        return imageUrl;
+    }
+
+    // Local image ise backend URL'i ekle
+    return `http://localhost:3000${imageUrl}`;
+};
+
 export function ShipAddOrEditModal({ isOpen, onClose, ship, onSuccess }: ShipAddOrEditModalProps) {
     const [isMounted, setIsMounted] = useState(false)
     const [isSubmitting, setIsSubmitting] = useState(false)
     const dispatch = useDispatch<AppDispatch>()
     const { loading, error } = useSelector((state: RootState) => state.ship)
     const [showAdvanced, setShowAdvanced] = useState(false)
+    const [imageFile, setImageFile] = useState<File | null>(null)
+    const [imagePreview, setImagePreview] = useState<string>("")
 
 
     const form = useForm<ShipFormValues>({
@@ -201,6 +219,7 @@ export function ShipAddOrEditModal({ isOpen, onClose, ship, onSuccess }: ShipAdd
             mmsiNumber: "",
             callsign: "",
             name: "",
+            image: "",
             type: "",
             flag: "",
             eta: undefined,
@@ -223,6 +242,16 @@ export function ShipAddOrEditModal({ isOpen, onClose, ship, onSuccess }: ShipAdd
         setIsMounted(true)
     }, [])
 
+    // Image preview'i ship.image'den al
+    useEffect(() => {
+        if (ship?.image) {
+            setImagePreview(ship.image)
+        } else {
+            setImagePreview("")
+        }
+        setImageFile(null)
+    }, [ship?.image])
+
     useEffect(() => {
         if (isOpen) {
             if (ship) {
@@ -243,6 +272,7 @@ export function ShipAddOrEditModal({ isOpen, onClose, ship, onSuccess }: ShipAdd
                     mmsiNumber: ship.mmsiNumber || "",
                     callsign: ship.callsign || "",
                     name: ship.name || "",
+                    image: ship.image || "",
                     type: getShipTypeValue(ship.type) || "Bilinmiyor",
                     flag: ship.flag || "",
                     eta: ship.eta ? new Date(ship.eta) : null,
@@ -259,12 +289,18 @@ export function ShipAddOrEditModal({ isOpen, onClose, ship, onSuccess }: ShipAdd
                     beam: ship.beam || undefined,
                     notes: ship.notes || "",
                 })
+                // AIS'den gelen image'i preview'e set et
+                if (ship.image) {
+                    const imageUrl = getImageUrl(ship.image);
+                    setImagePreview(imageUrl || "")
+                }
             } else {
                 form.reset({
                     imoNumber: "",
                     mmsiNumber: "",
                     callsign: "",
                     name: "",
+                    image: "",
                     type: "",
                     flag: "",
                     eta: null,
@@ -281,13 +317,29 @@ export function ShipAddOrEditModal({ isOpen, onClose, ship, onSuccess }: ShipAdd
                     beam: undefined,
                     notes: "",
                 })
+                setImagePreview("")
+                setImageFile(null)
             }
         }
     }, [ship, form, isOpen])
 
     const handleClose = () => {
         form.reset()
+        setImageFile(null)
+        setImagePreview("")
         onClose()
+    }
+
+    const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0]
+        if (file) {
+            setImageFile(file)
+            const reader = new FileReader()
+            reader.onloadend = () => {
+                setImagePreview(reader.result as string)
+            }
+            reader.readAsDataURL(file)
+        }
     }
 
     const onSubmit = async (values: ShipFormValues) => {
@@ -295,9 +347,34 @@ export function ShipAddOrEditModal({ isOpen, onClose, ship, onSuccess }: ShipAdd
 
         setIsSubmitting(true);
         try {
+            let imageUrl = ship?.image || imagePreview || values.image || null;
+
+            // Eğer yeni bir dosya seçildiyse, upload et
+            if (imageFile) {
+                try {
+                    const formData = new FormData();
+                    formData.append('image', imageFile);
+
+                    const uploadResponse = await api.post('/ship/upload-image', formData, {
+                        headers: {
+                            'Content-Type': 'multipart/form-data',
+                        }
+                    });
+
+                    if (uploadResponse.data?.imageUrl) {
+                        // Backend'den relative path geliyor (/images/ships/...), bunu direkt kullan
+                        imageUrl = uploadResponse.data.imageUrl;
+                    }
+                } catch (uploadError: any) {
+                    console.error('Upload error:', uploadError);
+                    // Hata olsa bile devam et, external URL kullanılabilir
+                }
+            }
+
             // Format dates to ISO strings in UTC
             const formattedValues = {
                 ...values,
+                image: imageUrl,
                 eta: values.eta ? new Date(values.eta.getTime() - (values.eta.getTimezoneOffset() * 60000)).toISOString() : null,
                 etd: values.etd ? new Date(values.etd.getTime() - (values.etd.getTimezoneOffset() * 60000)).toISOString() : null
             };
@@ -325,6 +402,8 @@ export function ShipAddOrEditModal({ isOpen, onClose, ship, onSuccess }: ShipAdd
             }
 
             form.reset()
+            setImageFile(null)
+            setImagePreview("")
             if (onSuccess) onSuccess()
             onClose()
         } catch (error: any) {
@@ -343,14 +422,28 @@ export function ShipAddOrEditModal({ isOpen, onClose, ship, onSuccess }: ShipAdd
                 <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
                     <DialogHeader>
                         <div className="flex flex-col items-center justify-center space-y-2">
-                            <div className="border rounded-full p-4">
-                                <LordIcon
-                                    src="https://cdn.lordicon.com/gynikalk.json"
-                                    trigger="hover"
-                                    delay="2000"
-                                    colors="primary:#000000,secondary:#000000"
-                                    style={{ width: '100px', height: '100px' }}
+                            {/* Image Upload Area */}
+                            <div className="relative">
+                                <input
+                                    type="file"
+                                    id="ship-image-upload"
+                                    accept="image/*"
+                                    onChange={handleImageChange}
+                                    className="hidden"
                                 />
+                                <label
+                                    htmlFor="ship-image-upload"
+                                    className="cursor-pointer flex flex-col items-center justify-center w-32 h-32 border-2 border-dashed border-gray-300 rounded-lg hover:border-gray-400 transition-colors"
+                                >
+                                    {imagePreview ? (
+                                        <img src={imagePreview} alt="Gemi Önizleme" className="w-full h-full object-cover rounded-lg" />
+                                    ) : (
+                                        <div className="flex flex-col items-center justify-center text-gray-400">
+                                            <Ship className="h-12 w-12 mb-2" />
+                                            <span className="text-xs">Fotoğraf Ekle</span>
+                                        </div>
+                                    )}
+                                </label>
                             </div>
                             <DialogTitle className="text-center">
                                 {ship && ship.id ? 'Gemi Bilgilerini Düzenle' : 'Yeni Gemi Ekle'}
@@ -464,28 +557,6 @@ export function ShipAddOrEditModal({ isOpen, onClose, ship, onSuccess }: ShipAdd
                                         </FormItem>
                                     )}
                                 />
-
-                                <FormField
-                                    control={form.control}
-                                    name="etd"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel className="flex items-center gap-2">
-                                                <Calendar className="h-4 w-4 text-muted-foreground" />
-                                                ETD (Tahmini Kalkış)
-                                            </FormLabel>
-                                            <FormControl>
-                                                <DateTimePicker
-                                                    value={field.value}
-                                                    onChange={field.onChange}
-                                                    placeholder="Tarih ve saat seçin"
-                                                />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-
 
                                 <FormField
                                     control={form.control}

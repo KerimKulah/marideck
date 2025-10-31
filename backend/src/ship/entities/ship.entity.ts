@@ -17,6 +17,9 @@ export class Ship {
     @Column({ nullable: true })
     name?: string;
 
+    @Column({ nullable: true, type: 'text' })
+    image?: string; // Gemi fotoğrafı URL
+
     @Column({ nullable: true })
     type?: string;
 

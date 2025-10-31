@@ -123,7 +123,7 @@ export const CustomerDetailsModal = ({ isOpen, onClose, customer }: CustomerDeta
 
                 {/* Profil Bölümü */}
                 <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 py-4">
-                    <div className="w-12 h-12 sm:w-18 sm:h-18 border rounded-full flex items-center justify-center flex-shrink-0">
+                    <div className="w-18 h-18 border rounded-full flex items-center justify-center flex-shrink-0">
                         <LordIcon
                             src="https://cdn.lordicon.com/kdduutaw.json"
                             trigger="hover"

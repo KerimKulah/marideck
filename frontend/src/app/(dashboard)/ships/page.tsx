@@ -1,6 +1,6 @@
 "use client"
 
-import { Search, Plus, MoreHorizontal, Ship, Clock, Anchor, LocationEditIcon, Locate, MapPin, MapPinned, Circle, Edit, Trash, AlertTriangle, ChevronDown, ShipIcon, Calendar, MapPinnedIcon, X, Eye, Copy, Filter } from "lucide-react"
+import { Search, Plus, MoreHorizontal, Ship, Clock, Anchor, LocationEditIcon, Locate, MapPin, MapPinned, Circle, Edit, Trash, AlertTriangle, ChevronDown, ShipIcon, Calendar, MapPinnedIcon, X, Eye, Copy, Filter, ArrowUpDown, ArrowUp, ArrowDown, ShipWheel } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -12,7 +12,7 @@ import ShipStatsCards from '@/components/ship-stats-cards';
 import { ShipAddOrEditModal } from "@/components/ship-addoredit-modal"
 import { useSelector, useDispatch } from "react-redux"
 import { RootState, AppDispatch } from "@/redux/store"
-import { getShips, setPage, setLimit, setSearchQuery, deleteShip, removeShipOptimistic, clearError } from "@/redux/slices/shipSlice"
+import { getShips, setPage, setLimit, setSearchQuery, deleteShip, removeShipOptimistic, clearError, setSortBy, setSortOrder } from "@/redux/slices/shipSlice"
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination"
 import { MiniLoading } from "@/components/ui/mini-loading"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
@@ -98,9 +98,32 @@ const copyToClipboard = (text: string) => {
     toast.success("Panoya kopyalandı");
 };
 
+// Image URL helper - local images için backend URL, external için olduğu gibi kullan
+const getImageUrl = (imageUrl: string | null | undefined) => {
+    if (!imageUrl) return null;
+
+    // Eğer URL http/https ile başlıyorsa, zaten tam URL
+    if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+        return imageUrl;
+    }
+
+    // Local image ise backend URL'i ekle
+    return `http://localhost:3000${imageUrl}`;
+};
+
+// Sort icon helper (customers sayfasındaki gibi davranış)
+const getEtaSortIcon = (active: boolean, order: 'ASC' | 'DESC') => {
+    if (!active) {
+        return <ArrowUpDown className="h-4 w-4 text-muted-foreground" />;
+    }
+    return order === 'ASC'
+        ? <ArrowUp className="h-4 w-4 text-blue-600" />
+        : <ArrowDown className="h-4 w-4 text-blue-600" />;
+};
+
 export default function ShipsPage() {
     const dispatch = useDispatch<AppDispatch>();
-    const { ships, loading, error, page, limit, totalPages, searchQuery, totalShips } = useSelector((state: RootState) => state.ship);
+    const { ships, loading, error, page, limit, totalPages, searchQuery, totalShips, sortBy, sortOrder } = useSelector((state: RootState) => state.ship);
     const [searchInput, setSearchInput] = useState(searchQuery);
     const [selectedShip, setSelectedShip] = useState<any | null>(null);
     const [vesselLocationModal, setVesselLocationModal] = useState<{
@@ -130,8 +153,8 @@ export default function ShipsPage() {
     };
 
     useEffect(() => {
-        dispatch(getShips({ page, limit, search: searchQuery }));
-    }, [dispatch, page, limit, searchQuery]);
+        dispatch(getShips({ page, limit, search: searchQuery, sortBy, sortOrder }));
+    }, [dispatch, page, limit, searchQuery, sortBy, sortOrder]);
 
     useEffect(() => {
         if (error) {
@@ -213,12 +236,13 @@ export default function ShipsPage() {
             name: shipData.name,
             imoNumber: shipData.imoNumber?.toString(),
             mmsiNumber: shipData.mmsiNumber,
-            callSign: shipData.callSign,
+            callsign: shipData.callsign,
             type: shipData.type,
             flag: shipData.flag,
             length: shipData.length,
             beam: shipData.beam,
             grossTonnage: shipData.grossTonnage,
+            netTonnage: shipData.netTonnage,
             deadweight: shipData.deadweight,
             builtYear: shipData.builtYear,
             draft: shipData.draft,
@@ -227,6 +251,7 @@ export default function ShipsPage() {
             departurePort: shipData.departurePort,
             destinationPort: shipData.destinationPort,
             status: shipData.status,
+            image: shipData.image,
             notes: `AIS'den otomatik eklenen gemi - ${new Date().toLocaleString('tr-TR')}`
         };
 
@@ -268,7 +293,7 @@ export default function ShipsPage() {
                             e.preventDefault();
                             setIsAisLookupOpen(true);
                         }}>
-                            Otomatik Ekle (Beta)
+                            Otomatik Ekle
                         </DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
@@ -278,11 +303,28 @@ export default function ShipsPage() {
                 <Table>
                     <TableHeader>
                         <TableRow>
+                            <TableHead>Fotoğraf</TableHead>
                             <TableHead>IMO / MMSI</TableHead>
                             <TableHead>Gemi Adı</TableHead>
                             <TableHead>Tipi</TableHead>
                             <TableHead>Bayrak</TableHead>
-                            <TableHead>ETA</TableHead>
+                            <TableHead>
+                                <Button
+                                    variant="ghost"
+                                    onClick={() => {
+                                        if (sortBy === 'eta') {
+                                            dispatch(setSortOrder(sortOrder === 'ASC' ? 'DESC' : 'ASC'))
+                                        } else {
+                                            dispatch(setSortBy('eta'))
+                                            dispatch(setSortOrder('ASC'))
+                                        }
+                                    }}
+                                    className="h-auto -ml-3 font-semibold hover:bg-transparent flex items-center"
+                                >
+                                    <span>ETA</span>
+                                    <span className="ml-1">{getEtaSortIcon(sortBy === 'eta', sortOrder)}</span>
+                                </Button>
+                            </TableHead>
                             <TableHead>Durum</TableHead>
                             <TableHead className="w-20">Son Güncelleme</TableHead>
                             <TableHead className="text-center">Konum</TableHead>
@@ -292,19 +334,31 @@ export default function ShipsPage() {
                     <TableBody>
                         {loading ? (
                             <TableRow>
-                                <TableCell colSpan={9} className="h-24 text-center">
+                                <TableCell colSpan={10} className="h-24 text-center">
                                     <MiniLoading />
                                 </TableCell>
                             </TableRow>
                         ) : ships?.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
+                                <TableCell colSpan={10} className="text-center py-8 text-muted-foreground">
                                     Henüz gemi kaydı bulunmuyor.
                                 </TableCell>
                             </TableRow>
                         ) : (
                             ships.map((ship, index) => (
                                 <TableRow key={ship.id || ship.imoNumber || ship.mmsiNumber || `ship-${index}`}>
+                                    {/* Fotoğraf */}
+                                    <TableCell className="py-4">
+                                        <div className="flex items-center justify-center">
+                                            {getImageUrl(ship.image) ? (
+                                                <img src={getImageUrl(ship.image)!} alt={ship.name} className="h-24 w-32 rounded-lg object-cover shadow-sm" />
+                                            ) : (
+                                                <div className="h-24 w-32 rounded-lg bg-muted flex items-center justify-center">
+                                                    <Ship className="h-12 w-12 text-muted-foreground" />
+                                                </div>
+                                            )}
+                                        </div>
+                                    </TableCell>
                                     {/* IMO / MMSI */}
                                     <TableCell>
                                         <div className="flex flex-col">
@@ -347,7 +401,11 @@ export default function ShipsPage() {
                                         </div>
                                     </TableCell>
                                     {/* gemi tipi */}
-                                    <TableCell>{ship.type}</TableCell>
+                                    <TableCell>
+                                        <div className="flex items-center gap-2">
+                                            <ShipWheel className="h-4 w-4" /> {ship.type}
+                                        </div>
+                                    </TableCell>
                                     {/* bayrak */}
                                     <TableCell>
                                         <CountryCell countryCode={ship.flag} />
@@ -394,7 +452,7 @@ export default function ShipsPage() {
                                             <DropdownMenuContent>
                                                 <DropdownMenuItem onClick={() => handleOpenShipDetailsModal(ship)}><Eye className="mr-2 h-4 w-4" />Detayları Göster</DropdownMenuItem>
                                                 <DropdownMenuItem onClick={() => handleOpenShipAddOrEditModal(ship)}><Edit className="mr-2 h-4 w-4" />Bilgileri El ile Güncelle</DropdownMenuItem>
-                                                <DropdownMenuItem onClick={() => handleDeleteShip(ship.id)} className="text-red-600 focus:text-red-600"><X color="red" className="mr-2 h-4 w-4" />Gemiyi Takipten Çıkart</DropdownMenuItem>
+                                                <DropdownMenuItem onClick={() => handleDeleteShip(ship.id)} className="text-red-600 focus:text-red-600"><X color="red" className="mr-2 h-4 w-4" />Gemiyi Sil</DropdownMenuItem>
                                             </DropdownMenuContent>
                                         </DropdownMenu>
                                     </TableCell>

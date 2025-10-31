@@ -52,7 +52,7 @@ export class ShipService {
 
 
   // GET ALL
-  async findAll(page?: number, limit?: number, search?: string): Promise<{
+  async findAll(page?: number, limit?: number, search?: string, sortBy?: string, sortOrder?: 'ASC' | 'DESC'): Promise<{
     ships: Ship[]; shipsCount: number; page?: number; limit?: number; totalPages?: number;
   }> {
     const queryBuilder = this.shipRepository.createQueryBuilder('ship');
@@ -67,7 +67,17 @@ export class ShipService {
       );
     }
 
-    queryBuilder.orderBy('ship.createdAt', 'DESC');
+    // Sorting
+    const allowedSortFields: Record<string, string> = {
+      createdAt: 'ship.createdAt',
+      updatedAt: 'ship.updatedAt',
+      eta: 'ship.eta',
+      name: 'ship.name',
+    };
+    const orderField = sortBy && allowedSortFields[sortBy] ? allowedSortFields[sortBy] : 'ship.createdAt';
+    const orderDirection: 'ASC' | 'DESC' = sortOrder === 'ASC' || sortOrder === 'DESC' ? sortOrder : 'DESC';
+
+    queryBuilder.orderBy(orderField, orderDirection);
 
     // Eğer hem page hem limit varsa, skip ve take uygula
     if (page != null && limit != null) {
@@ -121,5 +131,32 @@ export class ShipService {
     if (!ship) throw new NotFoundException('Ship not found');
     await this.shipRepository.restore(ship.id);
     return { message: 'Ship restored successfully' };
+  }
+
+  // STATS: counts by status
+  async getStatusStats(): Promise<{
+    totalShips: number;
+    byStatus: Record<string, number>;
+  }> {
+    const totalShips = await this.shipRepository.count();
+
+    const rows = await this.shipRepository.createQueryBuilder('ship')
+      .select('ship.status', 'status')
+      .addSelect('COUNT(*)', 'count')
+      .groupBy('ship.status')
+      .getRawMany<{ status: string | null, count: string }>();
+
+    const byStatus: Record<string, number> = {};
+    for (const r of rows) {
+      const key = r.status ?? 'Bilinmiyor';
+      byStatus[key] = parseInt(r.count, 10) || 0;
+    }
+
+    // Ensure standard keys exist even if zero
+    for (const k of ['Beklemede','Yolda','Demirde','Gecikmeli','Acil','Bilinmiyor','Limanda']) {
+      if (byStatus[k] == null) byStatus[k] = 0;
+    }
+
+    return { totalShips, byStatus };
   }
 }

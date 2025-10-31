@@ -148,13 +148,6 @@ const VesselLocationModal: React.FC<VesselLocationModalProps> = ({
 
                     {/* Action Buttons */}
                     <div className="flex justify-end gap-3 pt-4">
-                        <Button
-                            variant="outline"
-                            onClick={() => window.open(`https://www.vesselfinder.com/vessels/details/${vessel.imo}`, '_blank')}
-                        >
-                            <ExternalLink className="h-4 w-4 mr-2" />
-                            VesselFinder'da Aç
-                        </Button>
                         <Button variant="default" onClick={onClose}>
                             Kapat
                         </Button>

@@ -5,15 +5,19 @@ interface GetShipsParams {
     page?: number;
     limit?: number;
     search?: string;
+    sortBy?: string;
+    sortOrder?: 'ASC' | 'DESC';
 }
 
 // GET SHIPS WITH PAGINATION AND SEARCH
-export const getShips = createAsyncThunk("ship/getShips", async ({ page, limit, search }: GetShipsParams, { rejectWithValue }) => {
+export const getShips = createAsyncThunk("ship/getShips", async ({ page, limit, search, sortBy, sortOrder }: GetShipsParams, { rejectWithValue }) => {
     try {
         const params = new URLSearchParams();
         if (page) params.append('page', page.toString());
         if (limit) params.append('limit', limit.toString());
         if (search) params.append('search', search);
+        if (sortBy) params.append('sortBy', sortBy);
+        if (sortOrder) params.append('sortOrder', sortOrder);
 
         const response = await api.get(`/ship?${params.toString()}`);
         return response.data; // { ships, shipsCount, page, limit, totalPages }
@@ -21,6 +25,19 @@ export const getShips = createAsyncThunk("ship/getShips", async ({ page, limit, 
         return rejectWithValue(error.response?.data || { message: "An error occurred while fetching ships" });
     }
 }
+)
+
+// GET SHIP STATISTICS
+export const getShipStatistics = createAsyncThunk(
+    'ship/getShipStatistics',
+    async (_, { rejectWithValue }) => {
+        try {
+            const response = await api.get('/ship/stats');
+            return response.data as { totalShips: number; byStatus: Record<string, number> };
+        } catch (error: any) {
+            return rejectWithValue(error.response?.data || { message: 'An error occurred while fetching ship statistics' });
+        }
+    }
 )
 
 // CREATE SHIP
@@ -74,9 +91,16 @@ interface ShipState {
     totalShips: number;
     totalPages: number;
     searchQuery: string;
+    sortBy: string;
+    sortOrder: 'ASC' | 'DESC';
     createLoading: boolean;
     updateLoading: boolean;
     deleteLoading: boolean;
+    statistics: {
+        totalShips: number;
+        byStatus: Record<string, number>;
+    } | null;
+    statisticsLoading: boolean;
 }
 
 const initialState: ShipState = {
@@ -89,9 +113,13 @@ const initialState: ShipState = {
     totalShips: 0,
     totalPages: 1,
     searchQuery: '',
+    sortBy: 'createdAt',
+    sortOrder: 'DESC',
     createLoading: false,
     updateLoading: false,
     deleteLoading: false,
+    statistics: null,
+    statisticsLoading: false,
 }
 
 export const shipSlice = createSlice({
@@ -110,6 +138,14 @@ export const shipSlice = createSlice({
         },
         setSearchQuery: (state, action: PayloadAction<string>) => {
             state.searchQuery = action.payload;
+            state.page = 1;
+        },
+        setSortBy: (state, action: PayloadAction<string>) => {
+            state.sortBy = action.payload;
+            state.page = 1;
+        },
+        setSortOrder: (state, action: PayloadAction<'ASC' | 'DESC'>) => {
+            state.sortOrder = action.payload;
             state.page = 1;
         },
         resetShipState: () => initialState,
@@ -224,11 +260,23 @@ export const shipSlice = createSlice({
             state.deleteLoading = false;
             state.error = (action.payload as any)?.message || "Bilinmeyen hata";
         })
+
+        // GET SHIP STATISTICS
+        builder.addCase(getShipStatistics.pending, (state) => {
+            state.statisticsLoading = true;
+        })
+        builder.addCase(getShipStatistics.fulfilled, (state, action) => {
+            state.statisticsLoading = false;
+            state.statistics = action.payload;
+        })
+        builder.addCase(getShipStatistics.rejected, (state) => {
+            state.statisticsLoading = false;
+        })
     }
 });
 
 export default shipSlice.reducer;
-export const { clearError, setPage, setLimit, setSearchQuery, resetShipState, addShipOptimistic, updateShipOptimistic, removeShipOptimistic } = shipSlice.actions;
+export const { clearError, setPage, setLimit, setSearchQuery, setSortBy, setSortOrder, resetShipState, addShipOptimistic, updateShipOptimistic, removeShipOptimistic } = shipSlice.actions;
 
 
 

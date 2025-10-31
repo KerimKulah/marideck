@@ -1,4 +1,7 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, ParseIntPipe, HttpCode, UseFilters, UseGuards, Query, HttpException } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, ParseIntPipe, HttpCode, UseFilters, UseGuards, Query, HttpException, UseInterceptors, UploadedFile } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
+import { extname } from 'path';
 import { ShipService } from './ship.service';
 import { ShipDto } from './dto/ship.dto';
 import { ExceptionFilterImp } from '../filters/exception-filter';
@@ -23,8 +26,20 @@ export class ShipController {
 
   @Get()
   @HttpCode(200)
-  async findAll(@Query('page', ParseIntPipe) page?: number, @Query('limit', ParseIntPipe) limit?: number, @Query('search') search?: string) {
-    return this.shipService.findAll(page, limit, search);
+  async findAll(
+    @Query('page', ParseIntPipe) page?: number,
+    @Query('limit', ParseIntPipe) limit?: number,
+    @Query('search') search?: string,
+    @Query('sortBy') sortBy?: string,
+    @Query('sortOrder') sortOrder?: 'ASC' | 'DESC',
+  ) {
+    return this.shipService.findAll(page, limit, search, sortBy, sortOrder);
+  }
+
+  @Get('stats')
+  @HttpCode(200)
+  async getStats() {
+    return this.shipService.getStatusStats();
   }
 
   @Get(':id')
@@ -51,14 +66,68 @@ export class ShipController {
     return await this.shipService.restore(id);
   }
 
+  @Post('upload-image')
+  @HttpCode(200)
+  @UseInterceptors(FileInterceptor('image', {
+    storage: diskStorage({
+      destination: './public/images/ships',
+      filename: (req, file, callback) => {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        const ext = extname(file.originalname);
+        callback(null, `ship-${uniqueSuffix}${ext}`);
+      }
+    }),
+    fileFilter: (req, file, callback) => {
+      if (!file.mimetype.match(/\/(jpg|jpeg|png|gif|webp)$/)) {
+        return callback(new HttpException('Sadece resim dosyaları yüklenebilir!', 400), false);
+      }
+      callback(null, true);
+    },
+    limits: { fileSize: 5 * 1024 * 1024 } // 5MB limit
+  }))
+  async uploadImage(@UploadedFile() file: Express.Multer.File): Promise<{ imageUrl: string }> {
+    if (!file) {
+      throw new HttpException('Dosya yüklenemedi', 400);
+    }
+    // URL'i döndür (frontend'den erişilebilir)
+    const imageUrl = `/images/ships/${file.filename}`;
+    return { imageUrl };
+  }
+
+  @Get('proxy-image')
+  @HttpCode(200)
+  async proxyImage(@Query('url') url: string) {
+    if (!url) {
+      throw new HttpException('URL parametresi gerekli', 400);
+    }
+
+    try {
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new HttpException('Resim yüklenemedi', 400);
+      }
+
+      const buffer = await response.arrayBuffer();
+      const contentType = response.headers.get('content-type') || 'image/jpeg';
+
+      return {
+        data: Buffer.from(buffer).toString('base64'),
+        contentType
+      };
+    } catch (error) {
+      throw new HttpException('Resim proxy hatası', 500);
+    }
+  }
+
   ////////////////////////////// AIS ////////////////////////////  
   @Get('ais/mmsi/:mmsi')
   async getAisShip(@Param('mmsi') mmsi: string) {
     const clickUrl = `${process.env.AIS_API_URL}/click/${mmsi}`;
     const vi2Url = `${process.env.AIS_API_URL}/vi2/${mmsi}`;
 
+
     try {
-      // İki isteği paralel yap
+      // İlk olarak CLICK ve VI2 isteklerini paralel yap
       const [clickRes, vi2Res] = await Promise.allSettled([
         fetch(clickUrl),
         fetch(vi2Url),
@@ -73,6 +142,21 @@ export class ShipController {
         ? await vi2Res.value.json()
         : null;
 
+      // IMO numarası varsa ShipNext API'den netTonnage, callSign ve image bilgilerini al
+      let shipNextData: { data?: { rt?: { nt?: number }; callSign?: string; images?: Array<{ url?: string }> } } | null = null;
+      if (clickData.imo) {
+        const shipNextUrl = `https://shipnext.com/api/v2/fleet/public/${clickData.imo}`;
+        try {
+          const shipNextRes = await fetch(shipNextUrl);
+          if (shipNextRes.ok) {
+            shipNextData = await shipNextRes.json();
+          }
+        } catch (error) {
+          // ShipNext API hatası durumunda devam et
+          console.warn('ShipNext API hatası:', error);
+        }
+      }
+
       const shipDto = {
         // CLICK verileri
         name: clickData.name ?? null,
@@ -86,6 +170,11 @@ export class ShipController {
         deadweight: clickData.dw ?? null,
         builtYear: clickData.yt || clickData.y || null,
         draft: clickData.draught ?? null,
+
+        // SHPNXT verileri
+        netTonnage: shipNextData?.data?.rt?.nt ?? null,
+        callsign: shipNextData?.data?.callSign ?? null,
+        image: shipNextData?.data?.images?.[0]?.url ?? null,
 
         // VI2 + CLICK birleşimi (rota bilgileri)
         departurePort: vi2Data?.rpdna ?? null,
