@@ -15,6 +15,7 @@ export class OperationService {
 
     async findAll(page?: number, limit?: number, search?: string) {
         const queryBuilder = this.operationRepository.createQueryBuilder('operation')
+            .withDeleted() // Customer ve Ship  soft delete olsa bile verileri getirsin
             .leftJoinAndSelect('operation.customer', 'customer')
             .leftJoinAndSelect('operation.ship', 'ship')
             .leftJoinAndSelect('operation.users', 'user')
@@ -57,7 +58,11 @@ export class OperationService {
     }
 
     async findOne(id: number): Promise<Operation> {
-        const operation = await this.operationRepository.findOne({ where: { id }, relations: ['operationLogs', 'operationLogs.createdBy', 'customer', 'ship', 'users'] });
+        const operation = await this.operationRepository.findOne({
+            where: { id },
+            relations: ['operationLogs', 'operationLogs.createdBy', 'customer', 'ship', 'users'],
+            withDeleted: true // Customer ve Ship için soft delete olsa bile verileri getirsin
+        });
         if (!operation) throw new NotFoundException('Operation not found');
         return operation;
     }

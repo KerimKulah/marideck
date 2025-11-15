@@ -159,7 +159,7 @@ export function WeatherWidget() {
                     <p>Hava durumu bilgisi alınamadı.</p>
                     <button
                         onClick={() => fetchWeather()}
-                        className="mt-4 bg-white/30 hover:bg-white/40 transition-colors duration-200 rounded-lg px-4 py-2"
+                        className="mt-4 bg-white/30 hover:bg-white/40 transition-colors duration-200 rounded-lg px-4 py-2 cursor-pointer"
                     >
                         Tekrar Dene
                     </button>

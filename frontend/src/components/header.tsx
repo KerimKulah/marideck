@@ -23,6 +23,11 @@ const getCurrentMenuItem = (pathname: string) => {
         { title: "Operasyonlar", path: "/operations" },
         { title: "Belgeler", path: "/documents" },
         { title: "Finans", path: "/finance" },
+        { title: "Görevler", path: "/tasks" },
+        { title: "Ekip", path: "/personnels" },
+        { title: "Takvim", path: "/calendar" },
+        { title: "Limanlar", path: "/ports" },
+        { title: "İnsan Kaynakları", path: "/human-resources" },
     ]
 
     // Find exact match first
@@ -95,7 +100,7 @@ export function Header() {
                 <Button
                     variant="ghost"
                     size="icon"
-                    className="relative rounded-full h-9 w-9 hover:bg-gray-100"
+                    className="relative rounded-full h-9 w-9 hover:bg-gray-100 cursor-pointer"
                     aria-label="Bildirimler"
                 >
                     <Bell className="h-4 w-4" />
@@ -117,7 +122,7 @@ export function Header() {
                     user ? (
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" className="h-9 px-2 gap-2 hover:bg-gray-100">
+                                <Button variant="ghost" className="h-9 px-2 gap-2 hover:bg-gray-100 cursor-pointer">
                                     <Avatar className="h-8 w-8">
                                         <AvatarImage crossOrigin="anonymous" src={`http://localhost:3000/${user.photo}`} alt="Profile-Photo" />
                                         <AvatarFallback className="rounded-lg">

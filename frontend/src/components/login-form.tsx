@@ -60,11 +60,12 @@ export function LoginForm({ className, ...props }: React.ComponentProps<"div">) 
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card>
         <CardHeader className="text-center space-y-4">
-          <div className="flex justify-center">
+          {/* Logo - Only visible on mobile/tablet (when hero section is hidden) */}
+          <div className="flex justify-center lg:hidden mb-4">
             <img className="h-16 w-auto" src="/kmaritime-logo.png" alt="MaritimeDesk Logo" />
           </div>
           <div className="space-y-2">
-            <CardTitle>Maritime Desk Yönetim Sistemine Hoşgeldiniz</CardTitle>
+            <CardTitle>Maritime Desk'e Hoş Geldiniz!</CardTitle>
             <CardDescription>Lütfen email adresinizi ve şifrenizi girin.</CardDescription>
           </div>
         </CardHeader>

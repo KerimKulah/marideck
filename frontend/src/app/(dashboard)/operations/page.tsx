@@ -113,7 +113,7 @@ export default function OperationsPage() {
         if (!operations) return { myOperations: 0, all: 0, completed: 0 };
 
         const myOperations = operations.filter(op =>
-            user?.id && op.users.some((u: any) => u.id === user.id)
+            user?.id && op.users?.some((u: any) => u.id === user.id)
         ).length;
 
         const completed = operations.filter(op =>
@@ -134,7 +134,7 @@ export default function OperationsPage() {
         return operations.filter(operation => {
             // Filter by tab
             if (selectedTab === 'my-operations') {
-                const isAssignedToMe = user?.id && operation.users.some((u: any) => u.id === user.id);
+                const isAssignedToMe = user?.id && operation.users?.some((u: any) => u.id === user.id);
                 if (!isAssignedToMe) return false;
             } else if (selectedTab === 'completed') {
                 if (operation.status !== OperationStatus.COMPLETED) return false;
@@ -221,7 +221,7 @@ export default function OperationsPage() {
                 {/* Yeni Operasyon Ekle Butonu */}
                 <Button onClick={() => setIsAddModalOpen(true)} className="w-full sm:w-auto">
                     <Plus className="mr-2 h-4 w-4" />
-                    <span>Operasyon Başlat</span>
+                    <span>Operasyon Ekle</span>
                 </Button>
             </div>
 

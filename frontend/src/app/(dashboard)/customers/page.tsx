@@ -289,7 +289,7 @@ export default function CustomersPage() {
         </div>
 
         {/* Yeni Müşteri Ekle Butonu */}
-        <Button onClick={handleAddCustomer} className="w-full sm:w-auto">
+        <Button onClick={handleAddCustomer} className="w-full sm:w-auto cursor-pointer">
           <Plus className="mr-2 h-4 w-4" />
           <span>Yeni Müşteri Ekle</span>
         </Button>
@@ -306,7 +306,7 @@ export default function CustomersPage() {
                   <Button
                     variant="ghost"
                     onClick={() => handleSort('name')}
-                    className="h-auto -ml-3 font-semibold hover:bg-transparent"
+                    className="h-auto -ml-3 font-semibold hover:bg-transparent cursor-pointer"
                   >
                     Adı Soyadı
                     {getSortIcon('name')}
@@ -316,7 +316,7 @@ export default function CustomersPage() {
                   <Button
                     variant="ghost"
                     onClick={() => handleSort('company')}
-                    className="h-auto -ml-3 font-semibold hover:bg-transparent"
+                    className="h-auto -ml-3 font-semibold hover:bg-transparent cursor-pointer"
                   >
                     Firma Adı
                     {getSortIcon('company')}
@@ -326,7 +326,7 @@ export default function CustomersPage() {
                   <Button
                     variant="ghost"
                     onClick={() => handleSort('email')}
-                    className="h-auto -ml-3 font-semibold hover:bg-transparent"
+                    className="h-auto -ml-3 font-semibold hover:bg-transparent cursor-pointer"
                   >
                     E-posta
                     {getSortIcon('email')}
@@ -337,7 +337,7 @@ export default function CustomersPage() {
                   <Button
                     variant="ghost"
                     onClick={() => handleSort('country')}
-                    className="h-auto -ml-3.5 font-semibold hover:bg-transparent"
+                    className="h-auto -ml-3.5 font-semibold hover:bg-transparent cursor-pointer"
                   >
                     Ülke
                     {getSortIcon('country')}
@@ -347,7 +347,7 @@ export default function CustomersPage() {
                   <Button
                     variant="ghost"
                     onClick={() => handleSort('createdAt')}
-                    className="h-auto -ml-3 font-semibold hover:bg-transparent"
+                    className="h-auto -ml-3 font-semibold hover:bg-transparent cursor-pointer"
                   >
                     Eklenme Tarihi
                     {getSortIcon('createdAt')}
@@ -357,7 +357,7 @@ export default function CustomersPage() {
                   <Button
                     variant="ghost"
                     onClick={() => handleSort('operationStatus')}
-                    className="h-auto -ml-2.5 font-semibold hover:bg-transparent"
+                    className="h-auto -ml-2.5 font-semibold hover:bg-transparent cursor-pointer"
                   >
                     Durum
                     {getSortIcon('operationStatus')}
@@ -383,7 +383,7 @@ export default function CustomersPage() {
                 </TableRow>
               ) : (
                 sortedCustomers?.map((customer) => (
-                  <TableRow key={customer.id} className="hover:bg-muted/50">
+                  <TableRow key={customer.id} className="hover:bg-muted/50 cursor-pointer">
                     {/* Yetkili Kişi */}
                     <TableCell className="min-w-[200px]">
                       <div className="flex items-center gap-2">
@@ -422,7 +422,7 @@ export default function CustomersPage() {
                                   toast.error('Kopyalama başarısız!');
                                 }
                               }}
-                              className="h-3 w-3 -ml-2"
+                              className="h-3 w-3 -ml-2 cursor-pointer"
                             >
                               <Copy style={{ width: '10px', height: '10px' }} />
 
@@ -451,7 +451,7 @@ export default function CustomersPage() {
                                   toast.error('Kopyalama başarısız!');
                                 }
                               }}
-                              className="h-3 w-3 p-0 -ml-2"
+                              className="h-3 w-3 p-0 -ml-2 cursor-pointer"
                             >
                               <Copy style={{ width: '10px', height: '10px' }} />
                             </Button>
@@ -479,7 +479,7 @@ export default function CustomersPage() {
                     <TableCell>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" className="h-8 w-8 p-0">
+                          <Button variant="ghost" className="h-8 w-8 p-0 cursor-pointer">
                             <span className="sr-only">Menüyü aç</span>
                             <MoreHorizontal className="h-4 w-4" />
                           </Button>
@@ -544,7 +544,7 @@ export default function CustomersPage() {
                   if (page > 1) handlePageChange(page - 1);
                 }}
                 aria-disabled={page === 1}
-                className={page === 1 ? "pointer-events-none opacity-50" : ""}
+                className={page === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
               />
             </PaginationItem>
 
@@ -557,7 +557,7 @@ export default function CustomersPage() {
                   handlePageChange(1);
                 }}
                 aria-current={1 === page ? "page" : undefined}
-                className={1 === page ? "font-bold underline" : ""}
+                className={1 === page ? "font-bold underline cursor-pointer" : "cursor-pointer"}
               >
                 1
               </PaginationLink>
@@ -593,7 +593,7 @@ export default function CustomersPage() {
                           handlePageChange(pageNumber);
                         }}
                         aria-current={pageNumber === page ? "page" : undefined}
-                        className={pageNumber === page ? "font-bold underline" : ""}
+                        className={pageNumber === page ? "font-bold underline cursor-pointer" : "cursor-pointer"}
                       >
                         {pageNumber}
                       </PaginationLink>
@@ -621,7 +621,7 @@ export default function CustomersPage() {
                     handlePageChange(totalPages);
                   }}
                   aria-current={totalPages === page ? "page" : undefined}
-                  className={totalPages === page ? "font-bold underline" : ""}
+                  className={totalPages === page ? "font-bold underline cursor-pointer" : "cursor-pointer"}
                 >
                   {totalPages}
                 </PaginationLink>
@@ -637,7 +637,7 @@ export default function CustomersPage() {
                   if (page < totalPages) handlePageChange(page + 1);
                 }}
                 aria-disabled={page === totalPages}
-                className={page === totalPages ? "pointer-events-none opacity-50" : ""}
+                className={page === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
               />
             </PaginationItem>
           </PaginationContent>

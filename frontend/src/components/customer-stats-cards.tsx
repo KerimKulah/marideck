@@ -2,25 +2,12 @@
 
 import React, { useEffect } from 'react';
 import Script from 'next/script';
-import {
-    Users,
-    Building2,
-    Globe,
-    TrendingUp,
-    UserCheck,
-    Calendar,
-    Mail,
-    Phone
-} from 'lucide-react';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/redux/store';
 
 // Custom LordIcon component
 declare global {
-    // This tells TypeScript that we're adding a global declaration
-    // for the `lord-icon` element
     interface Window {
-        // @ts-ignore - This is a global variable provided by lordicon.js
         loadAnimation?: any;
     }
 }
@@ -43,13 +30,11 @@ const LordIcon: React.FC<LordIconProps> = ({
     className = ''
 }) => {
     useEffect(() => {
-        // This will help ensure the icon is properly initialized
         if (typeof window !== 'undefined' && window.loadAnimation) {
             window.loadAnimation();
         }
     }, [src]);
 
-    // Create the HTML string for the lord-icon
     const iconHtml = {
         __html: `
             <lord-icon
@@ -68,6 +53,32 @@ const LordIcon: React.FC<LordIconProps> = ({
     return <div dangerouslySetInnerHTML={iconHtml} />;
 };
 
+const StatCard = ({ title, value, icon, iconType, bgColor, iconColor, trigger, colors, delay = '1000' }: any) => (
+    <div className={`rounded-lg border p-3 ${bgColor} transition-shadow`}>
+        <div className="flex items-center justify-between">
+            <div className="space-y-1">
+                <p className="text-sm text-muted-foreground">{title}</p>
+                <p className="text-2xl font-bold">{value}</p>
+            </div>
+            <div className={`p-2 rounded-full ${iconColor} flex items-center justify-center`} style={{ width: '48px', height: '48px' }}>
+                {iconType === 'lordicon' ? (
+                    <div className="w-full h-full flex items-center justify-center">
+                        <LordIcon
+                            src={icon}
+                            trigger={trigger}
+                            delay={delay}
+                            colors={colors}
+                            style={{ width: '60px', height: '60px' }}
+                        />
+                    </div>
+                ) : (
+                    <div className="h-6 w-6 text-white" />
+                )}
+            </div>
+        </div>
+    </div>
+);
+
 export default function CustomerStatsCards() {
     const { statistics, statisticsLoading } = useSelector((state: RootState) => state.customer);
 
@@ -79,39 +90,12 @@ export default function CustomerStatsCards() {
         lastWeekAdded: statistics?.customersAddedThisWeek || 0
     };
 
-    const StatCard = ({ title, value, icon: Icon, iconType, trend, trendValue, bgColor, iconColor, trigger, colors }: any) => (
-        <div className={`rounded-lg border p-3 ${bgColor} `}>
-            <div className="flex items-center justify-between">
-                <div className="space-y-1">
-                    <p className="text-sm text-muted-foreground">{title}</p>
-                    <p className="text-2xl font-bold">{value}</p>
-                </div>
-                <div className={`p-2 rounded-full ${iconColor} flex items-center justify-center`} style={{ width: '48px', height: '48px' }}>
-                    {iconType === 'lordicon' ? (
-                        <div className="w-full h-full flex items-center justify-center">
-                            <LordIcon
-                                src={Icon}
-                                trigger={trigger}
-                                delay={title === 'Toplam Müşteri' ? '1000' : '2000'}
-                                colors={colors}
-                                style={{ width: '60px', height: '60px' }}
-                            />
-                        </div>
-                    ) : (
-                        <Icon className="h-6 w-6 text-white" />
-                    )}
-                </div>
-            </div>
-        </div>
-    );
-
     return (
         <>
             <Script
                 src="https://cdn.lordicon.com/lordicon.js"
                 strategy="afterInteractive"
                 onLoad={() => {
-                    // This ensures the icons are properly initialized after the script loads
                     if (window.loadAnimation) {
                         window.loadAnimation();
                     }
@@ -124,10 +108,10 @@ export default function CustomerStatsCards() {
                     value={statsData.totalCustomers}
                     icon="https://cdn.lordicon.com/yisvhhtw.json"
                     iconType="lordicon"
-                    trend="up"
-                    trendValue="+12 bu ay"
                     bgColor="bg-white"
                     iconColor="bg-white"
+                    trigger="hover"
+                    colors="primary:#121331,secondary:#348db5"
                 />
 
                 {/* Ülke Sayısı */}
@@ -136,10 +120,10 @@ export default function CustomerStatsCards() {
                     value={statsData.totalCountries}
                     icon="https://cdn.lordicon.com/aabwqxsm.json"
                     iconType="lordicon"
-                    trend="up"
-                    trendValue="+2 bu ay"
                     bgColor="bg-white"
                     iconColor="bg-white"
+                    trigger="hover"
+                    colors="primary:#121331,secondary:#2b87b1"
                 />
 
                 {/* Aktif Müşteri */}
@@ -148,10 +132,10 @@ export default function CustomerStatsCards() {
                     value={statsData.activeCustomers}
                     icon="https://cdn.lordicon.com/pfvaixkr.json"
                     iconType="lordicon"
-                    trend="up"
-                    trendValue="+5 bu hafta"
                     bgColor="bg-white"
                     iconColor="bg-white"
+                    trigger="hover"
+                    colors="primary:#121331,secondary:#348db5"
                 />
 
                 {/* Bu Hafta Eklenen */}
@@ -160,10 +144,10 @@ export default function CustomerStatsCards() {
                     value={statsData.lastWeekAdded}
                     icon="https://cdn.lordicon.com/sylzqxek.json"
                     iconType="lordicon"
-                    trend="up"
-                    trendValue="+5 bu hafta"
                     bgColor="bg-white"
                     iconColor="bg-white"
+                    trigger="hover"
+                    colors="primary:#121331,secondary:#2b87b1"
                 />
             </div>
         </>

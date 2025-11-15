@@ -280,19 +280,19 @@ export default function ShipsPage() {
 
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                        <Button className="w-full sm:w-auto">
+                        <Button className="w-full sm:w-auto cursor-pointer">
                             <Plus className="mr-2 h-4 w-4" />
-                            <span className="sm:inline">Takip Edilecek Gemi Ekle</span>
+                            <span className="sm:inline">Gemi Ekle</span>
                         </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent>
-                        <DropdownMenuItem onClick={() => handleOpenShipAddOrEditModal(null)}>
+                        <DropdownMenuItem onClick={() => handleOpenShipAddOrEditModal(null)} className="cursor-pointer">
                             El ile Ekle
                         </DropdownMenuItem>
                         <DropdownMenuItem onSelect={(e) => {
                             e.preventDefault();
                             setIsAisLookupOpen(true);
-                        }}>
+                        }} className="cursor-pointer">
                             Otomatik Ekle
                         </DropdownMenuItem>
                     </DropdownMenuContent>
@@ -319,7 +319,7 @@ export default function ShipsPage() {
                                             dispatch(setSortOrder('ASC'))
                                         }
                                     }}
-                                    className="h-auto -ml-3 font-semibold hover:bg-transparent flex items-center"
+                                    className="h-auto -ml-3 font-semibold hover:bg-transparent flex items-center cursor-pointer"
                                 >
                                     <span>ETA</span>
                                     <span className="ml-1">{getEtaSortIcon(sortBy === 'eta', sortOrder)}</span>
@@ -346,7 +346,7 @@ export default function ShipsPage() {
                             </TableRow>
                         ) : (
                             ships.map((ship, index) => (
-                                <TableRow key={ship.id || ship.imoNumber || ship.mmsiNumber || `ship-${index}`}>
+                                <TableRow key={ship.id || ship.imoNumber || ship.mmsiNumber || `ship-${index}`} className="cursor-pointer">
                                     {/* Fotoğraf */}
                                     <TableCell className="py-4">
                                         <div className="flex items-center justify-center">
@@ -369,7 +369,7 @@ export default function ShipsPage() {
                                                         <Copy onClick={(e) => {
                                                             e.stopPropagation();
                                                             copyToClipboard(ship.imoNumber);
-                                                        }} className="h-3 w-3" />
+                                                        }} className="h-3 w-3 cursor-pointer" />
                                                     </TooltipTrigger>
                                                     <TooltipContent>
                                                         <p>Kopyala</p>
@@ -384,7 +384,7 @@ export default function ShipsPage() {
                                                             <Copy onClick={(e) => {
                                                                 e.stopPropagation();
                                                                 copyToClipboard(ship.mmsiNumber);
-                                                            }} className="h-3 w-3" />
+                                                            }} className="h-3 w-3 cursor-pointer" />
                                                         </TooltipTrigger>
                                                         <TooltipContent>
                                                             <p>Kopyala</p>
@@ -450,9 +450,9 @@ export default function ShipsPage() {
                                                 <MoreHorizontal className="h-4 w-4 cursor-pointer" />
                                             </DropdownMenuTrigger>
                                             <DropdownMenuContent>
-                                                <DropdownMenuItem onClick={() => handleOpenShipDetailsModal(ship)}><Eye className="mr-2 h-4 w-4" />Detayları Göster</DropdownMenuItem>
-                                                <DropdownMenuItem onClick={() => handleOpenShipAddOrEditModal(ship)}><Edit className="mr-2 h-4 w-4" />Bilgileri El ile Güncelle</DropdownMenuItem>
-                                                <DropdownMenuItem onClick={() => handleDeleteShip(ship.id)} className="text-red-600 focus:text-red-600"><X color="red" className="mr-2 h-4 w-4" />Gemiyi Sil</DropdownMenuItem>
+                                                <DropdownMenuItem onClick={() => handleOpenShipDetailsModal(ship)}><Eye className="h-4 w-4" />Detayları Görüntüle</DropdownMenuItem>
+                                                <DropdownMenuItem onClick={() => handleOpenShipAddOrEditModal(ship)}><Edit className="h-4 w-4" />Düzenle / Güncelle</DropdownMenuItem>
+                                                <DropdownMenuItem onClick={() => handleDeleteShip(ship.id)} className="text-red-600 focus:text-red-600"><Trash color="red" className="h-4 w-4" />Sil</DropdownMenuItem>
                                             </DropdownMenuContent>
                                         </DropdownMenu>
                                     </TableCell>
@@ -502,7 +502,7 @@ export default function ShipsPage() {
                                     if (page > 1) handlePageChange(page - 1);
                                 }}
                                 aria-disabled={page === 1}
-                                className={page === 1 ? "pointer-events-none opacity-50" : ""}
+                                className={page === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
                             />
                         </PaginationItem>
 
@@ -515,7 +515,7 @@ export default function ShipsPage() {
                                     handlePageChange(1);
                                 }}
                                 aria-current={1 === page ? "page" : undefined}
-                                className={1 === page ? "font-bold underline" : ""}
+                                className={1 === page ? "font-bold underline cursor-pointer" : "cursor-pointer"}
                             >
                                 1
                             </PaginationLink>
@@ -551,7 +551,7 @@ export default function ShipsPage() {
                                                     handlePageChange(pageNumber);
                                                 }}
                                                 aria-current={pageNumber === page ? "page" : undefined}
-                                                className={pageNumber === page ? "font-bold underline" : ""}
+                                                className={pageNumber === page ? "font-bold underline cursor-pointer" : "cursor-pointer"}
                                             >
                                                 {pageNumber}
                                             </PaginationLink>
@@ -579,7 +579,7 @@ export default function ShipsPage() {
                                         handlePageChange(totalPages);
                                     }}
                                     aria-current={totalPages === page ? "page" : undefined}
-                                    className={totalPages === page ? "font-bold underline" : ""}
+                                    className={totalPages === page ? "font-bold underline cursor-pointer" : "cursor-pointer"}
                                 >
                                     {totalPages}
                                 </PaginationLink>
@@ -595,7 +595,7 @@ export default function ShipsPage() {
                                     if (page < totalPages) handlePageChange(page + 1);
                                 }}
                                 aria-disabled={page === totalPages}
-                                className={page === totalPages ? "pointer-events-none opacity-50" : ""}
+                                className={page === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
                             />
                         </PaginationItem>
                     </PaginationContent>

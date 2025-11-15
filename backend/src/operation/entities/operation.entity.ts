@@ -23,14 +23,14 @@ export class Operation {
     @Column()
     port: string;
 
-    @ManyToOne(() => Customer)
+    @ManyToOne(() => Customer, { onDelete: 'RESTRICT' })
     customer: Customer;
 
     @ManyToMany(() => User)
     @JoinTable()
     users: User[];
 
-    @ManyToOne(() => Ship)
+    @ManyToOne(() => Ship, { onDelete: 'RESTRICT' })
     ship: Ship;
 
     @OneToMany(() => OperationLog, (operationLog) => operationLog.operation)

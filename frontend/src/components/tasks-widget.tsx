@@ -84,7 +84,7 @@ export const TasksWidget = () => {
                     ) : (
                         <ul className="space-y-1">
                             {tasks.map((task) => (
-                                <li key={task.id} className="flex items-start justify-between p-1 rounded-lg hover:bg-gray-50">
+                                <li key={task.id} className="flex items-start justify-between p-1 rounded-lg hover:bg-gray-50 cursor-pointer">
                                     <div className="flex items-start gap-3">
                                         <div className="mt-0.5">
                                             {getStatusIcon(task.status)}

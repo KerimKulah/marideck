@@ -91,7 +91,7 @@ export function UpcomingShipsCard() {
                         {upcomingShips.slice(0, 5).map((ship: Ship) => {
                             const etaDate = new Date(ship.newTime || ship.eta)
                             return (
-                                <div key={ship.id} className="border rounded-lg p-3 hover:bg-accent/50 transition-colors">
+                                <div key={ship.id} className="border rounded-lg p-3 hover:bg-accent/50 transition-colors cursor-pointer">
                                     <div className="flex items-start justify-between">
                                         <div>
                                             <h4 className="font-medium">{ship.name}</h4>

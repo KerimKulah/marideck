@@ -80,7 +80,7 @@ export const EmbeddedMap = () => {
                             <p className="text-gray-600 mb-2">Harita yüklenemedi</p>
                             <button
                                 onClick={() => window.location.reload()}
-                                className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                                className="text-blue-600 hover:text-blue-800 text-sm font-medium cursor-pointer"
                             >
                                 Tekrar Dene
                             </button>
