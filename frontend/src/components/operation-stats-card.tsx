@@ -52,15 +52,14 @@ const LordIcon: React.FC<LordIconProps> = ({
     return <div dangerouslySetInnerHTML={iconHtml} />;
 };
 
-interface Operation {
-    id: number;
-    status: OperationStatus;
-    users: Array<{ id: number; name: string; role?: string }>;
-}
-
 interface OperationStatsCardsProps {
-    operations: Operation[];
-    userId?: number;
+    statistics: {
+        myOperations?: number; // Geriye dönük uyumluluk
+        myOperationsActive?: number;
+        myOperationsCompleted?: number;
+        activeOperations: number;
+        completedOperations: number;
+    } | null;
 }
 
 const StatCard = ({ title, value, icon, iconType, bgColor, iconColor, trigger, colors, delay = '1000' }: any) => (
@@ -89,31 +88,22 @@ const StatCard = ({ title, value, icon, iconType, bgColor, iconColor, trigger, c
     </div>
 );
 
-export default function OperationStatsCards({ operations = [], userId }: OperationStatsCardsProps) {
+export default function OperationStatsCards({ statistics }: OperationStatsCardsProps) {
     const stats = useMemo(() => {
-        // Mevcut Operasyonlarım - Kullanıcıya atanmış operasyonlar
-        const myOperations = operations.filter(operation => {
-            if (!userId) return false;
-            return operation.users?.some((u: any) => u.id === userId);
-        });
-
-        // Toplam Aktif Operasyon - IN_PROGRESS ve PLANNED durumundaki operasyonlar
-        const activeOperations = operations.filter(operation =>
-            operation.status === OperationStatus.IN_PROGRESS ||
-            operation.status === OperationStatus.PLANNED
-        );
-
-        // Tamamlanan Operasyonlar - COMPLETED durumundaki operasyonlar
-        const completedOperations = operations.filter(operation =>
-            operation.status === OperationStatus.COMPLETED
-        );
+        if (!statistics) {
+            return {
+                myOperations: 0,
+                activeOperations: 0,
+                completedOperations: 0,
+            };
+        }
 
         return {
-            myOperations: myOperations.length,
-            activeOperations: activeOperations.length,
-            completedOperations: completedOperations.length,
+            myOperations: statistics.myOperations,
+            activeOperations: statistics.activeOperations,
+            completedOperations: statistics.completedOperations,
         };
-    }, [operations, userId]);
+    }, [statistics]);
 
     return (
         <>

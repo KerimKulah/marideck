@@ -5,16 +5,21 @@ interface GetOperationsParams {
     page?: number;
     limit?: number;
     search?: string;
+    tab?: 'my-operations-active' | 'my-operations-completed' | 'all-active' | 'all-completed';
 }
 
 // OPERATION THUNKS
 
-export const getOperations = createAsyncThunk("operation/getOperations", async ({ page, limit, search }: GetOperationsParams, { rejectWithValue }) => {
+export const getOperations = createAsyncThunk("operation/getOperations", async ({ page, limit, search, tab }: GetOperationsParams, { rejectWithValue }) => {
     try {
         const params = new URLSearchParams();
         if (page) params.append('page', page.toString());
         if (limit) params.append('limit', limit.toString());
-        if (search) params.append('search', search);
+        // Always send search parameter, even if empty string (backend will handle it)
+        if (search !== undefined && search !== null) {
+            params.append('search', search);
+        }
+        if (tab) params.append('tab', tab);
 
         const response = await api.get(`/operation?${params.toString()}`);
         return response.data;
@@ -65,6 +70,15 @@ export const deleteOperation = createAsyncThunk("operation/deleteOperation", asy
 }
 );
 
+export const getOperationStatistics = createAsyncThunk("operation/getOperationStatistics", async (_, { rejectWithValue }) => {
+    try {
+        const response = await api.get('/operation/stats');
+        return response.data;
+    } catch (error: any) {
+        return rejectWithValue(error.response?.data || { message: "An error occurred while fetching operation statistics" });
+    }
+});
+
 // OPERATION LOG THUNKS
 
 export const createOperationLog = createAsyncThunk("operation/createOperationLog", async (logData: { operationId: number; description: string; createdById?: number }, { rejectWithValue }) => {
@@ -105,6 +119,14 @@ interface OperationState {
     logs: any[];
     logsLoading: boolean;
     logsError: string | null;
+    statistics: {
+        myOperations?: number; // Geriye dönük uyumluluk
+        myOperationsActive?: number;
+        myOperationsCompleted?: number;
+        activeOperations: number;
+        completedOperations: number;
+    } | null;
+    statisticsLoading: boolean;
 }
 
 const initialState: OperationState = {
@@ -123,6 +145,8 @@ const initialState: OperationState = {
     logs: [],
     logsLoading: false,
     logsError: null,
+    statistics: null,
+    statisticsLoading: false,
 };
 
 // SLICE
@@ -206,7 +230,8 @@ export const operationSlice = createSlice({
         });
         builder.addCase(createOperation.fulfilled, (state, action) => {
             state.createLoading = false;
-            state.operations.unshift(action.payload);
+            const operation = action.payload.data || action.payload;
+            state.operations.unshift(operation);
             state.totalOperations += 1;
         });
         builder.addCase(createOperation.rejected, (state, action) => {
@@ -221,12 +246,13 @@ export const operationSlice = createSlice({
         });
         builder.addCase(updateOperation.fulfilled, (state, action) => {
             state.updateLoading = false;
-            const index = state.operations.findIndex(op => op.id === action.payload.id);
+            const operation = action.payload.data || action.payload;
+            const index = state.operations.findIndex(op => op.id === operation.id);
             if (index !== -1) {
-                state.operations[index] = action.payload;
+                state.operations[index] = operation;
             }
-            if (state.currentOperation?.id === action.payload.id) {
-                state.currentOperation = action.payload;
+            if (state.currentOperation?.id === operation.id) {
+                state.currentOperation = operation;
             }
         });
         builder.addCase(updateOperation.rejected, (state, action) => {
@@ -277,6 +303,20 @@ export const operationSlice = createSlice({
         });
         builder.addCase(deleteOperationLog.rejected, (state, action) => {
             state.logsError = (action.payload as any)?.message || "Failed to delete operation log";
+        });
+
+        // Get Operation Statistics
+        builder.addCase(getOperationStatistics.pending, (state) => {
+            state.statisticsLoading = true;
+            state.error = null;
+        });
+        builder.addCase(getOperationStatistics.fulfilled, (state, action) => {
+            state.statisticsLoading = false;
+            state.statistics = action.payload;
+        });
+        builder.addCase(getOperationStatistics.rejected, (state, action) => {
+            state.statisticsLoading = false;
+            state.error = (action.payload as any)?.message || "Failed to fetch operation statistics";
         });
     },
 });

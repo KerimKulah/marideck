@@ -13,7 +13,7 @@ export class OperationService {
 
     constructor(@InjectRepository(Operation) private operationRepository: Repository<Operation>) { }
 
-    async findAll(page?: number, limit?: number, search?: string) {
+    async findAll(page?: number, limit?: number, search?: string, tab?: 'my-operations-active' | 'my-operations-completed' | 'all-active' | 'all-completed', userId?: number) {
         const queryBuilder = this.operationRepository.createQueryBuilder('operation')
             .withDeleted() // Customer ve Ship  soft delete olsa bile verileri getirsin
             .leftJoinAndSelect('operation.customer', 'customer')
@@ -22,15 +22,41 @@ export class OperationService {
             .leftJoinAndSelect('operation.operationLogs', 'operationLog')
             .leftJoin('operationLog.createdBy', 'createdBy').addSelect(['createdBy.firstName', 'createdBy.lastName', 'createdBy.email']);
 
-        if (search) {
+        // Tab filtreleme
+        if (tab === 'my-operations-active') {
+            // Kullanıcıya atanmış aktif operasyonlar (planned, in_progress)
+            if (userId) {
+                queryBuilder.andWhere('user.id = :userId', { userId });
+                queryBuilder.andWhere('operation.status IN (:...activeStatuses)', { activeStatuses: ['planned', 'in_progress'] });
+            } else {
+                queryBuilder.andWhere('1 = 0');
+            }
+        } else if (tab === 'my-operations-completed') {
+            // Kullanıcıya atanmış tamamlanmış operasyonlar
+            if (userId) {
+                queryBuilder.andWhere('user.id = :userId', { userId });
+                queryBuilder.andWhere('operation.status = :status', { status: 'completed' });
+            } else {
+                queryBuilder.andWhere('1 = 0');
+            }
+        } else if (tab === 'all-active') {
+            // Tüm aktif operasyonlar (planned, in_progress)
+            queryBuilder.andWhere('operation.status IN (:...activeStatuses)', { activeStatuses: ['planned', 'in_progress'] });
+        } else if (tab === 'all-completed') {
+            // Tüm tamamlanmış operasyonlar
+            queryBuilder.andWhere('operation.status = :status', { status: 'completed' });
+        }
+        // Eğer tab belirtilmemişse, tüm operasyonlar (geriye dönük uyumluluk için)
+
+        if (search && search.trim() !== '') {
             queryBuilder.andWhere(
                 new Brackets((qb: WhereExpressionBuilder) => {
                     qb.where('operation.name ILIKE :search', { search: `%${search}%` })
                         .orWhere('operation.type ILIKE :search', { search: `%${search}%` })
                         .orWhere('operation.details ILIKE :search', { search: `%${search}%` })
                         .orWhere('operation.port ILIKE :search', { search: `%${search}%` })
-                        .orWhere('operation.customer.name ILIKE :search', { search: `%${search}%` })
-                        .orWhere('operation.ship.name ILIKE :search', { search: `%${search}%` });
+                        .orWhere('customer.name ILIKE :search', { search: `%${search}%` })
+                        .orWhere('ship.name ILIKE :search', { search: `%${search}%` });
                 }),
             );
         }
@@ -136,5 +162,45 @@ export class OperationService {
     async restore(id: number): Promise<{ message: string }> {
         await this.operationRepository.restore(id);
         return { message: 'Operation restored successfully' };
+    }
+
+    async getStatistics(userId?: number) {
+        // Kullanıcıya atanmış aktif operasyonlar (PLANNED ve IN_PROGRESS)
+        let myOperationsActiveCount = 0;
+        if (userId) {
+            const myOperationsActiveQuery = this.operationRepository.createQueryBuilder('operation')
+                .leftJoin('operation.users', 'user')
+                .where('user.id = :userId', { userId })
+                .andWhere('operation.status IN (:...statuses)', { statuses: ['planned', 'in_progress'] });
+            myOperationsActiveCount = await myOperationsActiveQuery.getCount();
+        }
+
+        // Kullanıcıya atanmış tamamlanmış operasyonlar
+        let myOperationsCompletedCount = 0;
+        if (userId) {
+            const myOperationsCompletedQuery = this.operationRepository.createQueryBuilder('operation')
+                .leftJoin('operation.users', 'user')
+                .where('user.id = :userId', { userId })
+                .andWhere('operation.status = :status', { status: 'completed' });
+            myOperationsCompletedCount = await myOperationsCompletedQuery.getCount();
+        }
+
+        // Tüm aktif operasyonlar (PLANNED ve IN_PROGRESS)
+        const activeOperationsQuery = this.operationRepository.createQueryBuilder('operation')
+            .where('operation.status IN (:...statuses)', { statuses: ['planned', 'in_progress'] });
+        const activeOperationsCount = await activeOperationsQuery.getCount();
+
+        // Tüm tamamlanan operasyonlar
+        const completedOperationsQuery = this.operationRepository.createQueryBuilder('operation')
+            .where('operation.status = :status', { status: 'completed' });
+        const completedOperationsCount = await completedOperationsQuery.getCount();
+
+        return {
+            myOperations: myOperationsActiveCount, // Geriye dönük uyumluluk için
+            myOperationsActive: myOperationsActiveCount,
+            myOperationsCompleted: myOperationsCompletedCount,
+            activeOperations: activeOperationsCount,
+            completedOperations: completedOperationsCount,
+        };
     }
 }

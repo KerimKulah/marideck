@@ -1,4 +1,5 @@
 
+import { Type } from "class-transformer";
 import { IsNotEmpty, IsString, IsNumber, IsDate, IsOptional, IsEnum } from "class-validator";
 import { OperationStatus } from "../enums/operation-status.enum";
 
@@ -34,10 +35,12 @@ export class OperationDto {
 
     @IsNotEmpty({ message: 'Başlangıç tarihi zorunlu' })
     @IsDate()
+    @Type(() => Date)
     startDate: Date;
 
     @IsNotEmpty({ message: 'Bitiş tarihi zorunlu' })
     @IsDate()
+    @Type(() => Date)
     endDate: Date;
 
     @IsNotEmpty({ message: 'Durum zorunlu' })
@@ -54,5 +57,6 @@ export class OperationDto {
 
     @IsOptional()
     @IsDate()
+    @Type(() => Date)
     finishedAt?: Date;
 }

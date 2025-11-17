@@ -1,6 +1,6 @@
 "use client"
 
-import { Search, Plus, Ship, Users, Clock, AlertCircle, CheckCircle, XCircle, MoreHorizontal, MessageSquare, Package, Info, X, Calendar, Pencil, Filter, User, Mail, Phone, MessageCircle, Anchor, Briefcase, List } from "lucide-react"
+import { Search, Plus, Ship, Users, Clock, AlertCircle, CheckCircle, XCircle, MoreHorizontal, MessageSquare, Package, Info, X, Calendar, Pencil, Filter, User, Mail, Phone, MessageCircle, Anchor, Briefcase, List, Trash2 } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -19,10 +19,11 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { useState, useEffect, useMemo } from "react"
+import { useState, useEffect, useMemo, useRef } from "react"
+import { debounce } from "lodash"
 import { useDispatch, useSelector } from "react-redux"
 import { AppDispatch, RootState } from "@/redux/store"
-import { getOperations, getOperation, createOperation, updateOperation } from "@/redux/slices/operationSlice"
+import { getOperations, getOperation, createOperation, updateOperation, deleteOperation, getOperationStatistics } from "@/redux/slices/operationSlice"
 import { format } from "date-fns"
 import { tr } from "date-fns/locale"
 import { useSearchParams, useRouter } from "next/navigation"
@@ -79,12 +80,19 @@ export default function OperationsPage() {
     const [selectedOperation, setSelectedOperation] = useState<Operation | null>(null)
     const [isAddModalOpen, setIsAddModalOpen] = useState(false)
     const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false)
+    const [searchInput, setSearchInput] = useState("")
     const [searchTerm, setSearchTerm] = useState("")
-    const [selectedTab, setSelectedTab] = useState<'my-operations' | 'all' | 'completed'>('my-operations')
+    const [selectedTab, setSelectedTab] = useState<'my-operations-active' | 'my-operations-completed' | 'all-active' | 'all-completed'>('my-operations-active')
     const [isOperationRoomOpen, setIsOperationRoomOpen] = useState(false)
+    const searchInputRef = useRef(searchInput)
+
+    // Keep ref in sync with state
+    useEffect(() => {
+        searchInputRef.current = searchInput
+    }, [searchInput])
 
     // Selectors
-    const { operations, loading, totalOperations, page, limit, totalPages } = useSelector(
+    const { operations, loading, totalOperations, page, limit, totalPages, statistics } = useSelector(
         (state: RootState) => state.operation
     )
     const { user } = useSelector((state: RootState) => state.auth)
@@ -96,63 +104,98 @@ export default function OperationsPage() {
         { id: 3, name: 'Ayşe Kaya', role: 'Güvenlik Sorumlusu' },
     ])
 
-    // Fetch operations when tab or search term changes
+    // Debounced search function
+    const debouncedSearch = useMemo(
+        () => debounce((value: string, tab: 'my-operations-active' | 'my-operations-completed' | 'all-active' | 'all-completed') => {
+            setSearchTerm(value)
+            dispatch(getOperations({
+                page: 1,
+                limit: 10,
+                search: value || '', // Always send search, even if empty
+                tab: tab
+            }))
+        }, 500),
+        [dispatch]
+    )
+
+    // Fetch operations when tab changes
     useEffect(() => {
-        const tab = searchParams.get('tab') as 'my-operations' | 'all' | 'completed' || 'my-operations'
+        const tab = searchParams.get('tab') as 'my-operations-active' | 'my-operations-completed' | 'all-active' | 'all-completed' || 'my-operations-active'
         setSelectedTab(tab)
 
+        const currentSearch = searchInputRef.current || ''
+
+        // Use current searchInput value from ref (always up-to-date)
         dispatch(getOperations({
             page: 1,
             limit: 10,
-            search: searchTerm
+            search: currentSearch, // Always send search, even if empty
+            tab: tab
         }))
-    }, [searchParams, searchTerm, user, dispatch])
+    }, [searchParams, user, dispatch])
 
-    // Calculate operation counts for each tab
+    // Handle search input with debounce
+    useEffect(() => {
+        // Skip on initial mount
+        if (searchInput === undefined) return
+
+        const tab = selectedTab || 'my-operations-active'
+
+        if (searchInput === '') {
+            // Search cleared - immediately update and fetch
+            setSearchTerm('')
+            dispatch(getOperations({
+                page: 1,
+                limit: 10,
+                search: '', // Always send search, even if empty
+                tab: tab
+            }))
+        } else {
+            // Search has value - use debounce
+            debouncedSearch(searchInput, tab)
+        }
+
+        return () => {
+            debouncedSearch.cancel()
+        }
+    }, [searchInput, debouncedSearch, selectedTab, dispatch])
+
+    // Fetch statistics
+    useEffect(() => {
+        dispatch(getOperationStatistics())
+    }, [dispatch])
+
+    // Tab counts from statistics
     const tabCounts = useMemo(() => {
-        if (!operations) return { myOperations: 0, all: 0, completed: 0 };
+        if (!statistics) return {
+            myOperationsActive: 0,
+            myOperationsCompleted: 0,
+            allActive: 0,
+            allCompleted: 0
+        };
 
-        const myOperations = operations.filter(op =>
-            user?.id && op.users?.some((u: any) => u.id === user.id)
-        ).length;
-
-        const completed = operations.filter(op =>
-            op.status === OperationStatus.COMPLETED
-        ).length;
+        const stats = statistics as any; // Type assertion for new statistics structure
 
         return {
-            myOperations,
-            all: operations.length,
-            completed
+            myOperationsActive: stats.myOperationsActive || stats.myOperations || 0, // Aktif olanlar
+            myOperationsCompleted: stats.myOperationsCompleted || 0, // Tamamlanan olanlar (kullanıcıya atanmış)
+            allActive: statistics.activeOperations, // Tüm aktif operasyonlar
+            allCompleted: statistics.completedOperations // Tüm tamamlanan operasyonlar
         };
-    }, [operations, user?.id]);
+    }, [statistics]);
 
-    // Filter operations based on the selected tab
-    const filteredOperations = useMemo(() => {
-        if (!operations) return []
-
-        return operations.filter(operation => {
-            // Filter by tab
-            if (selectedTab === 'my-operations') {
-                const isAssignedToMe = user?.id && operation.users?.some((u: any) => u.id === user.id);
-                if (!isAssignedToMe) return false;
-            } else if (selectedTab === 'completed') {
-                if (operation.status !== OperationStatus.COMPLETED) return false;
-            }
-
-            return true;
-        });
-    }, [operations, selectedTab, user?.id])
+    // Operations are already filtered by backend
+    const filteredOperations = operations
 
     // Handle tab change
     const handleTabChange = (tab: string) => {
-        setSelectedTab(tab as 'my-operations' | 'all' | 'completed')
+        setSelectedTab(tab as 'my-operations-active' | 'my-operations-completed' | 'all-active' | 'all-completed')
         router.push(`/operations?tab=${tab}`)
     }
 
-    // Handle search
+    // Handle search input
     const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setSearchTerm(e.target.value)
+        setSearchInput(e.target.value)
     }
 
     // Handle view details
@@ -166,6 +209,62 @@ export default function OperationsPage() {
         } catch (error) {
             console.error("Operasyon detayları yüklenirken hata oluştu:", error)
             toast.error("Operasyon detayları yüklenirken bir hata oluştu")
+        }
+    }
+
+    // Handle mark as completed
+    const handleMarkAsCompleted = async (operation: Operation) => {
+        try {
+            // Mevcut operasyonun tüm verilerini al ve sadece status ve finishedAt'i güncelle
+            const updateData = {
+                name: operation.name,
+                type: operation.type,
+                details: operation.details,
+                port: operation.port,
+                customerId: operation.customer.id,
+                shipId: operation.ship.id,
+                userId: operation.users?.map(u => u.id) || [],
+                startDate: new Date(operation.startDate).toISOString(),
+                endDate: new Date(operation.endDate).toISOString(),
+                status: OperationStatus.COMPLETED,
+                finishedAt: new Date().toISOString(),
+                cargoType: operation.cargoType,
+                cargoDetails: operation.cargoDetails
+            }
+
+            const resultAction = await dispatch(updateOperation({
+                id: operation.id.toString(),
+                data: updateData
+            }))
+            if (updateOperation.fulfilled.match(resultAction)) {
+                toast.success("Operasyon tamamlandı olarak işaretlendi")
+                dispatch(getOperations({ page, limit, search: searchTerm }))
+            } else {
+                toast.error("Operasyon güncellenirken bir hata oluştu")
+            }
+        } catch (error) {
+            console.error("Operasyon güncellenirken hata oluştu:", error)
+            toast.error("Operasyon güncellenirken bir hata oluştu")
+        }
+    }
+
+    // Handle delete
+    const handleDelete = async (operation: Operation) => {
+        if (!confirm(`"${operation.name}" operasyonunu silmek istediğinize emin misiniz?`)) {
+            return
+        }
+
+        try {
+            const resultAction = await dispatch(deleteOperation(operation.id.toString()))
+            if (deleteOperation.fulfilled.match(resultAction)) {
+                toast.success("Operasyon başarıyla silindi")
+                dispatch(getOperations({ page, limit, search: searchTerm }))
+            } else {
+                toast.error("Operasyon silinirken bir hata oluştu")
+            }
+        } catch (error) {
+            console.error("Operasyon silinirken hata oluştu:", error)
+            toast.error("Operasyon silinirken bir hata oluştu")
         }
     }
 
@@ -203,7 +302,7 @@ export default function OperationsPage() {
 
     return (
         <div className="grid space-y-3 overflow-x-auto">
-            <OperationStatsCards operations={operations} userId={user?.id} />
+            <OperationStatsCards statistics={statistics} />
             {/* Arama ve Yeni Operasyon Ekle Butonu */}
             <div className="flex flex-col sm:flex-row gap-3 sm:items-center justify-between">
                 {/* Arama Inputu */}
@@ -213,8 +312,8 @@ export default function OperationsPage() {
                         type="search"
                         placeholder="Operasyon ara..."
                         className="w-full pl-9 pr-4 py-2 text-sm sm:text-base"
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
+                        value={searchInput}
+                        onChange={handleSearch}
                     />
                 </div>
 
@@ -227,43 +326,56 @@ export default function OperationsPage() {
 
             {/* Main Content */}
             <Tabs value={selectedTab} onValueChange={handleTabChange} className="w-full">
-                <TabsList className="grid w-full grid-cols-3 bg-muted/50 p-1.5 h-auto gap-1.5 rounded-xl border">
+                <TabsList className="grid w-full grid-cols-4 bg-muted/50 p-1.5 h-auto gap-1.5 rounded-xl border">
                     <TabsTrigger
-                        value="my-operations"
+                        value="my-operations-active"
                         className="flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all duration-200 rounded-lg"
                     >
                         <Briefcase className="h-4 w-4" />
                         <span className="hidden sm:inline">Mevcut Operasyonlarım</span>
                         <span className="sm:hidden">Mevcut</span>
-                        {tabCounts.myOperations > 0 && (
+                        {tabCounts.myOperationsActive > 0 && (
                             <Badge variant="secondary" className="ml-1 h-5 min-w-5 px-1.5 text-xs font-semibold">
-                                {tabCounts.myOperations}
+                                {tabCounts.myOperationsActive}
                             </Badge>
                         )}
                     </TabsTrigger>
                     <TabsTrigger
-                        value="all"
-                        className="flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all duration-200 rounded-lg"
-                    >
-                        <List className="h-4 w-4" />
-                        <span className="hidden sm:inline">Tüm Operasyonlar</span>
-                        <span className="sm:hidden">Tümü</span>
-                        {tabCounts.all > 0 && (
-                            <Badge variant="secondary" className="ml-1 h-5 min-w-5 px-1.5 text-xs font-semibold">
-                                {tabCounts.all}
-                            </Badge>
-                        )}
-                    </TabsTrigger>
-                    <TabsTrigger
-                        value="completed"
+                        value="my-operations-completed"
                         className="flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all duration-200 rounded-lg"
                     >
                         <CheckCircle className="h-4 w-4" />
-                        <span className="hidden sm:inline">Tamamlanan Operasyonlar</span>
-                        <span className="sm:hidden">Tamamlanan</span>
-                        {tabCounts.completed > 0 && (
+                        <span className="hidden sm:inline">Tamamlanan Operasyonlarım</span>
+                        <span className="sm:hidden">Tamamlananım</span>
+                        {tabCounts.myOperationsCompleted > 0 && (
                             <Badge variant="secondary" className="ml-1 h-5 min-w-5 px-1.5 text-xs font-semibold">
-                                {tabCounts.completed}
+                                {tabCounts.myOperationsCompleted}
+                            </Badge>
+                        )}
+                    </TabsTrigger>
+                    <TabsTrigger
+                        value="all-active"
+                        className="flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all duration-200 rounded-lg"
+                    >
+                        <List className="h-4 w-4" />
+                        <span className="hidden sm:inline">Tüm Aktif Operasyonlar</span>
+                        <span className="sm:hidden">Aktif</span>
+                        {tabCounts.allActive > 0 && (
+                            <Badge variant="secondary" className="ml-1 h-5 min-w-5 px-1.5 text-xs font-semibold">
+                                {tabCounts.allActive}
+                            </Badge>
+                        )}
+                    </TabsTrigger>
+                    <TabsTrigger
+                        value="all-completed"
+                        className="flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all duration-200 rounded-lg"
+                    >
+                        <CheckCircle className="h-4 w-4" />
+                        <span className="hidden sm:inline">Tüm Tamamlanan Operasyonlar</span>
+                        <span className="sm:hidden">Tamamlanan</span>
+                        {tabCounts.allCompleted > 0 && (
+                            <Badge variant="secondary" className="ml-1 h-5 min-w-5 px-1.5 text-xs font-semibold">
+                                {tabCounts.allCompleted}
                             </Badge>
                         )}
                     </TabsTrigger>
@@ -373,6 +485,26 @@ export default function OperationsPage() {
                                                     <Anchor className="mr-2 h-4 w-4" />
                                                     Operasyon Odası
                                                 </DropdownMenuItem>
+                                                <DropdownMenuItem
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleMarkAsCompleted(operation);
+                                                    }}
+                                                    disabled={operation.status === OperationStatus.COMPLETED}
+                                                >
+                                                    <CheckCircle className="mr-2 h-4 w-4" />
+                                                    Tamamlandı Olarak İşaretle
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleDelete(operation);
+                                                    }}
+                                                    className="text-destructive focus:text-destructive"
+                                                >
+                                                    <Trash2 className="mr-2 h-4 w-4 text-destructive" />
+                                                    Sil
+                                                </DropdownMenuItem>
 
                                             </DropdownMenuContent>
                                         </DropdownMenu>
@@ -395,7 +527,7 @@ export default function OperationsPage() {
                 }}
                 operation={selectedOperation}
                 onSuccess={() => {
-                    dispatch(getOperations({ page, limit, search: searchTerm }));
+                    dispatch(getOperations({ page, limit, search: searchTerm, tab: selectedTab }));
                     setSelectedOperation(null);
                     setIsAddModalOpen(false);
                 }}
@@ -439,7 +571,8 @@ export default function OperationsPage() {
                     dispatch(getOperations({
                         page,
                         limit,
-                        search: searchTerm
+                        search: searchTerm,
+                        tab: selectedTab
                     }));
                 }}
             />
