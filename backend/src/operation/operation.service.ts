@@ -13,7 +13,7 @@ export class OperationService {
 
     constructor(@InjectRepository(Operation) private operationRepository: Repository<Operation>) { }
 
-    async findAll(page?: number, limit?: number, search?: string, tab?: 'my-operations-active' | 'my-operations-completed' | 'all-active' | 'all-completed', userId?: number) {
+    async findAll(page?: number, limit?: number, search?: string, tab?: 'my-operations-active' | 'my-operations-completed' | 'my-operations-all' | 'all-active' | 'all-completed' | 'all-operations-all', userId?: number) {
         const queryBuilder = this.operationRepository.createQueryBuilder('operation')
             .withDeleted() // Customer ve Ship  soft delete olsa bile verileri getirsin
             .leftJoinAndSelect('operation.customer', 'customer')
@@ -39,12 +39,23 @@ export class OperationService {
             } else {
                 queryBuilder.andWhere('1 = 0');
             }
+        } else if (tab === 'my-operations-all') {
+            // Kullanıcıya atanmış tüm operasyonlar (hem aktif hem tamamlanan)
+            if (userId) {
+                queryBuilder.andWhere('user.id = :userId', { userId });
+                // Status filtresi yok - tüm status'ler
+            } else {
+                queryBuilder.andWhere('1 = 0');
+            }
         } else if (tab === 'all-active') {
             // Tüm aktif operasyonlar (planned, in_progress)
             queryBuilder.andWhere('operation.status IN (:...activeStatuses)', { activeStatuses: ['planned', 'in_progress'] });
         } else if (tab === 'all-completed') {
             // Tüm tamamlanmış operasyonlar
             queryBuilder.andWhere('operation.status = :status', { status: 'completed' });
+        } else if (tab === 'all-operations-all') {
+            // Tüm operasyonlar (hem aktif hem tamamlanan) - Status filtresi yok
+            // Hiçbir status filtresi eklenmiyor
         }
         // Eğer tab belirtilmemişse, tüm operasyonlar (geriye dönük uyumluluk için)
 

@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useMemo, useEffect } from 'react';
+import React, { useMemo, useEffect, memo } from 'react';
 import Script from 'next/script';
 import { OperationStatus } from '@/lib/operation-status';
 
@@ -20,7 +20,7 @@ interface LordIconProps {
     className?: string;
 }
 
-const LordIcon: React.FC<LordIconProps> = ({
+const LordIcon: React.FC<LordIconProps> = memo(({
     src,
     trigger = 'hover',
     delay = '1000',
@@ -34,23 +34,33 @@ const LordIcon: React.FC<LordIconProps> = ({
         }
     }, [src]);
 
-    const iconHtml = {
-        __html: `
-            <lord-icon
-                src="${src}"
-                trigger="${trigger}"
-                delay="${delay}"
-                colors="${colors}"
-                style="width: 40px; height: 40px; ${Object.entries(style)
-                .map(([key, value]) => `${key}: ${value};`)
-                .join(' ')}"
-                class="${className}">
-            </lord-icon>
-        `
-    };
+    const iconHtml = useMemo(() => {
+        const styleString = Object.entries(style)
+            .map(([key, value]) => {
+                // Convert camelCase to kebab-case for CSS
+                const kebabKey = key.replace(/([A-Z])/g, '-$1').toLowerCase();
+                return `${kebabKey}: ${value};`;
+            })
+            .join(' ');
+
+        return {
+            __html: `
+                <lord-icon
+                    src="${src}"
+                    trigger="${trigger}"
+                    delay="${delay}"
+                    colors="${colors}"
+                    style="width: 40px; height: 40px; ${styleString}"
+                    class="${className}">
+                </lord-icon>
+            `
+        };
+    }, [src, trigger, delay, colors, className, style]);
 
     return <div dangerouslySetInnerHTML={iconHtml} />;
-};
+});
+
+LordIcon.displayName = 'LordIcon';
 
 interface OperationStatsCardsProps {
     statistics: {
@@ -62,7 +72,10 @@ interface OperationStatsCardsProps {
     } | null;
 }
 
-const StatCard = ({ title, value, icon, iconType, bgColor, iconColor, trigger, colors, delay = '1000' }: any) => (
+// Memoize the style object to prevent unnecessary re-renders
+const iconStyle = { width: '60px', height: '60px' };
+
+const StatCard = memo(({ title, value, icon, iconType, bgColor, iconColor, trigger, colors, delay = '1000' }: any) => (
     <div className={`rounded-lg border p-3 ${bgColor} transition-shadow`}>
         <div className="flex items-center justify-between">
             <div className="space-y-1">
@@ -77,7 +90,7 @@ const StatCard = ({ title, value, icon, iconType, bgColor, iconColor, trigger, c
                             trigger={trigger}
                             delay={delay}
                             colors={colors}
-                            style={{ width: '60px', height: '60px' }}
+                            style={iconStyle}
                         />
                     </div>
                 ) : (
@@ -86,9 +99,11 @@ const StatCard = ({ title, value, icon, iconType, bgColor, iconColor, trigger, c
             </div>
         </div>
     </div>
-);
+));
 
-export default function OperationStatsCards({ statistics }: OperationStatsCardsProps) {
+StatCard.displayName = 'StatCard';
+
+const OperationStatsCards = memo(({ statistics }: OperationStatsCardsProps) => {
     const stats = useMemo(() => {
         if (!statistics) {
             return {
@@ -155,4 +170,20 @@ export default function OperationStatsCards({ statistics }: OperationStatsCardsP
             </div>
         </>
     );
-}
+}, (prevProps, nextProps) => {
+    // Custom comparison: Only re-render if statistics values actually changed
+    if (!prevProps.statistics && !nextProps.statistics) return true; // Both null, no change
+    if (!prevProps.statistics || !nextProps.statistics) return false; // One is null, changed
+
+    return (
+        prevProps.statistics.myOperations === nextProps.statistics.myOperations &&
+        prevProps.statistics.activeOperations === nextProps.statistics.activeOperations &&
+        prevProps.statistics.completedOperations === nextProps.statistics.completedOperations &&
+        prevProps.statistics.myOperationsActive === nextProps.statistics.myOperationsActive &&
+        prevProps.statistics.myOperationsCompleted === nextProps.statistics.myOperationsCompleted
+    );
+});
+
+OperationStatsCards.displayName = 'OperationStatsCards';
+
+export default OperationStatsCards;

@@ -5,7 +5,7 @@ interface GetOperationsParams {
     page?: number;
     limit?: number;
     search?: string;
-    tab?: 'my-operations-active' | 'my-operations-completed' | 'all-active' | 'all-completed';
+    tab?: 'my-operations-active' | 'my-operations-completed' | 'my-operations-all' | 'all-active' | 'all-completed' | 'all-operations-all';
 }
 
 // OPERATION THUNKS

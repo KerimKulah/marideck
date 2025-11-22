@@ -1,6 +1,6 @@
 "use client"
 
-import { Search, Plus, Ship, Users, Clock, AlertCircle, CheckCircle, XCircle, MoreHorizontal, MessageSquare, Package, Info, X, Calendar, Pencil, Filter, User, Mail, Phone, MessageCircle, Anchor, Briefcase, List, Trash2 } from "lucide-react"
+import { Search, Plus, Ship, Users, Clock, AlertCircle, CheckCircle, XCircle, MoreHorizontal, MessageSquare, Package, Info, X, Calendar, Pencil, Filter, User, Mail, Phone, MessageCircle, Anchor, Briefcase, List, Trash2, Grid3x3 } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -18,7 +18,6 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useState, useEffect, useMemo, useRef } from "react"
 import { debounce } from "lodash"
 import { useDispatch, useSelector } from "react-redux"
@@ -82,7 +81,10 @@ export default function OperationsPage() {
     const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false)
     const [searchInput, setSearchInput] = useState("")
     const [searchTerm, setSearchTerm] = useState("")
-    const [selectedTab, setSelectedTab] = useState<'my-operations-active' | 'my-operations-completed' | 'all-active' | 'all-completed'>('my-operations-active')
+    // Ana tab: 'my-operations' | 'all-operations'
+    // Alt tab: 'all' | 'active' | 'completed'
+    const [mainTab, setMainTab] = useState<'my-operations' | 'all-operations'>('my-operations')
+    const [subTab, setSubTab] = useState<'all' | 'active' | 'completed'>('all')
     const [isOperationRoomOpen, setIsOperationRoomOpen] = useState(false)
     const searchInputRef = useRef(searchInput)
 
@@ -104,15 +106,31 @@ export default function OperationsPage() {
         { id: 3, name: 'Ayşe Kaya', role: 'Güvenlik Sorumlusu' },
     ])
 
+    // Convert mainTab + subTab to backend tab format
+    const getBackendTab = (main: 'my-operations' | 'all-operations', sub: 'all' | 'active' | 'completed'): 'my-operations-active' | 'my-operations-completed' | 'my-operations-all' | 'all-active' | 'all-completed' | 'all-operations-all' => {
+        if (main === 'my-operations') {
+            if (sub === 'active') return 'my-operations-active'
+            if (sub === 'completed') return 'my-operations-completed'
+            if (sub === 'all') return 'my-operations-all'
+            return 'my-operations-all' // default
+        } else {
+            if (sub === 'active') return 'all-active'
+            if (sub === 'completed') return 'all-completed'
+            if (sub === 'all') return 'all-operations-all'
+            return 'all-operations-all' // default
+        }
+    }
+
     // Debounced search function
     const debouncedSearch = useMemo(
-        () => debounce((value: string, tab: 'my-operations-active' | 'my-operations-completed' | 'all-active' | 'all-completed') => {
+        () => debounce((value: string, mainTab: 'my-operations' | 'all-operations', subTab: 'all' | 'active' | 'completed') => {
             setSearchTerm(value)
+            const backendTab = getBackendTab(mainTab, subTab)
             dispatch(getOperations({
                 page: 1,
                 limit: 10,
-                search: value || '', // Always send search, even if empty
-                tab: tab
+                search: value || '',
+                tab: backendTab as 'my-operations-active' | 'my-operations-completed' | 'my-operations-all' | 'all-active' | 'all-completed' | 'all-operations-all'
             }))
         }, 500),
         [dispatch]
@@ -120,17 +138,20 @@ export default function OperationsPage() {
 
     // Fetch operations when tab changes
     useEffect(() => {
-        const tab = searchParams.get('tab') as 'my-operations-active' | 'my-operations-completed' | 'all-active' | 'all-completed' || 'my-operations-active'
-        setSelectedTab(tab)
+        const mainTabParam = searchParams.get('mainTab') as 'my-operations' | 'all-operations' || 'my-operations'
+        const subTabParam = searchParams.get('subTab') as 'all' | 'active' | 'completed' || 'all'
+
+        setMainTab(mainTabParam)
+        setSubTab(subTabParam)
 
         const currentSearch = searchInputRef.current || ''
+        const backendTab = getBackendTab(mainTabParam, subTabParam)
 
-        // Use current searchInput value from ref (always up-to-date)
         dispatch(getOperations({
             page: 1,
             limit: 10,
-            search: currentSearch, // Always send search, even if empty
-            tab: tab
+            search: currentSearch,
+            tab: backendTab as 'my-operations-active' | 'my-operations-completed' | 'my-operations-all' | 'all-active' | 'all-completed' | 'all-operations-all'
         }))
     }, [searchParams, user, dispatch])
 
@@ -139,26 +160,25 @@ export default function OperationsPage() {
         // Skip on initial mount
         if (searchInput === undefined) return
 
-        const tab = selectedTab || 'my-operations-active'
-
         if (searchInput === '') {
             // Search cleared - immediately update and fetch
             setSearchTerm('')
+            const backendTab = getBackendTab(mainTab, subTab)
             dispatch(getOperations({
                 page: 1,
                 limit: 10,
-                search: '', // Always send search, even if empty
-                tab: tab
+                search: '',
+                tab: backendTab as 'my-operations-active' | 'my-operations-completed' | 'my-operations-all' | 'all-active' | 'all-completed' | 'all-operations-all'
             }))
         } else {
             // Search has value - use debounce
-            debouncedSearch(searchInput, tab)
+            debouncedSearch(searchInput, mainTab, subTab)
         }
 
         return () => {
             debouncedSearch.cancel()
         }
-    }, [searchInput, debouncedSearch, selectedTab, dispatch])
+    }, [searchInput, debouncedSearch, mainTab, subTab, dispatch])
 
     // Fetch statistics
     useEffect(() => {
@@ -170,27 +190,43 @@ export default function OperationsPage() {
         if (!statistics) return {
             myOperationsActive: 0,
             myOperationsCompleted: 0,
+            myOperationsAll: 0,
             allActive: 0,
-            allCompleted: 0
+            allCompleted: 0,
+            allOperationsAll: 0
         };
 
-        const stats = statistics as any; // Type assertion for new statistics structure
+        const stats = statistics as any;
+
+        const myOperationsActive = stats.myOperationsActive || stats.myOperations || 0
+        const myOperationsCompleted = stats.myOperationsCompleted || 0
+        const allActive = statistics.activeOperations || 0
+        const allCompleted = statistics.completedOperations || 0
 
         return {
-            myOperationsActive: stats.myOperationsActive || stats.myOperations || 0, // Aktif olanlar
-            myOperationsCompleted: stats.myOperationsCompleted || 0, // Tamamlanan olanlar (kullanıcıya atanmış)
-            allActive: statistics.activeOperations, // Tüm aktif operasyonlar
-            allCompleted: statistics.completedOperations // Tüm tamamlanan operasyonlar
+            myOperationsActive,
+            myOperationsCompleted,
+            myOperationsAll: myOperationsActive + myOperationsCompleted,
+            allActive,
+            allCompleted,
+            allOperationsAll: allActive + allCompleted
         };
     }, [statistics]);
 
     // Operations are already filtered by backend
     const filteredOperations = operations
 
-    // Handle tab change
-    const handleTabChange = (tab: string) => {
-        setSelectedTab(tab as 'my-operations-active' | 'my-operations-completed' | 'all-active' | 'all-completed')
-        router.push(`/operations?tab=${tab}`)
+    // Handle main filter change
+    const handleMainFilterChange = (tab: 'my-operations' | 'all-operations') => {
+        setMainTab(tab)
+        setSubTab('all') // Reset sub filter when main filter changes
+        router.push(`/operations?mainTab=${tab}&subTab=all`)
+    }
+
+    // Handle sub filter change
+    const handleSubFilterChange = (tab: 'all' | 'active' | 'completed') => {
+        setSubTab(tab)
+        router.push(`/operations?mainTab=${mainTab}&subTab=${tab}`)
     }
 
     // Handle search input
@@ -238,7 +274,8 @@ export default function OperationsPage() {
             }))
             if (updateOperation.fulfilled.match(resultAction)) {
                 toast.success("Operasyon tamamlandı olarak işaretlendi")
-                dispatch(getOperations({ page, limit, search: searchTerm }))
+                const backendTab = getBackendTab(mainTab, subTab)
+                dispatch(getOperations({ page, limit, search: searchTerm, tab: backendTab as 'my-operations-active' | 'my-operations-completed' | 'my-operations-all' | 'all-active' | 'all-completed' | 'all-operations-all' }))
             } else {
                 toast.error("Operasyon güncellenirken bir hata oluştu")
             }
@@ -258,7 +295,8 @@ export default function OperationsPage() {
             const resultAction = await dispatch(deleteOperation(operation.id.toString()))
             if (deleteOperation.fulfilled.match(resultAction)) {
                 toast.success("Operasyon başarıyla silindi")
-                dispatch(getOperations({ page, limit, search: searchTerm }))
+                const backendTab = getBackendTab(mainTab, subTab)
+                dispatch(getOperations({ page, limit, search: searchTerm, tab: backendTab as 'my-operations-active' | 'my-operations-completed' | 'my-operations-all' | 'all-active' | 'all-completed' | 'all-operations-all' }))
             } else {
                 toast.error("Operasyon silinirken bir hata oluştu")
             }
@@ -301,92 +339,122 @@ export default function OperationsPage() {
     }
 
     return (
-        <div className="grid space-y-3 overflow-x-auto">
-            <OperationStatsCards statistics={statistics} />
-            {/* Arama ve Yeni Operasyon Ekle Butonu */}
-            <div className="flex flex-col sm:flex-row gap-3 sm:items-center justify-between">
-                {/* Arama Inputu */}
-                <div className="relative w-full ">
+        <div className="grid space-y-4 overflow-x-auto">
+            {/* <OperationStatsCards statistics={statistics} /> */}
+
+            {/* Premium Filter & Search Bar - Two Row Layout */}
+            {/* Top Row: Search + Action Buttons */}
+            <div className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
+                {/* Search Input */}
+                <div className="relative w-full sm:flex-1 ">
                     <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                     <Input
                         type="search"
                         placeholder="Operasyon ara..."
-                        className="w-full pl-9 pr-4 py-2 text-sm sm:text-base"
+                        className="w-full pl-9 pr-4 py-2 text-sm"
                         value={searchInput}
                         onChange={handleSearch}
                     />
                 </div>
 
-                {/* Yeni Operasyon Ekle Butonu */}
-                <Button onClick={() => setIsAddModalOpen(true)} className="w-full sm:w-auto">
-                    <Plus className="mr-2 h-4 w-4" />
-                    <span>Operasyon Ekle</span>
-                </Button>
+                {/* Right: Add Button + Filter Button */}
+                <div className="flex items-center gap-2">
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="outline" size="sm" className="h-9">
+                                <Filter className="h-4 w-4 mr-2" />
+                                Filtrele
+                                {subTab !== 'all' && (
+                                    <span className="ml-2 h-4 min-w-[18px] px-1.5 rounded-full bg-primary/10 text-primary text-[10px] font-semibold flex items-center justify-center">
+                                        1
+                                    </span>
+                                )}
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-52">
+                            <DropdownMenuItem
+                                onClick={() => handleSubFilterChange('all')}
+                                className={`${subTab === 'all' ? 'bg-accent font-medium' : ''} cursor-pointer`}
+                            >
+                                <div className="flex items-center justify-between w-full">
+                                    <div className="flex items-center gap-2">
+                                        <Grid3x3 className="h-4 w-4 text-muted-foreground" />
+                                        <span>Tümü</span>
+                                    </div>
+                                </div>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                                onClick={() => handleSubFilterChange('active')}
+                                className={`${subTab === 'active' ? 'bg-accent font-medium' : ''} cursor-pointer`}
+                            >
+                                <div className="flex items-center justify-between w-full">
+                                    <div className="flex items-center gap-2">
+                                        <Clock className="h-4 w-4 text-muted-foreground" />
+                                        <span>Aktif Olanlar</span>
+                                    </div>
+                                    {(mainTab === 'my-operations' && tabCounts.myOperationsActive > 0) ||
+                                        (mainTab === 'all-operations' && tabCounts.allActive > 0) ? (
+                                        <span className="h-5 min-w-[20px] px-1.5 rounded-full bg-primary/10 text-primary text-xs font-semibold flex items-center justify-center">
+                                            {mainTab === 'my-operations' ? tabCounts.myOperationsActive : tabCounts.allActive}
+                                        </span>
+                                    ) : null}
+                                </div>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                                onClick={() => handleSubFilterChange('completed')}
+                                className={`${subTab === 'completed' ? 'bg-accent font-medium' : ''} cursor-pointer`}
+                            >
+                                <div className="flex items-center justify-between w-full">
+                                    <div className="flex items-center gap-2">
+                                        <CheckCircle className="h-4 w-4 text-muted-foreground" />
+                                        <span>Tamamlananlar</span>
+                                    </div>
+                                    {(mainTab === 'my-operations' && tabCounts.myOperationsCompleted > 0) ||
+                                        (mainTab === 'all-operations' && tabCounts.allCompleted > 0) ? (
+                                        <span className="h-5 min-w-[20px] px-1.5 rounded-full bg-primary/10 text-primary text-xs font-semibold flex items-center justify-center">
+                                            {mainTab === 'my-operations' ? tabCounts.myOperationsCompleted : tabCounts.allCompleted}
+                                        </span>
+                                    ) : null}
+                                </div>
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                    <Button onClick={() => setIsAddModalOpen(true)} className="cursor-pointer w-full sm:w-auto whitespace-nowrap">
+                        <Plus className="mr-2 h-4 w-4" />
+                        <span>Operasyon Ekle</span>
+                    </Button>
+                </div>
             </div>
 
-            {/* Main Content */}
-            <Tabs value={selectedTab} onValueChange={handleTabChange} className="w-full">
-                <TabsList className="grid w-full grid-cols-4 bg-muted/50 p-1.5 h-auto gap-1.5 rounded-xl border">
-                    <TabsTrigger
-                        value="my-operations-active"
-                        className="flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all duration-200 rounded-lg"
+            {/* Bottom Row: Scope Tabs - Below Search */}
+            <div className="flex items-center">
+                <div className="flex items-center gap-1.5 rounded-lg border bg-muted/30 p-1">
+                    <Button
+                        variant={mainTab === 'my-operations' ? 'default' : 'ghost'}
+                        size="sm"
+                        onClick={() => handleMainFilterChange('my-operations')}
+                        className="h-8 px-3 text-xs font-medium"
                     >
-                        <Briefcase className="h-4 w-4" />
-                        <span className="hidden sm:inline">Mevcut Operasyonlarım</span>
-                        <span className="sm:hidden">Mevcut</span>
-                        {tabCounts.myOperationsActive > 0 && (
-                            <Badge variant="secondary" className="ml-1 h-5 min-w-5 px-1.5 text-xs font-semibold">
-                                {tabCounts.myOperationsActive}
-                            </Badge>
-                        )}
-                    </TabsTrigger>
-                    <TabsTrigger
-                        value="my-operations-completed"
-                        className="flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all duration-200 rounded-lg"
+                        <Briefcase className="h-3.5 w-3.5 mr-1.5" />
+                        Operasyonlarım
+                    </Button>
+                    <Button
+                        variant={mainTab === 'all-operations' ? 'default' : 'ghost'}
+                        size="sm"
+                        onClick={() => handleMainFilterChange('all-operations')}
+                        className="h-8 px-3 text-xs font-medium"
                     >
-                        <CheckCircle className="h-4 w-4" />
-                        <span className="hidden sm:inline">Tamamlanan Operasyonlarım</span>
-                        <span className="sm:hidden">Tamamlananım</span>
-                        {tabCounts.myOperationsCompleted > 0 && (
-                            <Badge variant="secondary" className="ml-1 h-5 min-w-5 px-1.5 text-xs font-semibold">
-                                {tabCounts.myOperationsCompleted}
-                            </Badge>
-                        )}
-                    </TabsTrigger>
-                    <TabsTrigger
-                        value="all-active"
-                        className="flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all duration-200 rounded-lg"
-                    >
-                        <List className="h-4 w-4" />
-                        <span className="hidden sm:inline">Tüm Aktif Operasyonlar</span>
-                        <span className="sm:hidden">Aktif</span>
-                        {tabCounts.allActive > 0 && (
-                            <Badge variant="secondary" className="ml-1 h-5 min-w-5 px-1.5 text-xs font-semibold">
-                                {tabCounts.allActive}
-                            </Badge>
-                        )}
-                    </TabsTrigger>
-                    <TabsTrigger
-                        value="all-completed"
-                        className="flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all duration-200 rounded-lg"
-                    >
-                        <CheckCircle className="h-4 w-4" />
-                        <span className="hidden sm:inline">Tüm Tamamlanan Operasyonlar</span>
-                        <span className="sm:hidden">Tamamlanan</span>
-                        {tabCounts.allCompleted > 0 && (
-                            <Badge variant="secondary" className="ml-1 h-5 min-w-5 px-1.5 text-xs font-semibold">
-                                {tabCounts.allCompleted}
-                            </Badge>
-                        )}
-                    </TabsTrigger>
-                </TabsList>
-            </Tabs>
+                        <List className="h-3.5 w-3.5 mr-1.5" />
+                        Tüm Operasyonlar
+                    </Button>
+                </div>
+            </div>
 
             <div className="rounded-lg border overflow-x-auto">
                 <Table className="w-full min-w-[700px] sm:min-w-full">
                     <TableHeader>
                         <TableRow>
-                            <TableHead>Operasyon</TableHead>
+                            <TableHead>Operasyon </TableHead>
                             <TableHead>Müşteri</TableHead>
                             <TableHead>Gemi</TableHead>
                             <TableHead>Liman</TableHead>
@@ -527,7 +595,8 @@ export default function OperationsPage() {
                 }}
                 operation={selectedOperation}
                 onSuccess={() => {
-                    dispatch(getOperations({ page, limit, search: searchTerm, tab: selectedTab }));
+                    const backendTab = getBackendTab(mainTab, subTab)
+                    dispatch(getOperations({ page, limit, search: searchTerm, tab: backendTab as 'my-operations-active' | 'my-operations-completed' | 'my-operations-all' | 'all-active' | 'all-completed' | 'all-operations-all' }));
                     setSelectedOperation(null);
                     setIsAddModalOpen(false);
                 }}
@@ -568,11 +637,12 @@ export default function OperationsPage() {
                     setSelectedOperation(updatedOperation);
 
                     // Also update the operations list
+                    const backendTab = getBackendTab(mainTab, subTab)
                     dispatch(getOperations({
                         page,
                         limit,
                         search: searchTerm,
-                        tab: selectedTab
+                        tab: backendTab as 'my-operations-active' | 'my-operations-completed' | 'my-operations-all' | 'all-active' | 'all-completed' | 'all-operations-all'
                     }));
                 }}
             />

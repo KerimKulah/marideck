@@ -238,8 +238,7 @@ export default function CustomersPage() {
 
   return (
     <div className="grid space-y-4">
-      {/* Delete Confirmation Dialog */}
-      <CustomerStatsCards />
+      {/* <CustomerStatsCards /> */}
 
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <DialogContent className="sm:max-w-[425px]">

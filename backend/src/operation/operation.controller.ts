@@ -20,7 +20,7 @@ export class OperationController {
     @Query('page') page?: number,
     @Query('limit') limit?: number,
     @Query('search') search?: string,
-    @Query('tab') tab?: 'my-operations-active' | 'my-operations-completed' | 'all-active' | 'all-completed',
+    @Query('tab') tab?: 'my-operations-active' | 'my-operations-completed' | 'my-operations-all' | 'all-active' | 'all-completed' | 'all-operations-all',
     @CurrentUserId() userId?: number
   ) {
     const pageNum = page ? parseInt(page.toString()) : undefined;
