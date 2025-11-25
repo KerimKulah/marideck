@@ -2,8 +2,7 @@ import { AppDispatch } from '@/redux/store';
 import { useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { toast } from "sonner";
-import { getShipByMMSI } from '@/redux/slices/shipSlice';
-import api from '@/api/axios';
+import { getShipByMMSI, getShipByImo } from '@/redux/slices/shipSlice';
 
 export const useAisShipData = (onDataLoaded: (data: any) => void) => {
     const dispatch = useDispatch<AppDispatch>();
@@ -27,9 +26,8 @@ export const useAisShipData = (onDataLoaded: (data: any) => void) => {
                 // MMSI araması
                 shipData = await dispatch(getShipByMMSI(searchValue)).unwrap();
             } else if (searchValue.length === 7) {
-                // IMO araması - backend'de IMO endpoint'i kullan
-                const response = await api.get(`/ship/ais/imo/${searchValue}`);
-                shipData = response.data;
+                // IMO araması
+                shipData = await dispatch(getShipByImo(searchValue)).unwrap();
             } else {
                 setError('Geçersiz numara formatı. MMSI (9 haneli) veya IMO (7 haneli) giriniz');
                 return;

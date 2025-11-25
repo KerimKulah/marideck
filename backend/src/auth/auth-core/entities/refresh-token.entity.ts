@@ -1,13 +1,14 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, CreateDateColumn, UpdateDateColumn } from "typeorm";
 import { User } from "../../user/entities/user.entity";
 
+// Bu entity session yönetimi için kullanılır.
 @Entity()
 export class RefreshToken {
     @PrimaryGeneratedColumn()
     id: number;
 
     @Column(({ unique: true }))
-    hash: string;
+    hash: string;  // Session token (refresh token)
 
     @CreateDateColumn({ type: 'timestamptz' })
     createdAt: Date;
@@ -27,7 +28,7 @@ export class RefreshToken {
     @Column({ default: false })
     isRevoked: boolean;
 
-    @Column({ type: 'timestamptz', nullable: true }) 
+    @Column({ type: 'timestamptz', nullable: true })
     usedAt: Date;
 
     @ManyToOne(() => User, (user) => user.refreshTokens, { onDelete: 'CASCADE' })

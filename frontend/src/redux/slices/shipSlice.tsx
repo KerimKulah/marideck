@@ -81,6 +81,16 @@ export const getShipByMMSI = createAsyncThunk("ship/getShipByMMSI", async (mmsi:
     }
 })
 
+// GET SHIP BY IMO
+export const getShipByImo = createAsyncThunk("ship/getShipByImo", async (imo: string, { rejectWithValue }) => {
+    try {
+        const response = await api.get(`/ship/ais/imo/${imo}`);
+        return response.data;
+    } catch (error: any) {
+        return rejectWithValue(error.response?.data || { message: "Bilinmeyen hata" });
+    }
+})
+
 interface ShipState {
     ships: any[];
     ship: any | null;
