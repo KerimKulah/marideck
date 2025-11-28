@@ -4,8 +4,6 @@ import { useState, useEffect } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
-import { format } from "date-fns"
-import { tr } from "date-fns/locale"
 import { toast } from "sonner"
 import { useDispatch, useSelector } from "react-redux"
 import { AppDispatch, RootState } from "@/redux/store"
@@ -16,12 +14,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "./ui/form"
 import { Input } from "./ui/input"
 import { Textarea } from "./ui/textarea"
-import { Calendar } from "./ui/calendar"
-import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover"
-import { CalendarIcon, Loader2, Plus, X, ChevronDown, ChevronRight, Ship, User, Package, MapPin, Clock, FileText, Users, Building2, Anchor } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { Loader2, Plus, X, ChevronRight, Ship, User, Package, MapPin, Clock, FileText, Users, Anchor } from "lucide-react"
+import { DateTimePicker } from "./date-time-picker"
 import { SelectModal } from "./select-modal"
 import { OperationStatus, getOperationStatusTranslation } from "@/lib/operation-status"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select"
 
 const operationFormSchema = z.object({
     name: z.string().min(1, "Operasyon adı zorunludur"),
@@ -40,6 +37,14 @@ const operationFormSchema = z.object({
     status: z.nativeEnum(OperationStatus),
     cargoType: z.string().optional(),
     cargoDetails: z.string().optional(),
+}).refine((data) => {
+    if (data.startDate && data.endDate) {
+        return data.startDate <= data.endDate;
+    }
+    return true;
+}, {
+    message: "Başlangıç tarihi bitiş tarihinden sonra olamaz",
+    path: ["startDate"],
 })
 
 type OperationFormValues = z.infer<typeof operationFormSchema>
@@ -76,31 +81,33 @@ export function OperationAddOrEditModal({
     const [selectedUserIds, setSelectedUserIds] = useState<number[]>([])
 
     useEffect(() => {
-        if (operation) {
-            setSelectedCustomer(operation.customer || null)
-            setSelectedShip(operation.ship || null)
-            const userIds = operation.users?.map((u: any) => u.id) || []
-            setSelectedUserIds(userIds)
+        if (open) {
+            if (operation && operation.id) {
+                setSelectedCustomer(operation.customer || null)
+                setSelectedShip(operation.ship || null)
+                const userIds = operation.users?.map((u: any) => u.id) || []
+                setSelectedUserIds(userIds)
 
-            form.reset({
-                name: operation.name || "",
-                type: operation.type || "",
-                details: operation.details || "",
-                port: operation.port || "",
-                customerId: operation.customer?.id || undefined,
-                shipId: operation.ship?.id || undefined,
-                userId: userIds,
-                startDate: operation.startDate ? new Date(operation.startDate) : new Date(),
-                endDate: operation.endDate ? new Date(operation.endDate) : new Date(),
-                status: operation.status || OperationStatus.PLANNED,
-                cargoType: operation.cargoType || "",
-                cargoDetails: operation.cargoDetails || "",
-            })
-        } else {
-            // Reset form for new operation
-            resetForm()
+                form.reset({
+                    name: operation.name || "",
+                    type: operation.type || "",
+                    details: operation.details || "",
+                    port: operation.port || "",
+                    customerId: operation.customer?.id || undefined,
+                    shipId: operation.ship?.id || undefined,
+                    userId: userIds,
+                    startDate: operation.startDate ? new Date(operation.startDate) : undefined,
+                    endDate: operation.endDate ? new Date(operation.endDate) : undefined,
+                    status: operation.status || OperationStatus.PLANNED,
+                    cargoType: operation.cargoType || "",
+                    cargoDetails: operation.cargoDetails || "",
+                })
+            } else {
+                // Reset form for new operation
+                resetForm()
+            }
         }
-    }, [operation])
+    }, [operation, open])
 
     const form = useForm<OperationFormValues>({
         resolver: zodResolver(operationFormSchema),
@@ -112,8 +119,8 @@ export function OperationAddOrEditModal({
             customerId: undefined,
             shipId: undefined,
             userId: [],
-            startDate: new Date(),
-            endDate: new Date(),
+            startDate: undefined,
+            endDate: undefined,
             status: OperationStatus.PLANNED,
             cargoType: "",
             cargoDetails: "",
@@ -173,6 +180,9 @@ export function OperationAddOrEditModal({
             const operationData = {
                 ...data,
                 userId: form.getValues("userId"),
+                // Tarihleri ISO string formatına çevir ve timezone offset'ini düzelt
+                startDate: data.startDate ? new Date(data.startDate.getTime() - (data.startDate.getTimezoneOffset() * 60000)).toISOString() : undefined,
+                endDate: data.endDate ? new Date(data.endDate.getTime() - (data.endDate.getTimezoneOffset() * 60000)).toISOString() : undefined,
             }
 
             if (operation) {
@@ -206,8 +216,8 @@ export function OperationAddOrEditModal({
             customerId: undefined,
             shipId: undefined,
             userId: [],
-            startDate: new Date(),
-            endDate: new Date(),
+            startDate: undefined,
+            endDate: undefined,
             status: OperationStatus.PLANNED,
             cargoType: "",
             cargoDetails: "",
@@ -218,50 +228,75 @@ export function OperationAddOrEditModal({
     const handleOpenChange = (open: boolean) => {
         if (!open) {
             resetForm()
+        } else {
+            // Modal açıldığında, eğer operation yoksa veya id yoksa form'u temizle
+            if (!operation || !operation.id) {
+                resetForm()
+            }
         }
         onOpenChange(open)
     }
 
-    const currentStatus = statusOptions.find(option => option.value === form.watch("status"));
 
     return (
         <>
             <Dialog open={open} onOpenChange={handleOpenChange}>
-                <DialogContent className="sm:max-w-[900px] max-h-[95vh] overflow-hidden flex flex-col">
-                    <DialogHeader className="pb-6 border-b border-gray-100">
-                        <DialogTitle className="text-2xl font-bold text-gray-900 flex items-center gap-3">
-                            <div className="p-2 bg-blue-100 rounded-lg">
-                                <Anchor className="h-6 w-6 text-black" />
-                            </div>
-                            {operation ? "Operasyonu Düzenle" : "Yeni Operasyon Oluştur"}
+                <DialogContent className="w-[95vw] lg:min-w-[900px] max-w-7xl max-h-[90vh] overflow-y-auto">
+                    <DialogHeader className="pb-4 border-b">
+                        <DialogTitle className="text-xl font-semibold flex items-center gap-2">
+                            {operation && operation.id ? (
+                                'Operasyon Bilgilerini Düzenle'
+                            ) : (
+                                <>
+                                    Yeni Operasyon Ekle
+                                </>
+                            )}
                         </DialogTitle>
-                        <DialogDescription className="text-gray-600 mt-2">
-                            {operation ? "Mevcut operasyonun bilgilerini güncelleyin" : "Yeni bir operasyon oluşturmak için aşağıdaki bilgileri doldurun"}
-                        </DialogDescription>
                     </DialogHeader>
 
-                    <div className="flex-1 overflow-y-auto py-6">
-                        <Form {...form}>
-                            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-                                {/* Temel Bilgiler */}
-                                <div className="space-y-4">
-                                    <div className="flex items-center gap-2 text-lg font-semibold text-gray-800 pb-2 border-b border-gray-200">
-                                        <FileText className="h-5 w-5 text-blue-600" />
-                                        Temel Bilgiler
+                    <Form {...form}>
+                        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                            {/* Profil Header - Kompakt */}
+                            {operation && operation.id && (
+                                <div className="flex items-center gap-4 py-4 border-b">
+                                    <div className="w-14 h-14 rounded-lg bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950 dark:to-blue-900 flex items-center justify-center flex-shrink-0 border border-blue-200 dark:border-blue-800">
+                                        <Anchor className="h-7 w-7 text-blue-600 dark:text-blue-400" />
                                     </div>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div className="flex-1 min-w-0">
+                                        <h3 className="text-lg font-semibold text-foreground break-words">
+                                            {operation.name || 'Operasyon'}
+                                        </h3>
+                                        {operation.type && (
+                                            <div className="flex items-center gap-2 mt-1">
+                                                <Package className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                                                <span className="text-sm text-muted-foreground break-words">
+                                                    {operation.type}
+                                                </span>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Bilgiler Grid - Kompakt ve Kurumsal */}
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 py-4 min-w-0">
+                                {/* Temel Bilgiler Kartı */}
+                                <div className="bg-muted/30 rounded-lg border p-4 space-y-3 h-full">
+                                    <h4 className="text-sm font-semibold text-foreground flex items-center gap-2 pb-2 border-b">
+                                        <FileText className="h-4 w-4 text-muted-foreground" />
+                                        Temel Bilgiler
+                                    </h4>
+                                    <div className="space-y-3">
                                         <FormField
                                             control={form.control}
                                             name="name"
                                             render={({ field }) => (
                                                 <FormItem>
-                                                    <FormLabel className="text-sm font-medium text-gray-700">Operasyon Adı</FormLabel>
+                                                    <FormLabel className="text-xs text-muted-foreground">
+                                                        Operasyon Adı <span className="text-red-500">*</span>
+                                                    </FormLabel>
                                                     <FormControl>
-                                                        <Input
-                                                            {...field}
-                                                            className="h-11 border-gray-300 focus:border-blue-500 focus:ring-blue-200"
-                                                            placeholder="Operasyon adını giriniz"
-                                                        />
+                                                        <Input placeholder="Operasyon adını giriniz" {...field} />
                                                     </FormControl>
                                                     <FormMessage />
                                                 </FormItem>
@@ -273,13 +308,11 @@ export function OperationAddOrEditModal({
                                             name="type"
                                             render={({ field }) => (
                                                 <FormItem>
-                                                    <FormLabel className="text-sm font-medium text-gray-700">Operasyon Tipi</FormLabel>
+                                                    <FormLabel className="text-xs text-muted-foreground">
+                                                        Operasyon Tipi <span className="text-red-500">*</span>
+                                                    </FormLabel>
                                                     <FormControl>
-                                                        <Input
-                                                            {...field}
-                                                            className="h-11 border-gray-300 focus:border-blue-500 focus:ring-blue-200"
-                                                            placeholder="Operasyon tipini giriniz"
-                                                        />
+                                                        <Input placeholder="Operasyon tipini giriniz" {...field} />
                                                     </FormControl>
                                                     <FormMessage />
                                                 </FormItem>
@@ -291,16 +324,11 @@ export function OperationAddOrEditModal({
                                             name="port"
                                             render={({ field }) => (
                                                 <FormItem>
-                                                    <FormLabel className="text-sm font-medium text-gray-700 flex items-center gap-1">
-                                                        <MapPin className="h-4 w-4" />
-                                                        Liman
+                                                    <FormLabel className="text-xs text-muted-foreground flex items-center gap-1">
+                                                        Liman <span className="text-red-500">*</span>
                                                     </FormLabel>
                                                     <FormControl>
-                                                        <Input
-                                                            {...field}
-                                                            className="h-11 border-gray-300 focus:border-blue-500 focus:ring-blue-200"
-                                                            placeholder="Liman adını giriniz"
-                                                        />
+                                                        <Input placeholder="Liman adını giriniz" {...field} />
                                                     </FormControl>
                                                     <FormMessage />
                                                 </FormItem>
@@ -312,25 +340,22 @@ export function OperationAddOrEditModal({
                                             name="status"
                                             render={({ field }) => (
                                                 <FormItem>
-                                                    <FormLabel className="text-sm font-medium text-gray-700">Durum</FormLabel>
+                                                    <FormLabel className="text-xs text-muted-foreground">
+                                                        Durum <span className="text-red-500">*</span>
+                                                    </FormLabel>
                                                     <FormControl>
-                                                        <div className="relative">
-                                                            <select
-                                                                className="flex h-11 w-full rounded-md border border-gray-300 bg-background px-3 py-2 text-sm ring-offset-background focus:border-blue-500 focus:ring-2 focus:ring-blue-200 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                                                                {...field}
-                                                            >
+                                                        <Select onValueChange={field.onChange} value={field.value}>
+                                                            <SelectTrigger className="w-full">
+                                                                <SelectValue placeholder="Durum seçiniz" />
+                                                            </SelectTrigger>
+                                                            <SelectContent>
                                                                 {statusOptions.map(option => (
-                                                                    <option key={option.value} value={option.value}>
+                                                                    <SelectItem key={option.value} value={option.value}>
                                                                         {option.label}
-                                                                    </option>
+                                                                    </SelectItem>
                                                                 ))}
-                                                            </select>
-                                                            {currentStatus && (
-                                                                <div className={`absolute right-12 top-3 px-2 py-1 rounded-full text-xs font-medium ${currentStatus.color}`}>
-                                                                    {currentStatus.label}
-                                                                </div>
-                                                            )}
-                                                        </div>
+                                                            </SelectContent>
+                                                        </Select>
                                                     </FormControl>
                                                     <FormMessage />
                                                 </FormItem>
@@ -339,41 +364,43 @@ export function OperationAddOrEditModal({
                                     </div>
                                 </div>
 
-                                {/* Müşteri ve Gemi Seçimi */}
-                                <div className="space-y-4">
-                                    <div className="flex items-center gap-2 text-lg font-semibold text-gray-800 pb-2 border-b border-gray-200">
-                                        <User className="h-5 w-5 text-blue-600" />
-                                        Müşteri ve Gemi Bilgileri
-                                    </div>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                {/* Müşteri ve Gemi Bilgileri Kartı */}
+                                <div className="bg-muted/30 rounded-lg border p-4 space-y-3 h-full">
+                                    <h4 className="text-sm font-semibold text-foreground flex items-center gap-2 pb-2 border-b">
+                                        <User className="h-4 w-4 text-muted-foreground" />
+                                        Müşteri ve Gemi
+                                    </h4>
+                                    <div className="space-y-3">
                                         <FormField
                                             control={form.control}
                                             name="customerId"
                                             render={({ field }) => (
                                                 <FormItem>
-                                                    <FormLabel className="text-sm font-medium text-gray-700">Müşteri</FormLabel>
-                                                    <div className="flex gap-2">
+                                                    <FormLabel className="text-xs text-muted-foreground">
+                                                        Müşteri <span className="text-red-500">*</span>
+                                                    </FormLabel>
+                                                    <div className="flex gap-2 min-w-0">
                                                         <Button
                                                             type="button"
                                                             variant="outline"
-                                                            className="flex-1 justify-between h-11 border-gray-300 hover:border-blue-400 hover:bg-blue-50"
+                                                            className="flex-1 justify-between h-10 text-sm min-w-0"
                                                             onClick={() => setOpenCustomerModal(true)}
                                                         >
-                                                            <span className="flex items-center gap-2">
-                                                                <User className="h-4 w-4 text-gray-500" />
+                                                            <span className="flex items-center gap-2 min-w-0 flex-1">
                                                                 {selectedCustomer
-                                                                    ? <span className="font-medium">{selectedCustomer.name}</span>
-                                                                    : <span className="text-gray-500">Müşteri seçin...</span>}
+                                                                    ? <span className="truncate min-w-0">{selectedCustomer.name}</span>
+                                                                    : <span className="text-muted-foreground truncate">Müşteri seçin...</span>}
                                                             </span>
-                                                            <ChevronRight className="h-4 w-4 text-gray-400" />
+                                                            <ChevronRight className="h-3.5 w-3.5 flex-shrink-0 ml-2" />
                                                         </Button>
                                                         {selectedCustomer && (
                                                             <Button
                                                                 type="button"
                                                                 variant="ghost"
                                                                 size="icon"
-                                                                className="h-11 w-11 text-gray-400 hover:text-red-500 hover:bg-red-50"
-                                                                onClick={() => {
+                                                                className="h-10 w-10 flex-shrink-0"
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
                                                                     setSelectedCustomer(null)
                                                                     field.onChange(null)
                                                                 }}
@@ -392,29 +419,31 @@ export function OperationAddOrEditModal({
                                             name="shipId"
                                             render={({ field }) => (
                                                 <FormItem>
-                                                    <FormLabel className="text-sm font-medium text-gray-700">Gemi</FormLabel>
-                                                    <div className="flex gap-2">
+                                                    <FormLabel className="text-xs text-muted-foreground">
+                                                        Gemi <span className="text-red-500">*</span>
+                                                    </FormLabel>
+                                                    <div className="flex gap-2 min-w-0">
                                                         <Button
                                                             type="button"
                                                             variant="outline"
-                                                            className="flex-1 justify-between h-11 border-gray-300 hover:border-blue-400 hover:bg-blue-50"
+                                                            className="flex-1 justify-between h-10 text-sm min-w-0"
                                                             onClick={() => setOpenShipModal(true)}
                                                         >
-                                                            <span className="flex items-center gap-2">
-                                                                <Ship className="h-4 w-4 text-gray-500" />
+                                                            <span className="flex items-center gap-2 min-w-0 flex-1">
                                                                 {selectedShip
-                                                                    ? <span className="font-medium">{`${selectedShip.name}${selectedShip.imoNumber ? ` (${selectedShip.imoNumber})` : ''}`}</span>
-                                                                    : <span className="text-gray-500">Gemi seçin...</span>}
+                                                                    ? <span className="truncate min-w-0">{`${selectedShip.name}${selectedShip.imoNumber ? ` (${selectedShip.imoNumber})` : ''}`}</span>
+                                                                    : <span className="text-muted-foreground truncate">Gemi seçin...</span>}
                                                             </span>
-                                                            <ChevronRight className="h-4 w-4 text-gray-400" />
+                                                            <ChevronRight className="h-3.5 w-3.5 flex-shrink-0 ml-2" />
                                                         </Button>
                                                         {selectedShip && (
                                                             <Button
                                                                 type="button"
                                                                 variant="ghost"
                                                                 size="icon"
-                                                                className="h-11 w-11 text-gray-400 hover:text-red-500 hover:bg-red-50"
-                                                                onClick={() => {
+                                                                className="h-10 w-10 flex-shrink-0"
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
                                                                     setSelectedShip(null)
                                                                     field.onChange(null)
                                                                 }}
@@ -430,154 +459,115 @@ export function OperationAddOrEditModal({
                                     </div>
                                 </div>
 
-                                {/* Tarih ve Yük Bilgileri */}
-                                <div className="space-y-4">
-                                    <div className="flex items-center gap-2 text-lg font-semibold text-gray-800 pb-2 border-b border-gray-200">
-                                        <Clock className="h-5 w-5 text-blue-600" />
-                                        Tarih ve Yük Bilgileri
+                                {/* Tarih ve Yük Bilgileri - Flex Col */}
+                                <div className="flex flex-col gap-4 h-full">
+                                    {/* Tarih Bilgileri Kartı */}
+                                    <div className="bg-muted/30 rounded-lg border p-4 space-y-3">
+                                        <h4 className="text-sm font-semibold text-foreground flex items-center gap-2 pb-2 border-b">
+                                            <Clock className="h-4 w-4 text-muted-foreground" />
+                                            Tarih
+                                        </h4>
+                                        <div className="space-y-3">
+                                            <FormField
+                                                control={form.control}
+                                                name="startDate"
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel className="text-xs text-muted-foreground">
+                                                            Başlangıç Tarihi <span className="text-red-500">*</span>
+                                                        </FormLabel>
+                                                        <FormControl>
+                                                            <DateTimePicker
+                                                                value={field.value}
+                                                                onChange={field.onChange}
+                                                                placeholder="Tarih ve saat seçin"
+                                                                maxDate={form.watch("endDate") || undefined}
+                                                            />
+                                                        </FormControl>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )}
+                                            />
+
+                                            <FormField
+                                                control={form.control}
+                                                name="endDate"
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel className="text-xs text-muted-foreground">
+                                                            Bitiş Tarihi <span className="text-red-500">*</span>
+                                                        </FormLabel>
+                                                        <FormControl>
+                                                            <DateTimePicker
+                                                                value={field.value}
+                                                                onChange={field.onChange}
+                                                                placeholder="Tarih ve saat seçin"
+                                                                minDate={form.watch("startDate") || undefined}
+                                                            />
+                                                        </FormControl>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )}
+                                            />
+                                        </div>
                                     </div>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        <FormField
-                                            control={form.control}
-                                            name="startDate"
-                                            render={({ field }) => (
-                                                <FormItem className="flex flex-col">
-                                                    <FormLabel className="text-sm font-medium text-gray-700">Başlangıç Tarihi</FormLabel>
-                                                    <Popover>
-                                                        <PopoverTrigger asChild>
-                                                            <FormControl>
-                                                                <Button
-                                                                    variant={"outline"}
-                                                                    className={cn(
-                                                                        "w-full h-11 pl-3 text-left font-normal border-gray-300 hover:border-blue-400 hover:bg-blue-50",
-                                                                        !field.value && "text-muted-foreground"
-                                                                    )}
-                                                                >
-                                                                    <CalendarIcon className="mr-2 h-4 w-4 text-gray-500" />
-                                                                    {field.value ? (
-                                                                        format(field.value, "PPP", { locale: tr })
-                                                                    ) : (
-                                                                        <span className="text-gray-500">Tarih seçin</span>
-                                                                    )}
-                                                                </Button>
-                                                            </FormControl>
-                                                        </PopoverTrigger>
-                                                        <PopoverContent className="w-auto p-0" align="start">
-                                                            <Calendar
-                                                                mode="single"
-                                                                selected={field.value}
-                                                                onSelect={field.onChange}
-                                                                disabled={(date) =>
-                                                                    date < new Date() || date < new Date("1900-01-01")
-                                                                }
-                                                                initialFocus
-                                                            />
-                                                        </PopoverContent>
-                                                    </Popover>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
 
-                                        <FormField
-                                            control={form.control}
-                                            name="endDate"
-                                            render={({ field }) => (
-                                                <FormItem className="flex flex-col">
-                                                    <FormLabel className="text-sm font-medium text-gray-700">Bitiş Tarihi</FormLabel>
-                                                    <Popover>
-                                                        <PopoverTrigger asChild>
-                                                            <FormControl>
-                                                                <Button
-                                                                    variant={"outline"}
-                                                                    className={cn(
-                                                                        "w-full h-11 pl-3 text-left font-normal border-gray-300 hover:border-blue-400 hover:bg-blue-50",
-                                                                        !field.value && "text-muted-foreground"
-                                                                    )}
-                                                                >
-                                                                    <CalendarIcon className="mr-2 h-4 w-4 text-gray-500" />
-                                                                    {field.value ? (
-                                                                        format(field.value, "PPP", { locale: tr })
-                                                                    ) : (
-                                                                        <span className="text-gray-500">Tarih seçin</span>
-                                                                    )}
-                                                                </Button>
-                                                            </FormControl>
-                                                        </PopoverTrigger>
-                                                        <PopoverContent className="w-auto p-0" align="start">
-                                                            <Calendar
-                                                                mode="single"
-                                                                selected={field.value}
-                                                                onSelect={field.onChange}
-                                                                disabled={(date) =>
-                                                                    date < new Date() || date < new Date("1900-01-01")
-                                                                }
-                                                                initialFocus
-                                                            />
-                                                        </PopoverContent>
-                                                    </Popover>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
+                                    {/* Yük Bilgileri Kartı */}
+                                    <div className="bg-muted/30 rounded-lg border p-4 space-y-3">
+                                        <h4 className="text-sm font-semibold text-foreground flex items-center gap-2 pb-2 border-b">
+                                            <Package className="h-4 w-4 text-muted-foreground" />
+                                            Yük
+                                        </h4>
+                                        <div className="space-y-3">
+                                            <FormField
+                                                control={form.control}
+                                                name="cargoType"
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel className="text-xs text-muted-foreground">
+                                                            Yük Tipi
+                                                        </FormLabel>
+                                                        <FormControl>
+                                                            <Input placeholder="Yük tipini giriniz" {...field} />
+                                                        </FormControl>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )}
+                                            />
 
-                                        <FormField
-                                            control={form.control}
-                                            name="cargoType"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel className="text-sm font-medium text-gray-700 flex items-center gap-1">
-                                                        <Package className="h-4 w-4" />
-                                                        Yük Tipi
-                                                    </FormLabel>
-                                                    <FormControl>
-                                                        <Input
-                                                            {...field}
-                                                            className="h-11 border-gray-300 focus:border-blue-500 focus:ring-blue-200"
-                                                            placeholder="Yük tipini giriniz"
-                                                        />
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-
-                                        <FormField
-                                            control={form.control}
-                                            name="cargoDetails"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel className="text-sm font-medium text-gray-700">Yük Detayları</FormLabel>
-                                                    <FormControl>
-                                                        <Input
-                                                            {...field}
-                                                            className="h-11 border-gray-300 focus:border-blue-500 focus:ring-blue-200"
-                                                            placeholder="Yük detaylarını giriniz"
-                                                        />
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
+                                            <FormField
+                                                control={form.control}
+                                                name="cargoDetails"
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel className="text-xs text-muted-foreground">Yük Detayları</FormLabel>
+                                                        <FormControl>
+                                                            <Input placeholder="Yük detaylarını giriniz" {...field} />
+                                                        </FormControl>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )}
+                                            />
+                                        </div>
                                     </div>
                                 </div>
 
-                                {/* Kullanıcı Atama */}
-                                <div className="space-y-4">
-                                    <div className="flex items-center gap-2 text-lg font-semibold text-gray-800 pb-2 border-b border-gray-200">
-                                        <Users className="h-5 w-5 text-blue-600" />
+                                {/* Atanan Çalışanlar Kartı */}
+                                <div className="bg-muted/30 rounded-lg border p-4 space-y-3 md:col-span-3">
+                                    <h4 className="text-sm font-semibold text-foreground flex items-center gap-2 pb-2 border-b">
+                                        <Users className="h-4 w-4 text-muted-foreground" />
                                         Atanan Çalışanlar
-                                        <span className="text-sm font-normal text-gray-500">
+                                        <span className="text-xs font-normal text-muted-foreground">
                                             ({selectedUserIds.length} seçili)
                                         </span>
-                                    </div>
-                                    <div className="border border-gray-200 rounded-lg overflow-hidden bg-white shadow-sm">
-                                        <div className="p-4 bg-gray-50 border-b border-gray-200">
+                                    </h4>
+                                    <div className="border rounded-lg overflow-hidden bg-background">
+                                        <div className="p-3 bg-muted/50 border-b">
                                             <Input
                                                 placeholder="Kullanıcı ara (ad, soyad veya email)..."
                                                 value={userSearch}
                                                 onChange={(e) => setUserSearch(e.target.value)}
-                                                className="h-10 bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-200"
+                                                className="h-9"
                                             />
                                         </div>
                                         <div className="max-h-48 overflow-y-auto">
@@ -589,33 +579,33 @@ export function OperationAddOrEditModal({
                                                     return (
                                                         <div
                                                             key={user.id}
-                                                            className={`flex items-center p-4 hover:bg-gray-50 cursor-pointer transition-colors ${isSelected ? 'bg-blue-50 border-l-4 border-blue-500' : ''
-                                                                } border-b border-gray-100 last:border-b-0`}
+                                                            className={`flex items-center p-3 hover:bg-muted/50 cursor-pointer transition-colors ${isSelected ? 'bg-blue-50 dark:bg-blue-950 border-l-4 border-blue-500' : ''
+                                                                } border-b last:border-b-0`}
                                                             onClick={() => toggleUserSelection(user.id)}
                                                         >
-                                                            <div className={`flex items-center justify-center h-5 w-5 rounded border-2 transition-colors ${isSelected ? 'bg-blue-600 border-blue-600' : 'border-gray-300 hover:border-blue-400'
+                                                            <div className={`flex items-center justify-center h-4 w-4 rounded border-2 transition-colors ${isSelected ? 'bg-blue-600 border-blue-600' : 'border-muted-foreground/30'
                                                                 }`}>
                                                                 {isSelected && (
-                                                                    <svg className="h-3 w-3 text-white" viewBox="0 0 20 20" fill="currentColor">
+                                                                    <svg className="h-2.5 w-2.5 text-white" viewBox="0 0 20 20" fill="currentColor">
                                                                         <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                                                                     </svg>
                                                                 )}
                                                             </div>
-                                                            <div className="ml-3 flex-1">
+                                                            <div className="ml-3 flex-1 min-w-0">
                                                                 <div className="flex items-center gap-2">
-                                                                    <User className="h-4 w-4 text-gray-400" />
-                                                                    <span className="text-sm font-medium text-gray-900">
+                                                                    <User className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+                                                                    <span className="text-sm font-medium truncate">
                                                                         {fullName || user.email}
                                                                     </span>
                                                                 </div>
                                                                 {user.email && fullName && (
-                                                                    <div className="text-xs text-gray-500 ml-6">{user.email}</div>
+                                                                    <div className="text-xs text-muted-foreground ml-5 truncate">{user.email}</div>
                                                                 )}
                                                             </div>
                                                             {user.roles?.[0]?.name && (
-                                                                <span className={`text-xs px-3 py-1 rounded-full font-medium ${user.roles[0].name === 'admin'
-                                                                    ? 'bg-purple-100 text-purple-700'
-                                                                    : 'bg-gray-100 text-gray-600'
+                                                                <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${user.roles[0].name === 'admin'
+                                                                    ? 'bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300'
+                                                                    : 'bg-muted text-muted-foreground'
                                                                     }`}>
                                                                     {user.roles[0].name === 'admin' ? 'Yönetici' : 'Personel'}
                                                                 </span>
@@ -624,78 +614,70 @@ export function OperationAddOrEditModal({
                                                     );
                                                 })
                                             ) : (
-                                                <div className="text-center py-8 text-gray-500">
-                                                    <User className="h-8 w-8 mx-auto mb-2 text-gray-300" />
+                                                <div className="text-center py-8 text-muted-foreground">
+                                                    <User className="h-8 w-8 mx-auto mb-2 opacity-50" />
                                                     <div className="text-sm">Kullanıcı bulunamadı</div>
                                                 </div>
                                             )}
                                         </div>
                                     </div>
                                     {form.formState.errors.userId && (
-                                        <p className="text-sm font-medium text-red-600 mt-2">
+                                        <p className="text-sm font-medium text-destructive mt-2">
                                             {form.formState.errors.userId.message}
                                         </p>
                                     )}
                                 </div>
 
-                                {/* Detaylar */}
-                                <div className="space-y-4">
-                                    <div className="flex items-center gap-2 text-lg font-semibold text-gray-800 pb-2 border-b border-gray-200">
-                                        <FileText className="h-5 w-5 text-blue-600" />
-                                        Operasyon Detayları
-                                    </div>
-                                    <FormField
-                                        control={form.control}
-                                        name="details"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel className="text-sm font-medium text-gray-700">Detaylar</FormLabel>
+                                {/* Detaylar Kartı - Tam Genişlik */}
+                                <FormField
+                                    control={form.control}
+                                    name="details"
+                                    render={({ field }) => (
+                                        <FormItem className="md:col-span-3 min-w-0 w-full">
+                                            <div className="bg-muted/30 rounded-lg border p-4 space-y-3 w-full min-w-0 overflow-hidden">
+                                                <h4 className="text-sm font-semibold text-foreground flex items-center gap-2 pb-2 border-b">
+                                                    <FileText className="h-4 w-4 text-muted-foreground" />
+                                                    Detaylar
+                                                </h4>
                                                 <FormControl>
                                                     <Textarea
                                                         {...field}
-                                                        className="min-h-[120px] border-gray-300 focus:border-blue-500 focus:ring-blue-200 resize-none"
+                                                        className="min-h-[120px] resize-none break-words overflow-wrap-anywhere"
                                                         placeholder="Operasyon ile ilgili detaylı açıklamaları buraya yazın..."
+                                                        style={{ maxWidth: '100%' }}
                                                     />
                                                 </FormControl>
                                                 <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                </div>
-                            </form>
-                        </Form>
-                    </div>
+                                            </div>
+                                        </FormItem>
+                                    )}
+                                />
+                            </div>
 
-                    <DialogFooter className="pt-6 border-t border-gray-100 bg-gray-50 px-6 py-4">
-                        <div className="flex gap-3 w-full sm:w-auto">
-                            <Button
-                                type="button"
-                                variant="outline"
-                                onClick={() => onOpenChange(false)}
-                                disabled={isSubmitting}
-                                className="flex-1 sm:flex-none border-gray-300 hover:bg-gray-50"
-                            >
-                                İptal
-                            </Button>
-                            <Button
-                                type="submit"
-                                disabled={isSubmitting}
-                                onClick={form.handleSubmit(onSubmit)}
-                                className="flex-1 sm:flex-none  bg-black hover:bg-black/80 text-white font-medium px-8"
-                            >
-                                {isSubmitting ? (
-                                    <>
-                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                        Kaydediliyor...
-                                    </>
-                                ) : (
-                                    <>
-                                        {operation ? 'Güncelle' : 'Oluştur'}
-                                    </>
-                                )}
-                            </Button>
-                        </div>
-                    </DialogFooter>
+                            {/* Footer */}
+                            <div className="flex justify-end gap-3 pt-4 border-t">
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={() => onOpenChange(false)}
+                                    disabled={isSubmitting}
+                                    className="px-6"
+                                >
+                                    İptal
+                                </Button>
+                                <Button type="submit" disabled={isSubmitting} className="px-6">
+                                    {isSubmitting ? (
+                                        <>
+                                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                            İşleniyor...
+                                        </>
+                                    ) : (
+                                        operation && operation.id ? 'Güncelle' : 'Kaydet'
+                                    )}
+                                </Button>
+                            </div>
+                        </form>
+                    </Form>
                 </DialogContent>
             </Dialog>
 

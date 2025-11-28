@@ -6,56 +6,6 @@ import { Ship as ShipIcon, Flag, Calendar, Circle, CalendarClock, StickyNote, Ru
 import tr from 'react-phone-input-2/lang/tr.json';
 import ReactCountryFlag from "react-country-flag";
 import { Badge } from "@/components/ui/badge";
-import { useEffect } from "react";
-
-// Custom LordIcon component
-declare global {
-    interface Window {
-        loadAnimation?: any;
-    }
-}
-
-interface LordIconProps {
-    src: string;
-    trigger?: string;
-    delay?: string;
-    colors?: string;
-    style?: React.CSSProperties;
-    className?: string;
-}
-
-const LordIcon: React.FC<LordIconProps> = ({
-    src,
-    trigger = 'loop',
-    delay = '2000',
-    colors = 'primary:#121331,secondary:#0473a3',
-    style = {},
-    className = ''
-}) => {
-    useEffect(() => {
-        if (typeof window !== 'undefined' && window.loadAnimation) {
-            window.loadAnimation();
-        }
-    }, [src]);
-
-    // Create the HTML string for the lord-icon
-    const iconHtml = {
-        __html: `
-                <lord-icon
-                    src="${src}"
-                    trigger="${trigger}"
-                    delay="${delay}"
-                    colors="${colors}"
-                    style="width: 100%; height: 100%; ${Object.entries(style)
-                .map(([key, value]) => `${key}: ${value};`)
-                .join(' ')}"
-                    class="${className}">
-                </lord-icon>
-            `
-    };
-
-    return <div dangerouslySetInnerHTML={iconHtml} />;
-};
 
 enum Status {
     Beklemede = "Beklemede", // 1, 7
@@ -112,7 +62,6 @@ interface ShipDetailsModalProps {
         length?: number;
         beam?: number;
     } | null;
-
 }
 
 const getCountryName = (countryCode: string): string => {
@@ -174,30 +123,24 @@ export const ShipDetailsModal = ({ isOpen, onClose, ship }: ShipDetailsModalProp
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="w-[95vw] max-w-2xl max-h-[90vh] overflow-y-auto mx-auto lg:min-w-2xl">
-                <DialogHeader>
-                    <DialogTitle className="text-lg sm:text-xl font-semibold text-center sm:text-left">
+            <DialogContent className="w-[95vw] lg:min-w-[900px] max-w-7xl max-h-[90vh] overflow-y-auto">
+                <DialogHeader className="pb-3 border-b">
+                    <DialogTitle className="text-xl font-semibold">
                         Gemi Detayları
                     </DialogTitle>
                 </DialogHeader>
 
-                {/* Gemi Profil Bölümü */}
-                <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 py-4">
-                    <div className="w-50 h-30  border flex items-center justify-center flex-shrink-0 overflow-hidden rounded-lg">
+                {/* Profil Header - Kompakt */}
+                <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 pb-4 border-b">
+                    <div className="w-48 h-32 sm:w-56 sm:h-40 rounded-lg bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950 dark:to-blue-900 flex items-center justify-center flex-shrink-0 border border-blue-200 dark:border-blue-800 overflow-hidden">
                         {getImageUrl(ship.image) ? (
-                            <img src={getImageUrl(ship.image)!} alt={ship.name || 'Gemi Fotoğrafı'} className="w-50 h-30 object-contain rounded-lg" />
+                            <img src={getImageUrl(ship.image)!} alt={ship.name || 'Gemi'} className="w-full h-full object-cover rounded-lg" />
                         ) : (
-                            <LordIcon
-                                src="https://cdn.lordicon.com/gynikalk.json"
-                                trigger="hover"
-                                delay="2000"
-                                colors="primary:#121331,secondary:#0473a3"
-                                style={{ width: '50px', height: '50px' }}
-                            />
+                            <ShipIcon className="h-16 w-16 text-blue-600 dark:text-blue-400" />
                         )}
                     </div>
-                    <div className="flex-1 text-center sm:text-left min-w-0">
-                        <h3 className="text-lg sm:text-xl font-semibold text-foreground break-words">
+                    <div className="flex-1 min-w-0 text-center sm:text-left">
+                        <h3 className="text-lg font-semibold text-foreground break-words">
                             {ship.name || 'İsimsiz Gemi'}
                         </h3>
                         <div className="flex items-center justify-center sm:justify-start gap-2 mt-1">
@@ -212,86 +155,168 @@ export const ShipDetailsModal = ({ isOpen, onClose, ship }: ShipDetailsModalProp
                     </div>
                 </div>
 
-                <div className="space-y-6">
-                    {/* Kimlik Bilgileri */}
-                    <div>
-                        <h3 className="text-xs sm:text-sm font-medium text-muted-foreground mb-3 uppercase tracking-wide">
+                {/* Bilgiler Grid - Kompakt ve Kurumsal */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 py-4">
+                    {/* Temel Bilgiler Kartı */}
+                    <div className="bg-muted/30 rounded-lg border p-4 space-y-3">
+                        <h4 className="text-sm font-semibold text-foreground flex items-center gap-2 pb-2 border-b">
+                            <Hash className="h-4 w-4 text-muted-foreground" />
                             Temel Bilgiler
-                        </h3>
-                        <hr className="my-2" />
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <InfoRow icon={Hash} label="IMO Numarası" value={ship.imoNumber} />
-                            <InfoRow icon={Radio} label="MMSI Numarası" value={ship.mmsiNumber} />
-                            <InfoRow icon={Phone} label="Çağrı İşareti" value={ship.callsign} />
-
-                            <div className="flex items-start gap-3 py-2">
-                                <FlagIcon className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground mt-0.5 flex-shrink-0" />
-                                <div className="flex-1 min-w-0">
-                                    <p className="text-xs sm:text-sm text-muted-foreground mb-1">Bayrak</p>
-                                    <div className="font-medium text-foreground text-sm sm:text-base break-words flex items-center gap-2">
-                                        <ReactCountryFlag
-                                            countryCode={ship.flag?.toUpperCase() || ''}
-                                            svg
-                                            style={{
-                                                width: '16px',
-                                                height: '12px',
-                                                boxShadow: '0 0 0 1px var(--border)',
-                                                borderRadius: '2px'
-                                            }}
-                                        />
-                                        {getCountryName(ship.flag || 'Bilinmiyor')}
-                                    </div>
+                        </h4>
+                        <div className="space-y-2.5">
+                            <div>
+                                <p className="text-xs text-muted-foreground mb-1">IMO Numarası</p>
+                                <span className="text-sm font-medium text-foreground">
+                                    {ship.imoNumber || '-'}
+                                </span>
+                            </div>
+                            <div>
+                                <p className="text-xs text-muted-foreground mb-1">MMSI Numarası</p>
+                                <span className="text-sm font-medium text-foreground">
+                                    {ship.mmsiNumber || '-'}
+                                </span>
+                            </div>
+                            <div>
+                                <p className="text-xs text-muted-foreground mb-1">Çağrı İşareti</p>
+                                <div className="flex items-center gap-2">
+                                    <Phone className="h-3.5 w-3.5 text-muted-foreground" />
+                                    <span className="text-sm font-medium text-foreground">
+                                        {ship.callsign || '-'}
+                                    </span>
+                                </div>
+                            </div>
+                            <div>
+                                <p className="text-xs text-muted-foreground mb-1">Bayrak</p>
+                                <div className="flex items-center gap-2">
+                                    {ship.flag ? (
+                                        <>
+                                            <ReactCountryFlag
+                                                countryCode={ship.flag.toUpperCase()}
+                                                svg
+                                                style={{
+                                                    width: '18px',
+                                                    height: '14px',
+                                                    borderRadius: '2px'
+                                                }}
+                                            />
+                                            <span className="text-sm font-medium text-foreground">
+                                                {getCountryName(ship.flag)}
+                                            </span>
+                                        </>
+                                    ) : (
+                                        <span className="text-sm text-muted-foreground">-</span>
+                                    )}
+                                </div>
+                            </div>
+                            <div>
+                                <p className="text-xs text-muted-foreground mb-1">İnşa Yılı</p>
+                                <div className="flex items-center gap-2">
+                                    <CalendarIcon className="h-3.5 w-3.5 text-muted-foreground" />
+                                    <span className="text-sm font-medium text-foreground">
+                                        {ship.builtYear || '-'}
+                                    </span>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    {/* Boyutlar ve Ölçüler */}
-                    <div>
-                        <h3 className="text-xs sm:text-sm font-medium text-muted-foreground mb-3 uppercase tracking-wide">
+                    {/* Boyutlar ve Ölçüler Kartı */}
+                    <div className="bg-muted/30 rounded-lg border p-4 space-y-3">
+                        <h4 className="text-sm font-semibold text-foreground flex items-center gap-2 pb-2 border-b">
+                            <Ruler className="h-4 w-4 text-muted-foreground" />
                             Boyutlar ve Ölçüler
-                        </h3>
-                        <hr className="my-2" />
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <InfoRow icon={Ruler} label="Uzunluk" value={ship.length ? `${ship.length} m` : undefined} />
-                            <InfoRow icon={Ruler} label="Genişlik (Beam)" value={ship.beam ? `${ship.beam} m` : undefined} />
-                            <InfoRow icon={Waves} label="Su Çekimi (Draft)" value={ship.draft ? `${ship.draft} m` : undefined} />
-                            <InfoRow icon={Weight} label="Brüt Tonaj" value={ship.grossTonnage ? `${ship.grossTonnage} GT` : undefined} />
-                            <InfoRow icon={Weight} label="Deadweight" value={ship.deadweight ? `${ship.deadweight} DWT` : undefined} />
-                            <InfoRow icon={CalendarIcon} label="İnşa Yılı" value={ship.builtYear} />
+                        </h4>
+                        <div className="space-y-2.5">
+                            <div>
+                                <p className="text-xs text-muted-foreground mb-1">Uzunluk</p>
+                                <span className="text-sm font-medium text-foreground">
+                                    {ship.length ? `${ship.length} m` : '-'}
+                                </span>
+                            </div>
+                            <div>
+                                <p className="text-xs text-muted-foreground mb-1">Genişlik (Beam)</p>
+                                <span className="text-sm font-medium text-foreground">
+                                    {ship.beam ? `${ship.beam} m` : '-'}
+                                </span>
+                            </div>
+                            <div>
+                                <p className="text-xs text-muted-foreground mb-1">Su Çekimi (Draft)</p>
+                                <span className="text-sm font-medium text-foreground">
+                                    {ship.draft ? `${ship.draft} m` : '-'}
+                                </span>
+                            </div>
+                            <div>
+                                <p className="text-xs text-muted-foreground mb-1">Brüt Tonaj</p>
+                                <span className="text-sm font-medium text-foreground">
+                                    {ship.grossTonnage ? `${ship.grossTonnage} GT` : '-'}
+                                </span>
+                            </div>
+                            <div>
+                                <p className="text-xs text-muted-foreground mb-1">Deadweight</p>
+                                <span className="text-sm font-medium text-foreground">
+                                    {ship.deadweight ? `${ship.deadweight} DWT` : '-'}
+                                </span>
+                            </div>
                         </div>
                     </div>
 
-                    {/* Seyir Bilgileri */}
-                    <div>
-                        <h3 className="text-xs sm:text-sm font-medium text-muted-foreground mb-3 uppercase tracking-wide">
+                    {/* Seyir Bilgileri Kartı */}
+                    <div className="bg-muted/30 rounded-lg border p-4 space-y-3">
+                        <h4 className="text-sm font-semibold text-foreground flex items-center gap-2 pb-2 border-b">
+                            <Compass className="h-4 w-4 text-muted-foreground" />
                             Seyir Bilgileri
-                        </h3>
-                        <hr className="my-2" />
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <InfoRow icon={PortIcon} label="Kalkış Limanı" value={ship.departurePort} />
-                            <InfoRow icon={Compass} label="Varış Limanı" value={ship.destinationPort} />
-                            <InfoRow icon={Clock} label="Tahmini Varış (ETA)" value={formatDate(ship.eta)} />
+                        </h4>
+                        <div className="space-y-2.5">
+                            <div>
+                                <p className="text-xs text-muted-foreground mb-1">Kalkış Limanı</p>
+                                <div className="flex items-center gap-2">
+                                    <PortIcon className="h-3.5 w-3.5 text-muted-foreground" />
+                                    <span className="text-sm font-medium text-foreground">
+                                        {ship.departurePort || '-'}
+                                    </span>
+                                </div>
+                            </div>
+                            <div>
+                                <p className="text-xs text-muted-foreground mb-1">Varış Limanı</p>
+                                <div className="flex items-center gap-2">
+                                    <Compass className="h-3.5 w-3.5 text-muted-foreground" />
+                                    <span className="text-sm font-medium text-foreground">
+                                        {ship.destinationPort || '-'}
+                                    </span>
+                                </div>
+                            </div>
+                            <div>
+                                <p className="text-xs text-muted-foreground mb-1">Tahmini Varış (ETA)</p>
+                                <div className="flex items-center gap-2">
+                                    <Clock className="h-3.5 w-3.5 text-muted-foreground" />
+                                    <span className="text-sm font-medium text-foreground">
+                                        {formatDate(ship.eta)}
+                                    </span>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
-                    {/* Notlar */}
+                    {/* Notlar Kartı - Tam Genişlik */}
                     {ship.notes && (
-                        <div>
-                            <h3 className="text-xs sm:text-sm font-medium text-muted-foreground mb-3 uppercase tracking-wide">
+                        <div className="bg-muted/30 rounded-lg border p-4 space-y-3 md:col-span-3">
+                            <h4 className="text-sm font-semibold text-foreground flex items-center gap-2 pb-2 border-b">
+                                <StickyNote className="h-4 w-4 text-muted-foreground" />
                                 Notlar
-                            </h3>
-                            <hr className="my-2" />
-                            <InfoRowLarge icon={StickyNote} label="Notlar" value={ship.notes} />
+                            </h4>
+                            <p className="text-sm text-foreground whitespace-pre-wrap break-words leading-relaxed">
+                                {ship.notes}
+                            </p>
                         </div>
                     )}
                 </div>
 
-                <div className="flex justify-end pt-4 mt-4 border-t">
+                {/* Footer */}
+                <div className="flex justify-end gap-3 pt-4 border-t">
                     <Button
                         variant="outline"
                         onClick={onClose}
-                        className="px-6 py-2"
+                        className="px-6"
                     >
                         Kapat
                     </Button>

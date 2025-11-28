@@ -290,7 +290,7 @@ export default function CustomersPage() {
         {/* Yeni Müşteri Ekle Butonu */}
         <Button onClick={handleAddCustomer} className="w-full sm:w-auto cursor-pointer">
           <Plus className="mr-2 h-4 w-4" />
-          <span>Yeni Müşteri Ekle</span>
+          <span>Müşteri Ekle</span>
         </Button>
       </div>
 

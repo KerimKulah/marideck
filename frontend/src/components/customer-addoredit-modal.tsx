@@ -20,58 +20,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import React from 'react'
 import ReactFlagsSelect from 'react-flags-select'
-import { Building2, Globe, IdCard, Mail, MapPin, Phone, StickyNote, User } from 'lucide-react'
+import { Building2, Globe, IdCard, Mail, MapPin, Phone, StickyNote, User, Plus } from 'lucide-react'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import Script from 'next/script';
-
-// Custom LordIcon component
-declare global {
-    interface Window {
-        loadAnimation?: any;
-    }
-}
-
-interface LordIconProps {
-    src: string;
-    trigger?: string;
-    delay?: string;
-    colors?: string;
-    style?: React.CSSProperties;
-    className?: string;
-}
-
-const LordIcon: React.FC<LordIconProps> = ({
-    src,
-    trigger = 'loop',
-    delay = '2000',
-    colors = 'primary:#121331,secondary:#0473a3',
-    style = {},
-    className = ''
-}) => {
-    useEffect(() => {
-        if (typeof window !== 'undefined' && window.loadAnimation) {
-            window.loadAnimation();
-        }
-    }, [src]);
-
-    // Create the HTML string for the lord-icon
-    const iconHtml = {
-        __html: `
-            <lord-icon
-                src="${src}"
-                trigger="${trigger}"
-                delay="${delay}"
-                colors="${colors}"
-                style="width: 100%; height: 100%; ${Object.entries(style)
-                .map(([key, value]) => `${key}: ${value};`)
-                .join(' ')}"
-                class="${className}">
-            </lord-icon>
-        `
-    };
-
-    return <div dangerouslySetInnerHTML={iconHtml} />;
-};
 
 const formSchema = z.object({
     name: z.string().nonempty({ message: "Yetkili Kişinin Adı Soyadı zorunludur" }),
@@ -229,246 +179,284 @@ export function CustomerAddOrEditModal({ isOpen, onClose, customer, onSuccess }:
 
     return (
         <>
-            <Script src="https://cdn.lordicon.com/lordicon.js" strategy="beforeInteractive" />
             <Dialog open={isOpen} onOpenChange={onClose}>
-                <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
-                    <DialogHeader>
-                        <div className="flex flex-col items-center justify-center space-y-2">
-                            <div className="border rounded-full p-4">
-                                <LordIcon
-                                    src="https://cdn.lordicon.com/kdduutaw.json"
-                                    trigger="hover"
-                                    delay="2000"
-                                    colors="primary:#121331,secondary:#0672a2"
-                                    style={{ width: '100px', height: '100px' }}
-                                />
-                            </div>
-                            <DialogTitle className="text-center">
-                                {customer ? 'Müşteri Bilgilerini Düzenle' : 'Yeni Müşteri Ekle'}
-                            </DialogTitle>
-                            <DialogDescription className="text-center">
-                                {customer ? 'Müşteri bilgilerini düzenlemek için yeni bilgileri giriniz.' : 'Eklemek istediğiniz müşterinin bilgilerini giriniz.'}
-                            </DialogDescription>
-                        </div>
+                <DialogContent className="w-[95vw] lg:min-w-[700px] max-w-7xl max-h-[90vh] overflow-y-auto">
+                    <DialogHeader className="pb-4 border-b">
+                        <DialogTitle className="text-xl font-semibold">
+                            {customer ? ('Müşteri Bilgilerini Düzenle') : ('Yeni Müşteri Ekle')}
+                        </DialogTitle>
                     </DialogHeader>
+
+                    {/* Profil Header - Kompakt */}
+                    {customer && (
+                        <div className="flex items-center gap-4 py-4 border-b">
+                            <div className="w-14 h-14 rounded-lg bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950 dark:to-blue-900 flex items-center justify-center flex-shrink-0 border border-blue-200 dark:border-blue-800">
+                                <User className="h-7 w-7 text-blue-600 dark:text-blue-400" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <h3 className="text-lg font-semibold text-foreground break-words">
+                                    {customer.name || 'Müşteri'}
+                                </h3>
+                                {customer.company && (
+                                    <div className="flex items-center gap-2 mt-1">
+                                        <Building2 className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                                        <span className="text-sm text-muted-foreground break-words">
+                                            {customer.company}
+                                        </span>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
 
                     <Form {...form}>
                         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                            <div className="grid grid-cols-2 gap-4">
-                                <FormField
-                                    control={form.control}
-                                    name="name"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>
-                                                <User className="h-4 w-4 text-muted-foreground" />
-                                                Ad Soyad <span className="text-red-500">*</span></FormLabel>
-                                            <FormControl>
-                                                <Input placeholder="Ad Soyad giriniz" {...field} />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
+                            {/* Bilgiler Grid - Kompakt ve Kurumsal */}
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 py-4 min-w-0">
+                                {/* Temel Bilgiler Kartı */}
+                                <div className="bg-muted/30 rounded-lg border p-4 space-y-3">
+                                    <h4 className="text-sm font-semibold text-foreground flex items-center gap-2 pb-2 border-b">
+                                        <User className="h-4 w-4 text-muted-foreground" />
+                                        Temel Bilgiler
+                                    </h4>
+                                    <div className="space-y-3">
+                                        <FormField
+                                            control={form.control}
+                                            name="name"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel className="text-xs text-muted-foreground">
+                                                        Ad Soyad <span className="text-red-500">*</span>
+                                                    </FormLabel>
+                                                    <FormControl>
+                                                        <Input placeholder="Ad Soyad giriniz" {...field} />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
 
-                                <FormField
-                                    control={form.control}
-                                    name="email"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>
-                                                <Mail className="h-4 w-4 text-muted-foreground" />
-                                                E-posta <span className="text-red-500">*</span></FormLabel>
-                                            <FormControl>
-                                                <Input type="email" placeholder="E-posta giriniz" {...field} />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
+                                        <FormField
+                                            control={form.control}
+                                            name="customerType"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel className="text-xs text-muted-foreground">
+                                                        Müşteri Türü <span className="text-red-500">*</span>
+                                                    </FormLabel>
+                                                    <FormControl>
+                                                        <Select
+                                                            onValueChange={field.onChange}
+                                                            defaultValue={field.value || ""}
+                                                        >
+                                                            <SelectTrigger className="w-full">
+                                                                <SelectValue placeholder="Müşteri türü seçiniz" />
+                                                            </SelectTrigger>
+                                                            <SelectContent>
+                                                                {Object.values(CustomerType).map((type) => (
+                                                                    <SelectItem key={type} value={type}>
+                                                                        {type}
+                                                                    </SelectItem>
+                                                                ))}
+                                                            </SelectContent>
+                                                        </Select>
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
 
+                                        <FormField
+                                            control={form.control}
+                                            name="company"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel className="text-xs text-muted-foreground">
+                                                        Firma
+                                                    </FormLabel>
+                                                    <FormControl>
+                                                        <Input placeholder="Firma adı giriniz" {...field} />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                    </div>
+                                </div>
 
-                                <FormField
-                                    control={form.control}
-                                    name="phone"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>
-                                                <Phone className="h-4 w-4 text-muted-foreground " />
-                                                Telefon <span className="text-red-500">*</span>
-                                            </FormLabel>
-                                            <FormControl>
-                                                <PhoneInput
-                                                    placeholder="Telefon numarası giriniz"
-                                                    value={field.value}
-                                                    onChange={field.onChange}
-                                                    country={'tr'}
-                                                    localization={tr}
-                                                    enableSearch={true}
-                                                    searchPlaceholder="Ülke kodu ara.."
-                                                    inputStyle={{
-                                                        width: '100%',
-                                                        borderRadius: '8px',
-                                                        borderColor: 'rgba(161, 161, 161, 0.3)',
-                                                        height: '36px',
+                                {/* İletişim Bilgileri Kartı */}
+                                <div className="bg-muted/30 rounded-lg border p-4 space-y-3">
+                                    <h4 className="text-sm font-semibold text-foreground flex items-center gap-2 pb-2 border-b">
+                                        <Phone className="h-4 w-4 text-muted-foreground" />
+                                        İletişim
+                                    </h4>
+                                    <div className="space-y-3">
+                                        <FormField
+                                            control={form.control}
+                                            name="email"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel className="text-xs text-muted-foreground">
+                                                        E-posta <span className="text-red-500">*</span>
+                                                    </FormLabel>
+                                                    <FormControl>
+                                                        <Input type="email" placeholder="E-posta giriniz" {...field} />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
 
-                                                    }}
-                                                    buttonStyle={{
-                                                        backgroundColor: "white",
-                                                        borderColor: 'rgba(161, 161, 161, 0.3)',
-                                                        borderRadius: '8px 0 0  8px',
-                                                        height: '36px',
-                                                    }}
-                                                />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
+                                        <FormField
+                                            control={form.control}
+                                            name="phone"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel className="text-xs text-muted-foreground">
+                                                        Telefon <span className="text-red-500">*</span>
+                                                    </FormLabel>
+                                                    <FormControl>
+                                                        <PhoneInput
+                                                            placeholder="Telefon numarası giriniz"
+                                                            value={field.value}
+                                                            onChange={field.onChange}
+                                                            country={'tr'}
+                                                            localization={tr}
+                                                            enableSearch={true}
+                                                            searchPlaceholder="Ülke kodu ara.."
+                                                            inputStyle={{
+                                                                width: '100%',
+                                                                borderRadius: '8px',
+                                                                borderColor: 'rgba(161, 161, 161, 0.3)',
+                                                                height: '36px',
+                                                            }}
+                                                            buttonStyle={{
+                                                                backgroundColor: "white",
+                                                                borderColor: 'rgba(161, 161, 161, 0.3)',
+                                                                borderRadius: '8px 0 0  8px',
+                                                                height: '36px',
+                                                            }}
+                                                        />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
 
-                                <FormField
-                                    control={form.control}
-                                    name="customerType"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>
-                                                <User className="h-4 w-4 text-muted-foreground" />
-                                                Müşteri Türü
-                                                <span className="text-xs text-red-500">*</span>
-                                            </FormLabel>
-                                            <FormControl>
-                                                <Select
-                                                    onValueChange={field.onChange}
-                                                    defaultValue={field.value || ""}
-                                                >
-                                                    <SelectTrigger className="w-full">
-                                                        <SelectValue placeholder="Müşteri türü seçiniz" />
-                                                    </SelectTrigger>
-                                                    <SelectContent>
-                                                        {Object.values(CustomerType).map((type) => (
-                                                            <SelectItem key={type} value={type}>
-                                                                {type}
-                                                            </SelectItem>
-                                                        ))}
-                                                    </SelectContent>
-                                                </Select>
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
+                                        <FormField
+                                            control={form.control}
+                                            name="country"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel className="text-xs text-muted-foreground">
+                                                        Ülke
+                                                    </FormLabel>
+                                                    <FormControl>
+                                                        <ReactFlagsSelect
+                                                            className="my-custom-flags-select pt-2"
+                                                            placeholder="Ülke seçiniz"
+                                                            onSelect={field.onChange}
+                                                            selected={field.value || ""}
+                                                            searchable={true}
+                                                            searchPlaceholder="Ülke adı ara.."
+                                                            customLabels={uppercaseLabels}
+                                                        />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                    </div>
+                                </div>
 
+                                {/* Detaylı Bilgiler Kartı */}
+                                <div className="bg-muted/30 rounded-lg border p-4 space-y-3">
+                                    <h4 className="text-sm font-semibold text-foreground flex items-center gap-2 pb-2 border-b">
+                                        <IdCard className="h-4 w-4 text-muted-foreground" />
+                                        Detaylı Bilgiler
+                                    </h4>
+                                    <div className="space-y-3">
+                                        <FormField
+                                            control={form.control}
+                                            name="taxNumber"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel className="text-xs text-muted-foreground">
+                                                        Vergi Numarası
+                                                    </FormLabel>
+                                                    <FormControl>
+                                                        <Input placeholder="Vergi Numarası giriniz" {...field} />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                    </div>
+                                </div>
 
-                                <FormField
-                                    control={form.control}
-                                    name="company"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>
-                                                <Building2 className="h-4 w-4 text-muted-foreground" />
-                                                Firma
-                                            </FormLabel>
-                                            <FormControl>
-                                                <Input placeholder="Firma adı giriniz" {...field} />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-
-                                <FormField
-                                    control={form.control}
-                                    name="taxNumber"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>
-                                                <IdCard className="h-4 w-4 text-muted-foreground" />
-                                                Vergi Numarası
-                                            </FormLabel>
-                                            <FormControl>
-                                                <Input placeholder="Vergi Numarası giriniz" {...field} />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-
-                                <FormField
-                                    control={form.control}
-                                    name="country"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>
-                                                <Globe className="h-4 w-4 text-muted-foreground" />
-                                                Ülke
-                                            </FormLabel>
-                                            <FormControl>
-                                                <ReactFlagsSelect
-                                                    className="my-custom-flags-select"
-                                                    placeholder="Ülke seçiniz"
-                                                    onSelect={field.onChange}
-                                                    selected={field.value || ""}
-                                                    searchable={true}
-                                                    searchPlaceholder="Ülke adı ara.."
-                                                    customLabels={uppercaseLabels}
-                                                />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-
+                                {/* Adres Kartı - Tam Genişlik */}
                                 <FormField
                                     control={form.control}
                                     name="address"
                                     render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>
-                                                <MapPin className="h-4 w-4 text-muted-foreground" />
-                                                Adres
-                                            </FormLabel>
-                                            <FormControl>
-                                                <Textarea
-                                                    placeholder="Adres bilgisi giriniz"
-                                                    {...field}
-                                                />
-                                            </FormControl>
-                                            <FormMessage />
+                                        <FormItem className="md:col-span-3 min-w-0 w-full">
+                                            <div className="bg-muted/30 rounded-lg border p-4 space-y-3 w-full min-w-0 overflow-hidden">
+                                                <h4 className="text-sm font-semibold text-foreground flex items-center gap-2 pb-2 border-b">
+                                                    <MapPin className="h-4 w-4 text-muted-foreground" />
+                                                    Adres
+                                                </h4>
+                                                <FormControl className="w-full min-w-0">
+                                                    <Textarea
+                                                        placeholder="Adres bilgisi giriniz"
+                                                        className="min-h-[80px] resize-none break-words overflow-wrap-anywhere w-full min-w-0"
+                                                        style={{ maxWidth: '100%' }}
+                                                        {...field}
+                                                    />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </div>
                                         </FormItem>
                                     )}
                                 />
 
+                                {/* Notlar Kartı - Tam Genişlik */}
                                 <FormField
                                     control={form.control}
                                     name="notes"
                                     render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>
-                                                <StickyNote className="h-4 w-4 text-muted-foreground" />
-                                                Not
-                                            </FormLabel>
-                                            <FormControl>
-                                                <Textarea
-                                                    placeholder="Notunuz varsa giriniz"
-                                                    {...field}
-                                                />
-                                            </FormControl>
-                                            <FormMessage />
+                                        <FormItem className="md:col-span-3 min-w-0 w-full">
+                                            <div className="bg-muted/30 rounded-lg border p-4 space-y-3 w-full min-w-0 overflow-hidden">
+                                                <h4 className="text-sm font-semibold text-foreground flex items-center gap-2 pb-2 border-b">
+                                                    <StickyNote className="h-4 w-4 text-muted-foreground" />
+                                                    Not
+                                                </h4>
+                                                <FormControl className="w-full min-w-0">
+                                                    <Textarea
+                                                        placeholder="Notunuz varsa giriniz"
+                                                        className="min-h-[80px] resize-none break-words overflow-wrap-anywhere w-full min-w-0"
+                                                        style={{ maxWidth: '100%' }}
+                                                        {...field}
+                                                    />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </div>
                                         </FormItem>
                                     )}
                                 />
                             </div>
 
-                            <div className="flex justify-end gap-3 pt-2">
+                            {/* Footer */}
+                            <div className="flex justify-end gap-3 pt-4 border-t">
                                 <Button
                                     type="button"
                                     variant="outline"
                                     onClick={handleClose}
-                                    disabled={loading}
+                                    disabled={loading || isSubmitting}
+                                    className="px-6"
                                 >
                                     İptal
                                 </Button>
-                                <Button type="submit" disabled={loading || isSubmitting}>
+                                <Button type="submit" disabled={loading || isSubmitting} className="px-6">
                                     {loading || isSubmitting ? (
                                         <div className="flex items-center gap-2">
                                             <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />

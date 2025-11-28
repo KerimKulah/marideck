@@ -35,6 +35,8 @@ interface DateTimePickerProps {
     placeholder?: string;
     disabled?: boolean;
     className?: string;
+    minDate?: Date | null;
+    maxDate?: Date | null;
 }
 
 export const DateTimePicker: React.FC<DateTimePickerProps> = ({
@@ -42,7 +44,9 @@ export const DateTimePicker: React.FC<DateTimePickerProps> = ({
     onChange,
     placeholder = "Tarih ve saat seçin",
     disabled = false,
-    className = ""
+    className = "",
+    minDate,
+    maxDate
 }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [selectedDate, setSelectedDate] = useState<Date | null>(value || null);
@@ -92,6 +96,15 @@ export const DateTimePicker: React.FC<DateTimePickerProps> = ({
 
     const handleDateSelect = (day: number) => {
         const newDate = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day, selectedHour, selectedMinute);
+        
+        // minDate ve maxDate kontrolü (saat dahil)
+        if (minDate && newDate < minDate) {
+            return;
+        }
+        if (maxDate && newDate > maxDate) {
+            return;
+        }
+        
         setSelectedDate(newDate);
         onChange(newDate);
     };
@@ -103,6 +116,15 @@ export const DateTimePicker: React.FC<DateTimePickerProps> = ({
         if (selectedDate) {
             const newDate = new Date(selectedDate);
             newDate.setHours(hour, minute);
+            
+            // minDate ve maxDate kontrolü (saat dahil)
+            if (minDate && newDate < minDate) {
+                return;
+            }
+            if (maxDate && newDate > maxDate) {
+                return;
+            }
+            
             setSelectedDate(newDate);
             onChange(newDate);
         }
@@ -138,12 +160,29 @@ export const DateTimePicker: React.FC<DateTimePickerProps> = ({
             const today = new Date();
             today.setHours(0, 0, 0, 0);
             const isPast = date < today;
+            
+            // minDate ve maxDate kontrolü
+            let isDisabled = isPast;
+            if (minDate) {
+                const minDateOnly = new Date(minDate);
+                minDateOnly.setHours(0, 0, 0, 0);
+                if (date < minDateOnly) {
+                    isDisabled = true;
+                }
+            }
+            if (maxDate) {
+                const maxDateOnly = new Date(maxDate);
+                maxDateOnly.setHours(23, 59, 59, 999);
+                if (date > maxDateOnly) {
+                    isDisabled = true;
+                }
+            }
 
             days.push(
                 <button
                     key={day}
-                    onClick={() => !isPast && handleDateSelect(day)}
-                    disabled={isPast}
+                    onClick={() => !isDisabled && handleDateSelect(day)}
+                    disabled={isDisabled}
                     className={cn(
                         "h-8 w-8 text-sm rounded-md hover:bg-accent hover:text-accent-foreground",
                         "disabled:opacity-50 disabled:cursor-not-allowed",
