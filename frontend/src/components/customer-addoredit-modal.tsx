@@ -33,8 +33,8 @@ const formSchema = z.object({
     country: z.string().max(100, { message: "Ülke en fazla 100 karakter uzunluğunda olmalıdır" }).optional(),
     company: z.string().max(500, { message: "Firma en fazla 500 karakter uzunluğunda olmalıdır" }).optional(),
     customerType: z.enum(["Armatör", "Broker", "Taşımacı", "Acente", "Yük Sahibi", "İhracatçı", "İthalatçı", "Terminal Operatörü", "Port Yetkilisi", "Gümrük Müşaviri", "Hukuk Temsilcisi", "Diğer"], {
-        required_error: "Müşteri türü zorunlu",
-        invalid_type_error: "Geçersiz müşteri türü"
+        required_error: "Müşteri kategorisi zorunlu",
+        invalid_type_error: "Geçersiz müşteri kategori"
     }),
     notes: z.string().optional()
 })
@@ -242,7 +242,7 @@ export function CustomerAddOrEditModal({ isOpen, onClose, customer, onSuccess }:
                                             render={({ field }) => (
                                                 <FormItem>
                                                     <FormLabel className="text-xs text-muted-foreground">
-                                                        Müşteri Türü <span className="text-red-500">*</span>
+                                                        Kategori / Müşteri Türü <span className="text-red-500">*</span>
                                                     </FormLabel>
                                                     <FormControl>
                                                         <Select
@@ -250,7 +250,7 @@ export function CustomerAddOrEditModal({ isOpen, onClose, customer, onSuccess }:
                                                             defaultValue={field.value || ""}
                                                         >
                                                             <SelectTrigger className="w-full">
-                                                                <SelectValue placeholder="Müşteri türü seçiniz" />
+                                                                <SelectValue placeholder="Kategori seçiniz" />
                                                             </SelectTrigger>
                                                             <SelectContent>
                                                                 {Object.values(CustomerType).map((type) => (

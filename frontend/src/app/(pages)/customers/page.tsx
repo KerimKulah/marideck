@@ -1,7 +1,7 @@
 
 "use client"
 
-import { Search, Plus, Building2, User, Mail, Phone, Globe, Calendar, MoreHorizontal, ChevronDown, PhoneCall, MessageCircle, Copy, Edit, Trash, Eye, AlertTriangle, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react"
+import { Search, Plus, Building2, User, Mail, Phone, Globe, Calendar, MoreHorizontal, ChevronDown, PhoneCall, MessageCircle, Copy, Edit, Trash, Eye, AlertTriangle, ArrowUpDown, ArrowUp, ArrowDown, Tag } from "lucide-react"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -210,7 +210,7 @@ export default function CustomersPage() {
     }
   };
 
-  // Client-side sorting for operation status
+  // Client-side sorting for operation status (backend doesn't support this field)
   const sortedCustomers = useMemo(() => {
     if (sortBy === 'operationStatus') {
       return [...customers].sort((a, b) => {
@@ -314,6 +314,16 @@ export default function CustomersPage() {
                 <TableHead>
                   <Button
                     variant="ghost"
+                    onClick={() => handleSort('customerType')}
+                    className="h-auto -ml-3 font-semibold hover:bg-transparent cursor-pointer"
+                  >
+                    Kategori / Tür
+                    {getSortIcon('customerType')}
+                  </Button>
+                </TableHead>
+                <TableHead>
+                  <Button
+                    variant="ghost"
                     onClick={() => handleSort('company')}
                     className="h-auto -ml-3 font-semibold hover:bg-transparent cursor-pointer"
                   >
@@ -370,13 +380,13 @@ export default function CustomersPage() {
             <TableBody >
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={8} className="h-24">
+                  <TableCell colSpan={9} className="h-24">
                     <MiniLoading />
                   </TableCell>
                 </TableRow>
               ) : sortedCustomers?.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
                     {searchQuery ? 'Arama kriterlerine uygun müşteri bulunamadı.' : 'Henüz müşteri kaydı bulunmuyor.'}
                   </TableCell>
                 </TableRow>
@@ -392,7 +402,15 @@ export default function CustomersPage() {
                         </span>
                       </div>
                     </TableCell>
-
+                    {/* Müşteri Türü */}
+                    <TableCell className="min-w-[150px]">
+                      <div className="flex items-center gap-2">
+                        <Tag className="h-4 w-4 text-muted-foreground" />
+                        <span>
+                          {customer.customerType || '-'}
+                        </span>
+                      </div>
+                    </TableCell>
                     {/* Firma Adı */}
                     <TableCell className="min-w-[200px]">
                       <div className="flex items-center gap-2">

@@ -122,7 +122,7 @@ export const CustomerDetailsModal = ({ isOpen, onClose, customer }: CustomerDeta
                             </div>
 
                             <div>
-                                <p className="text-xs text-muted-foreground mb-1">Müşteri Türü</p>
+                                <p className="text-xs text-muted-foreground mb-1">Müşteri Kategorisi</p>
                                 <div className="flex items-center gap-2">
                                     <User className="h-3.5 w-3.5 text-muted-foreground" />
                                     <span className="text-sm font-medium text-foreground">

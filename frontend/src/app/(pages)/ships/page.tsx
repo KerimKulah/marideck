@@ -325,6 +325,7 @@ export default function ShipsPage() {
                                     <span className="ml-1">{getEtaSortIcon(sortBy === 'eta', sortOrder)}</span>
                                 </Button>
                             </TableHead>
+                            <TableHead>Yaklaştığı Liman</TableHead>
                             <TableHead>Durum</TableHead>
                             <TableHead className="w-20">Son Güncelleme</TableHead>
                             <TableHead className="text-center">Konum</TableHead>
@@ -334,13 +335,13 @@ export default function ShipsPage() {
                     <TableBody>
                         {loading ? (
                             <TableRow>
-                                <TableCell colSpan={10} className="h-24 text-center">
+                                <TableCell colSpan={11} className="h-24 text-center">
                                     <MiniLoading />
                                 </TableCell>
                             </TableRow>
                         ) : ships?.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={10} className="text-center py-8 text-muted-foreground">
+                                <TableCell colSpan={11} className="text-center py-8 text-muted-foreground">
                                     Henüz gemi kaydı bulunmuyor.
                                 </TableCell>
                             </TableRow>
@@ -416,6 +417,13 @@ export default function ShipsPage() {
                                             <div className="flex gap-2">
                                                 <Calendar className="h-4 w-4" /> ETA: {ship.eta ? formatDate(ship.eta) : '-'}
                                             </div>
+                                        </div>
+                                    </TableCell>
+                                    {/* yaklaştığı liman */}
+                                    <TableCell>
+                                        <div className="flex items-center gap-2">
+                                            <Anchor className="h-4 w-4" />
+                                            {ship.destinationPort || '-'}
                                         </div>
                                     </TableCell>
                                     {/* durum */}

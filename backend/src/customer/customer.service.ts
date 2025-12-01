@@ -35,7 +35,7 @@ export class CustomerService {
 
         // Sorting
         if (sortBy && sortOrder) {
-            const allowedSortFields = ['name', 'company', 'email', 'country', 'createdAt'];
+            const allowedSortFields = ['name', 'company', 'email', 'country', 'createdAt', 'customerType'];
             if (allowedSortFields.includes(sortBy)) {
                 queryBuilder.orderBy(`customer.${sortBy}`, sortOrder);
             } else {
