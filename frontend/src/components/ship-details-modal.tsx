@@ -92,7 +92,7 @@ export const ShipDetailsModal = ({ isOpen, onClose, ship }: ShipDetailsModalProp
         if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
             return imageUrl;
         }
-        return `http://localhost:3000${imageUrl}`;
+        return `http://localhost:4000${imageUrl}`;
     };
 
     const InfoRow = ({ icon: Icon, label, value }: { icon: React.ElementType; label: string; value?: string | number | null }) => (

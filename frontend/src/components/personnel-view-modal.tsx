@@ -43,7 +43,7 @@ export function PersonnelViewModal({ isOpen, onClose, personnel }: PersonnelView
           <div className="flex items-center space-x-4">
             <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
               {personnel.photo ? (
-                <img crossOrigin="anonymous" src={`http://localhost:3000/${personnel.photo}`} alt={personnel.firstName} className="w-full h-full object-cover rounded-full" />
+                <img crossOrigin="anonymous" src={`http://localhost:4000/${personnel.photo}`} alt={personnel.firstName} className="w-full h-full object-cover rounded-full" />
               ) : (
                 <User className="h-8 w-8 text-primary" />
               )}

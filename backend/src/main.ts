@@ -36,15 +36,15 @@ async function bootstrap() {
     origin: [
       'http://localhost:3000',
       'http://localhost:4000',
-      'http://localhost:' + (process.env.PORT || '3000'),
-      'http://localhost:' + (process.env.NEXT_PUBLIC_PORT || '4000')
+      'http://localhost:' + (process.env.PORT || '4000'),
+      'http://localhost:' + (process.env.NEXT_PUBLIC_PORT || '3000')
     ],
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     allowedHeaders: ['Content-Type', 'Accept', 'Authorization'],
     credentials: true,
   });
 
-  await app.listen(process.env.PORT || 3000, '0.0.0.0');
+  await app.listen(process.env.PORT || 4000, '0.0.0.0');
 
   console.log(`🚀 Application is running on: ${await app.getUrl()}`);
 

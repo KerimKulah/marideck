@@ -149,7 +149,7 @@ const getImageUrl = (imageUrl: string | null | undefined) => {
     }
 
     // Local image ise backend URL'i ekle
-    return `http://localhost:3000${imageUrl}`;
+    return `http://localhost:4000${imageUrl}`;
 };
 
 export function ShipAddOrEditModal({ isOpen, onClose, ship, onSuccess }: ShipAddOrEditModalProps) {

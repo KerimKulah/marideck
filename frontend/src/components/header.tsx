@@ -124,7 +124,7 @@ export function Header() {
                             <DropdownMenuTrigger asChild>
                                 <Button variant="ghost" className="h-9 px-2 gap-2 hover:bg-gray-100 cursor-pointer">
                                     <Avatar className="h-8 w-8">
-                                        <AvatarImage crossOrigin="anonymous" src={`http://localhost:3000/${user.photo}`} alt="Profile-Photo" />
+                                        <AvatarImage crossOrigin="anonymous" src={`http://localhost:4000/${user.photo}`} alt="Profile-Photo" />
                                         <AvatarFallback className="rounded-lg">
                                             {user.firstName.split(' ').map((n: string) => n[0]).join('')}
                                             {user.lastName.split(' ').map((n: string) => n[0]).join('')}
@@ -141,7 +141,7 @@ export function Header() {
                                 <DropdownMenuLabel className="p-0 font-normal">
                                     <div className="flex items-center gap-2 p-2">
                                         <Avatar className="h-8 w-8">
-                                            <AvatarImage crossOrigin="anonymous" src={`http://localhost:3000/${user.photo}`} alt="Profile-Photo" />
+                                            <AvatarImage crossOrigin="anonymous" src={`http://localhost:4000/${user.photo}`} alt="Profile-Photo" />
                                             <AvatarFallback className="rounded-lg">
                                                 {user.firstName.split(' ').map((n: string) => n[0]).join('')}
                                                 {user.lastName.split(' ').map((n: string) => n[0]).join('')}
