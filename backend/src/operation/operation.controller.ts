@@ -1,14 +1,12 @@
-import { Controller, Get, HttpCode, Param, ParseIntPipe, Query, Post, Body, Delete, Put, UseFilters, UseGuards, Optional } from "@nestjs/common";
+import { Controller, Get, HttpCode, Param, ParseIntPipe, Query, Post, Body, Delete, Put, UseGuards, Optional } from "@nestjs/common";
 import { OperationService } from "./operation.service";
 import { OperationDto } from "./dto/operation.dto";
-import { ExceptionFilterImp } from "../filters/exception-filter";
 import { JwtGuard } from "../auth/common/guards/JwtGuard";
 import { RolesGuard } from "../auth/common/guards/RolesGuard";
 import { Roles } from "../auth/common/decorators/roles.decorator";
 import { CurrentUserId } from "../auth/common/decorators/currentuser.decorator";
 
 @Controller('operation')
-@UseFilters(ExceptionFilterImp)
 @UseGuards(JwtGuard, RolesGuard)
 @Roles('admin', 'employee')
 export class OperationController {

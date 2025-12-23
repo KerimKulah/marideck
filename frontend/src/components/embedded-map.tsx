@@ -1,7 +1,8 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import { MapIcon } from "lucide-react"
+import { MapIcon, Info } from "lucide-react"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 
 export const EmbeddedMap = () => {
     const [loading, setLoading] = useState(true);
@@ -98,6 +99,14 @@ export const EmbeddedMap = () => {
                     <div className="flex items-center gap-2 mb-2">
                         <MapIcon className="h-5 w-5" />
                         <h1 className="font-semibold">Gemi Trafiği Haritası</h1>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <Info className="h-4 w-4 text-muted-foreground cursor-help" />
+                            </TooltipTrigger>
+                            <TooltipContent>
+                                <p>Harita VesselFinder tarafından sağlanmaktadır. Details butonu harici bağlantıda açılır.</p>
+                            </TooltipContent>
+                        </Tooltip>
                     </div>
                     <div className="h-[1px] w-full bg-border"></div>
                 </div>

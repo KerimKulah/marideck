@@ -4,9 +4,13 @@ import { ValidationPipe } from '@nestjs/common';
 import helmet from 'helmet';
 import * as compression from 'compression';
 import * as cookieParser from 'cookie-parser';
+import { ExceptionFilterImp } from './filters/exception-filter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+  // Global exception filter
+  app.useGlobalFilters(new ExceptionFilterImp());
 
   // Global prefix
   app.setGlobalPrefix('api');

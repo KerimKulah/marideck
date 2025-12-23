@@ -1,15 +1,13 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, UseFilters, UnauthorizedException, NotFoundException } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, UnauthorizedException, NotFoundException } from '@nestjs/common';
 import { OperationLogService } from './operation-log.service';
 import { OperationLogDto } from './dto/operation-log.dto';
 import { CurrentUserId } from 'src/auth/common/decorators/currentuser.decorator';
-import { ExceptionFilterImp } from '../filters/exception-filter';
 import { JwtGuard } from '../auth/common/guards/JwtGuard';
 import { RolesGuard } from '../auth/common/guards/RolesGuard';
 import { Roles } from '../auth/common/decorators/roles.decorator';
 import { UserService } from 'src/auth/user/user.service';
 
 @Controller('operation-log')
-@UseFilters(ExceptionFilterImp)
 @UseGuards(JwtGuard, RolesGuard)
 @Roles('admin', 'employee')
 export class OperationLogController {

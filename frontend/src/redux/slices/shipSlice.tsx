@@ -119,7 +119,7 @@ const initialState: ShipState = {
     loading: false,
     error: null,
     page: 1,
-    limit: 10,
+    limit: 5,
     totalShips: 0,
     totalPages: 1,
     searchQuery: '',

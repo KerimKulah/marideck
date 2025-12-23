@@ -14,7 +14,7 @@ import { useSelector, useDispatch } from "react-redux"
 import { RootState, AppDispatch } from "@/redux/store"
 import { getShips, setPage, setLimit, setSearchQuery, deleteShip, removeShipOptimistic, clearError, setSortBy, setSortOrder } from "@/redux/slices/shipSlice"
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination"
-import { MiniLoading } from "@/components/ui/mini-loading"
+import { Skeleton } from "@/components/ui/skeleton"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import debounce from "lodash/debounce"
 import { toast } from "sonner"
@@ -300,7 +300,7 @@ export default function ShipsPage() {
             </div>
 
             <div className="rounded-lg border overflow-x-auto">
-                <Table>
+                <Table style={{ tableLayout: 'fixed' }}>
                     <TableHeader>
                         <TableRow>
                             <TableHead>Fotoğraf</TableHead>
@@ -334,11 +334,83 @@ export default function ShipsPage() {
                     </TableHeader>
                     <TableBody>
                         {loading ? (
-                            <TableRow>
-                                <TableCell colSpan={11} className="h-24 text-center">
-                                    <MiniLoading />
-                                </TableCell>
-                            </TableRow>
+                            // Skeleton loading rows - prevents layout shift
+                            Array.from({ length: 5 }).map((_, index) => (
+                                <TableRow key={`skeleton-${index}`} className="hover:bg-transparent">
+                                    {/* Fotoğraf */}
+                                    <TableCell className="py-4">
+                                        <div className="flex items-center justify-center">
+                                            <Skeleton className="h-24 w-32 rounded-lg" />
+                                        </div>
+                                    </TableCell>
+                                    {/* IMO / MMSI */}
+                                    <TableCell>
+                                        <div className="flex flex-col gap-1">
+                                            <div className="flex items-center gap-1">
+                                                <Skeleton className="h-4 w-20" />
+                                                <Skeleton className="h-3 w-3 rounded" />
+                                            </div>
+                                            <div className="flex items-center gap-1">
+                                                <Skeleton className="h-4 w-24" />
+                                                <Skeleton className="h-3 w-3 rounded" />
+                                            </div>
+                                        </div>
+                                    </TableCell>
+                                    {/* Gemi Adı */}
+                                    <TableCell>
+                                        <div className="flex items-center gap-2">
+                                            <Skeleton className="h-4 w-4 rounded" />
+                                            <Skeleton className="h-4 w-32" />
+                                        </div>
+                                    </TableCell>
+                                    {/* Tipi */}
+                                    <TableCell>
+                                        <div className="flex items-center gap-2">
+                                            <Skeleton className="h-4 w-4 rounded" />
+                                            <Skeleton className="h-4 w-24" />
+                                        </div>
+                                    </TableCell>
+                                    {/* Bayrak */}
+                                    <TableCell>
+                                        <Skeleton className="h-4 w-20" />
+                                    </TableCell>
+                                    {/* ETA */}
+                                    <TableCell>
+                                        <div className="flex items-center gap-2">
+                                            <Skeleton className="h-4 w-4 rounded" />
+                                            <Skeleton className="h-4 w-28" />
+                                        </div>
+                                    </TableCell>
+                                    {/* Yaklaştığı Liman */}
+                                    <TableCell>
+                                        <div className="flex items-center gap-2">
+                                            <Skeleton className="h-4 w-4 rounded" />
+                                            <Skeleton className="h-4 w-24" />
+                                        </div>
+                                    </TableCell>
+                                    {/* Durum */}
+                                    <TableCell>
+                                        <Skeleton className="h-6 w-20 rounded-full" />
+                                    </TableCell>
+                                    {/* Son Güncelleme */}
+                                    <TableCell>
+                                        <div className="flex items-center gap-2">
+                                            <Skeleton className="h-4 w-4 rounded" />
+                                            <Skeleton className="h-4 w-24" />
+                                        </div>
+                                    </TableCell>
+                                    {/* Konum */}
+                                    <TableCell>
+                                        <div className="flex items-center justify-center">
+                                            <Skeleton className="h-5 w-5 rounded" />
+                                        </div>
+                                    </TableCell>
+                                    {/* İşlemler */}
+                                    <TableCell>
+                                        <Skeleton className="h-4 w-4 rounded" />
+                                    </TableCell>
+                                </TableRow>
+                            ))
                         ) : ships?.length === 0 ? (
                             <TableRow>
                                 <TableCell colSpan={11} className="text-center py-8 text-muted-foreground">
@@ -415,7 +487,7 @@ export default function ShipsPage() {
                                     <TableCell>
                                         <div className="flex flex-col gap-2">
                                             <div className="flex gap-2">
-                                                <Calendar className="h-4 w-4" /> ETA: {ship.eta ? formatDate(ship.eta) : '-'}
+                                                <Calendar className="h-4 w-4" />{ship.eta ? formatDate(ship.eta) : '-'}
                                             </div>
                                         </div>
                                     </TableCell>

@@ -1,10 +1,9 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, ParseIntPipe, HttpCode, UseFilters, UseGuards, Query, HttpException, UseInterceptors, UploadedFile } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, ParseIntPipe, HttpCode, UseGuards, Query, HttpException, UseInterceptors, UploadedFile } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
 import { ShipService } from './ship.service';
 import { ShipDto } from './dto/ship.dto';
-import { ExceptionFilterImp } from '../filters/exception-filter';
 import { JwtGuard } from '../auth/common/guards/JwtGuard';
 import { RolesGuard } from '../auth/common/guards/RolesGuard';
 import { Roles } from '../auth/common/decorators/roles.decorator';
@@ -12,7 +11,6 @@ import { Ship } from './entities/ship.entity';
 import { Put } from '@nestjs/common';
 
 @Controller('ship')
-@UseFilters(ExceptionFilterImp)
 @UseGuards(JwtGuard, RolesGuard)
 @Roles('admin', 'employee')
 export class ShipController {

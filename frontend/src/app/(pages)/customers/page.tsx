@@ -6,6 +6,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, } from "@/components/ui/table"
+import { Skeleton } from "@/components/ui/skeleton"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, } from "@/components/ui/dropdown-menu"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { AppDispatch } from "@/redux/store"
@@ -16,7 +17,6 @@ import { useEffect, useState, useMemo } from "react"
 import debounce from "lodash/debounce"
 import { getCustomers, setPage, setLimit, setSearchQuery, setSortBy, setSortOrder, deleteCustomer, clearError, getCustomerStatistics } from "@/redux/slices/customerSlice"
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination"
-import { MiniLoading } from "@/components/ui/mini-loading"
 import { CustomerDetailsModal } from "@/components/customer-details-modal"
 import { CustomerAddOrEditModal } from "@/components/customer-addoredit-modal"
 import tr from 'react-phone-input-2/lang/tr.json'
@@ -297,7 +297,7 @@ export default function CustomersPage() {
       {/* Müşteri Tablosu */}
       <div className="rounded-lg border overflow-y-auto">
         <div className="max-h-[600px] overflow-y-auto ">
-          <Table className="w-full min-w-[700px] sm:min-w-full ">
+          <Table className="w-full min-w-[700px] sm:min-w-full" style={{ tableLayout: 'fixed' }}>
             {/* Tablo Header */}
             <TableHeader>
               <TableRow>
@@ -379,11 +379,67 @@ export default function CustomersPage() {
             {/* Tablo Body */}
             <TableBody >
               {loading ? (
-                <TableRow>
-                  <TableCell colSpan={9} className="h-24">
-                    <MiniLoading />
-                  </TableCell>
-                </TableRow>
+                // Skeleton loading rows - prevents layout shift
+                Array.from({ length: 5 }).map((_, index) => (
+                  <TableRow key={`skeleton-${index}`} className="hover:bg-transparent">
+                    {/* Yetkili Kişi */}
+                    <TableCell className="min-w-[200px]">
+                      <div className="flex items-center gap-2">
+                        <Skeleton className="h-4 w-4 rounded" />
+                        <Skeleton className="h-4 w-32" />
+                      </div>
+                    </TableCell>
+                    {/* Müşteri Türü */}
+                    <TableCell className="min-w-[150px]">
+                      <div className="flex items-center gap-2">
+                        <Skeleton className="h-4 w-4 rounded" />
+                        <Skeleton className="h-4 w-24" />
+                      </div>
+                    </TableCell>
+                    {/* Firma Adı */}
+                    <TableCell className="min-w-[200px]">
+                      <div className="flex items-center gap-2">
+                        <Skeleton className="h-4 w-4 rounded" />
+                        <Skeleton className="h-4 w-36" />
+                      </div>
+                    </TableCell>
+                    {/* E-posta */}
+                    <TableCell className="min-w-[200px]">
+                      <div className="flex items-center gap-2">
+                        <Skeleton className="h-4 w-4 rounded" />
+                        <Skeleton className="h-4 w-28 max-w-[120px]" />
+                        <Skeleton className="h-3 w-3 rounded" />
+                      </div>
+                    </TableCell>
+                    {/* Telefon */}
+                    <TableCell className="min-w-[170px]">
+                      <div className="flex items-center gap-2">
+                        <Skeleton className="h-4 w-4 rounded" />
+                        <Skeleton className="h-4 w-24" />
+                        <Skeleton className="h-3 w-3 rounded" />
+                      </div>
+                    </TableCell>
+                    {/* Ülke */}
+                    <TableCell>
+                      <Skeleton className="h-4 w-20" />
+                    </TableCell>
+                    {/* Eklenme Tarihi */}
+                    <TableCell>
+                      <div className="flex items-center gap-1.5">
+                        <Skeleton className="h-4 w-4 rounded" />
+                        <Skeleton className="h-4 w-24" />
+                      </div>
+                    </TableCell>
+                    {/* Durum */}
+                    <TableCell>
+                      <Skeleton className="h-6 w-24 rounded-full" />
+                    </TableCell>
+                    {/* İşlemler */}
+                    <TableCell>
+                      <Skeleton className="h-8 w-8 rounded" />
+                    </TableCell>
+                  </TableRow>
+                ))
               ) : sortedCustomers?.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
