@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react"
 import { MapIcon, Info } from "lucide-react"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
+import { Skeleton } from "@/components/ui/skeleton"
 
 export const EmbeddedMap = () => {
     const [loading, setLoading] = useState(true);
@@ -68,11 +69,8 @@ export const EmbeddedMap = () => {
         <div className="col-span-3 bg-white rounded-lg border shadow p-4 pt-6">
             <div className="relative bg-gray-50 overflow-hidden" style={{ height: '450px' }}>
                 {loading && (
-                    <div className="absolute inset-0 flex items-center justify-center bg-white bg-opacity-90 z-10">
-                        <div className="text-center">
-                            <div className="animate-spin h-8 w-8 border-4 border-blue-500 border-t-transparent rounded-full mx-auto mb-4"></div>
-                            <p className="text-gray-600">Harita yükleniyor...</p>
-                        </div>
+                    <div className="absolute inset-0 z-10 bg-white">
+                        <Skeleton className="w-full h-full rounded-lg" />
                     </div>
                 )}
                 {error && (

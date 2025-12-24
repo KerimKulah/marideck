@@ -53,7 +53,7 @@ export function NavSecondary({
       <div className="flex flex-col items-center mt-2 px-2">
         <div className="flex items-center gap-2">
           <Image src="/kmaritime-logo.png" alt="Logo" width={15} height={15} quality={90} />
-          <span className="text-xs font-bold">MARITIME DESK v0.5</span>
+          <span className="text-xs font-bold">MARIDECK v0.5</span>
         </div>
         <span className="text-xs text-gray-600">Denizcilik Yönetim Sistemi</span>
       </div>

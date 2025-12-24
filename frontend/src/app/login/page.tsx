@@ -23,9 +23,9 @@ export default function Page() {
             <div className="w-full max-w-2xl space-y-8 pl-8 pr-0">
               {/* Logo */}
               <div className="flex flex-col items-center mb-10 space-y-6">
-                <img className="h-28 w-auto brightness-0 invert" src="/kmaritime-logo.png" alt="MaritimeDesk Logo" />
+                <img className="h-28 w-auto brightness-0 invert" src="/kmaritime-logo.png" alt="Marideck Logo" />
                 <h1 className="text-5xl font-bold tracking-tight text-primary-foreground">
-                  Maritime Desk
+                  Marideck
                 </h1>
               </div>
 
@@ -50,12 +50,12 @@ export default function Page() {
             <div className="w-full max-w-2xl pl-8 pr-0 space-y-4 border-t border-primary-foreground/10 pt-6">
               <div className="flex flex-col items-center gap-3 text-sm text-primary-foreground/70">
                 <a
-                  href="https://maritime-desk.com"
+                  href="https://marideck.com"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="hover:text-primary-foreground transition-colors font-medium"
                 >
-                  maritime-desk.com
+                  marideck.com
                 </a>
                 <div className="flex items-center gap-4 text-xs">
                   <span className="px-3 py-1 rounded-full bg-primary-foreground/10 text-primary-foreground/60">
@@ -63,7 +63,7 @@ export default function Page() {
                   </span>
                   <span className="text-primary-foreground/50">•</span>
                   <span className="text-primary-foreground/50">
-                    © {new Date().getFullYear()} Maritime Desk
+                    © {new Date().getFullYear()} Marideck
                   </span>
                 </div>
               </div>

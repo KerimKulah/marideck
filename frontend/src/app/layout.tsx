@@ -4,8 +4,8 @@ import { StoreProvider } from "../components/providers/store-provider";
 import { Toaster } from "sonner";
 
 export const metadata: Metadata = {
-  title: "Maritime Desk - Denizcilik Sektöründe Güvenilir Ortağınız",
-  description: "Maritime Desk - Denizcilik Sektöründe Güvenilir Ortağınız",
+  title: "Marideck - Denizcilik Sektöründe Güvenilir Ortağınız",
+  description: "Marideck - Denizcilik Sektöründe Güvenilir Ortağınız",
   icons: {
     icon: [
       { url: '/favicon.ico', sizes: '32x32' },
