@@ -1,16 +1,12 @@
-import { Controller, HttpCode, Get, Query, Param, Post, Body, Put, Delete, Patch, ParseIntPipe } from '@nestjs/common';
+import { Controller, HttpCode, Get, Query, Param, Post, Body, Put, Delete, Patch, ParseIntPipe, UseGuards } from '@nestjs/common';
 import { CustomerService } from './customer.service';
 import { Customer } from './entities/customer.entity';
 import { CustomerDto } from './dto/customer-dto';
-import { UseFilters } from '@nestjs/common';
-import { ExceptionFilterImp } from '../filters/exception-filter';
-import { UseGuards } from '@nestjs/common';
 import { JwtGuard } from 'src/auth/common/guards/JwtGuard';
 import { RolesGuard } from 'src/auth/common/guards/RolesGuard';
 import { Roles } from 'src/auth/common/decorators/roles.decorator';
 
 @Controller('customer')
-@UseFilters(ExceptionFilterImp)
 @UseGuards(JwtGuard, RolesGuard)
 @Roles('admin', 'employee')
 export class CustomerController {

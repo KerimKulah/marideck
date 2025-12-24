@@ -15,61 +15,11 @@ import { Textarea } from "@/components/ui/textarea"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import React from 'react'
-import { Building2, Calendar, FlagIcon, Globe, IdCard, Mail, MapPin, Phone, Sailboat, Ship, StickyNote, User } from 'lucide-react';
+import { Building2, Calendar, FlagIcon, Globe, IdCard, Mail, MapPin, Phone, Sailboat, Ship, StickyNote, User, Plus, Hash, Radio, Ruler, Waves, Weight, Calendar as CalendarIcon, MapPin as PortIcon, Compass, Clock, Camera, X, Edit } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select"
 import ReactFlagsSelect from "react-flags-select"
 import tr from 'react-phone-input-2/lang/tr.json'
 import { DateTimePicker } from "./date-time-picker"
-import Script from 'next/script';
-
-// Custom LordIcon component
-declare global {
-    interface Window {
-        loadAnimation?: any;
-    }
-}
-
-interface LordIconProps {
-    src: string;
-    trigger?: string;
-    delay?: string;
-    colors?: string;
-    style?: React.CSSProperties;
-    className?: string;
-}
-
-const LordIcon: React.FC<LordIconProps> = ({
-    src,
-    trigger = 'loop',
-    delay = '2000',
-    colors = 'primary:#121331,secondary:#0473a3',
-    style = {},
-    className = ''
-}) => {
-    useEffect(() => {
-        if (typeof window !== 'undefined' && window.loadAnimation) {
-            window.loadAnimation();
-        }
-    }, [src]);
-
-    // Create the HTML string for the lord-icon
-    const iconHtml = {
-        __html: `
-                <lord-icon
-                    src="${src}"
-                    trigger="${trigger}"
-                    delay="${delay}"
-                    colors="${colors}"
-                    style="width: 100%; height: 100%; ${Object.entries(style)
-                .map(([key, value]) => `${key}: ${value};`)
-                .join(' ')}"
-                    class="${className}">
-                </lord-icon>
-            `
-    };
-
-    return <div dangerouslySetInnerHTML={iconHtml} />;
-};
 
 // Düzeltilmiş form şeması - backend ile uyumlu
 const formSchema = z.object({
@@ -199,7 +149,7 @@ const getImageUrl = (imageUrl: string | null | undefined) => {
     }
 
     // Local image ise backend URL'i ekle
-    return `http://localhost:3000${imageUrl}`;
+    return `http://localhost:4000${imageUrl}`;
 };
 
 export function ShipAddOrEditModal({ isOpen, onClose, ship, onSuccess }: ShipAddOrEditModalProps) {
@@ -207,7 +157,6 @@ export function ShipAddOrEditModal({ isOpen, onClose, ship, onSuccess }: ShipAdd
     const [isSubmitting, setIsSubmitting] = useState(false)
     const dispatch = useDispatch<AppDispatch>()
     const { loading, error } = useSelector((state: RootState) => state.ship)
-    const [showAdvanced, setShowAdvanced] = useState(false)
     const [imageFile, setImageFile] = useState<File | null>(null)
     const [imagePreview, setImagePreview] = useState<string>("")
 
@@ -417,255 +366,85 @@ export function ShipAddOrEditModal({ isOpen, onClose, ship, onSuccess }: ShipAdd
 
     return (
         <>
-            <Script src="https://cdn.lordicon.com/lordicon.js" />
             <Dialog open={isOpen} onOpenChange={onClose}>
-                <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
-                    <DialogHeader>
-                        <div className="flex flex-col items-center justify-center space-y-2">
-                            {/* Image Upload Area */}
-                            <div className="relative">
-                                <input
-                                    type="file"
-                                    id="ship-image-upload"
-                                    accept="image/*"
-                                    onChange={handleImageChange}
-                                    className="hidden"
-                                />
-                                <label
-                                    htmlFor="ship-image-upload"
-                                    className="cursor-pointer flex flex-col items-center justify-center w-32 h-32 border-2 border-dashed border-gray-300 rounded-lg hover:border-gray-400 transition-colors"
-                                >
-                                    {imagePreview ? (
-                                        <img src={imagePreview} alt="Gemi Önizleme" className="w-full h-full object-cover rounded-lg" />
-                                    ) : (
-                                        <div className="flex flex-col items-center justify-center text-gray-400">
-                                            <Ship className="h-12 w-12 mb-2" />
-                                            <span className="text-xs">Fotoğraf Ekle</span>
-                                        </div>
-                                    )}
-                                </label>
-                            </div>
-                            <DialogTitle className="text-center">
-                                {ship && ship.id ? 'Gemi Bilgilerini Düzenle' : 'Yeni Gemi Ekle'}
-                            </DialogTitle>
-                            <DialogDescription className="text-center">
-                                {ship && ship.id ? 'Gemi bilgilerini düzenlemek için yeni bilgileri giriniz.' : 'Eklemek istediğiniz geminin bilgilerini giriniz.'}
-                            </DialogDescription>
-                        </div>
+                <DialogContent className="w-[95vw] lg:min-w-[900px] max-w-7xl max-h-[90vh] overflow-y-auto">
+                    <DialogHeader className="pb-4 border-b">
+                        <DialogTitle className="text-xl font-semibold flex items-center gap-2">
+                            {ship && ship.id ? ('Gemi Bilgilerini Düzenle') : ('Yeni Gemi Ekle')}
+                        </DialogTitle>
                     </DialogHeader>
 
                     <Form {...form}>
                         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                            {/* Temel Bilgiler */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                <FormField
-                                    control={form.control}
-                                    name="name"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel className="flex items-center gap-2">
-                                                <Ship className="h-4 w-4 text-muted-foreground" />
-                                                Gemi Adı
-                                                <span className="text-red-500">*</span>
-                                            </FormLabel>
-                                            <FormControl>
-                                                <Input placeholder="Gemi adı giriniz" {...field} />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )} />
-
-                                <FormField
-                                    control={form.control}
-                                    name="imoNumber"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel className="flex items-center gap-2">
-                                                <IdCard className="h-4 w-4 text-muted-foreground" />
-                                                IMO Numarası
-                                                <span className="text-red-500">*</span>
-                                            </FormLabel>
-                                            <FormControl>
-                                                <Input placeholder="IMO numarasını giriniz" {...field} />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )} />
-
-                                <FormField
-                                    control={form.control}
-                                    name="type"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel className="flex items-center gap-2">
-                                                <Sailboat className="h-4 w-4" />
-                                                Gemi Tipi
-                                                <span className="text-xs text-red-500">*</span>
-                                            </FormLabel>
-                                            <FormControl>
-                                                <Select onValueChange={field.onChange} value={field.value || ""}>
-                                                    <SelectTrigger className="w-full lg:w-max-[200px]">
-                                                        <SelectValue placeholder="Gemi tipi seçiniz" />
-                                                    </SelectTrigger>
-                                                    <SelectContent>
-                                                        {Object.entries(ShipType).map(([key, value]) => (
-                                                            <SelectItem key={key} value={value}>
-                                                                {value}
-                                                            </SelectItem>
-                                                        ))}
-                                                    </SelectContent>
-                                                </Select>
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
+                            {/* Image Upload Area - Hem yeni ekleme hem düzenleme için */}
+                            <div className="flex justify-center py-4 border-b">
+                                <div className="relative group">
+                                    <input
+                                        type="file"
+                                        id="ship-image-upload"
+                                        accept="image/*"
+                                        onChange={handleImageChange}
+                                        className="hidden"
+                                    />
+                                    <label
+                                        htmlFor="ship-image-upload"
+                                        className="cursor-pointer relative flex flex-col items-center justify-center w-48 h-32 sm:w-64 sm:h-40 border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg hover:border-blue-400 dark:hover:border-blue-500 transition-all bg-muted/30 hover:bg-muted/50"
+                                    >
+                                        {imagePreview ? (
+                                            <>
+                                                <img src={imagePreview} alt="Gemi Önizleme" className="w-full h-full object-cover rounded-lg" />
+                                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center">
+                                                    <div className="flex flex-col items-center gap-2 text-white">
+                                                        <Camera className="h-6 w-6" />
+                                                        <span className="text-xs font-medium">Fotoğrafı Değiştir</span>
+                                                    </div>
+                                                </div>
+                                            </>
+                                        ) : (
+                                            <div className="flex flex-col items-center justify-center text-muted-foreground">
+                                                <div className="w-16 h-16 rounded-full bg-blue-50 dark:bg-blue-950 flex items-center justify-center mb-3">
+                                                    <Camera className="h-8 w-8 text-blue-600 dark:text-blue-400" />
+                                                </div>
+                                                <span className="text-sm font-medium">{ship && ship.id ? 'Fotoğrafı Değiştir' : 'Fotoğraf Ekle'}</span>
+                                                <span className="text-xs text-muted-foreground mt-1">Tıklayarak seçin</span>
+                                            </div>
+                                        )}
+                                    </label>
+                                    {imagePreview && (
+                                        <button
+                                            type="button"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setImagePreview("");
+                                                setImageFile(null);
+                                            }}
+                                            className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors z-10"
+                                        >
+                                            <X className="h-4 w-4" />
+                                        </button>
                                     )}
-                                />
-
-                                <FormField
-                                    control={form.control}
-                                    name="callsign"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel className="flex items-center gap-2">
-                                                <Globe className="h-4 w-4 text-muted-foreground" />
-                                                Çağrı İşareti (Callsign)
-                                            </FormLabel>
-                                            <FormControl>
-                                                <Input placeholder="Çağrı işareti" {...field} />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )} />
-
-                                <FormField
-                                    control={form.control}
-                                    name="eta"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel className="flex items-center gap-2">
-                                                <Calendar className="h-4 w-4 text-muted-foreground" />
-                                                ETA (Tahmini Varış)
-                                            </FormLabel>
-                                            <FormControl>
-                                                <DateTimePicker
-                                                    value={field.value}
-                                                    onChange={field.onChange}
-                                                    placeholder="Tarih ve saat seçin"
-                                                />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-
-                                <FormField
-                                    control={form.control}
-                                    name="flag"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel className="mb-3">
-                                                <FlagIcon className="h-4 w-4 text-muted-foreground" />
-                                                Bayrak
-                                            </FormLabel>
-                                            <FormControl>
-                                                <ReactFlagsSelect
-                                                    className="my-custom-flags-select"
-                                                    placeholder="Bayrak seçiniz"
-                                                    onSelect={field.onChange}
-                                                    selected={field.value || ""}
-                                                    searchable={true}
-                                                    searchPlaceholder="Ülke adı ara.."
-                                                    customLabels={uppercaseLabels}
-                                                />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )} />
-
-
-                                <FormField
-                                    control={form.control}
-                                    name="mmsiNumber"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel className="flex items-center gap-2">
-                                                <Phone className="h-4 w-4 text-muted-foreground" />
-                                                MMSI Numarası
-                                            </FormLabel>
-                                            <FormControl>
-                                                <Input placeholder="MMSI numarasını giriniz" {...field} />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )} />
-
-
-                                <FormField
-                                    control={form.control}
-                                    name="status"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel className="flex items-center gap-2">
-                                                <Building2 className="h-4 w-4 text-muted-foreground" />
-                                                Durum
-                                                <span className="text-xs text-red-500">*</span>
-                                            </FormLabel>
-                                            <FormControl>
-                                                <Select onValueChange={field.onChange} value={field.value}>
-                                                    <SelectTrigger className="w-full">
-                                                        <SelectValue placeholder="Güncel Durum Seçiniz" />
-                                                    </SelectTrigger>
-                                                    <SelectContent>
-                                                        {Object.values(Status)
-                                                            .map((status) => (
-                                                                <SelectItem key={status} value={status}>
-                                                                    {status}
-                                                                </SelectItem>
-                                                            ))}
-                                                    </SelectContent>
-                                                </Select>
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )} />
+                                </div>
                             </div>
 
-
-                            {/* Notlar */}
-                            <FormField
-                                control={form.control}
-                                name="notes"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel className="flex items-center gap-2">
-                                            <StickyNote className="h-4 w-4 text-muted-foreground" />
-                                            Notlar
-                                        </FormLabel>
-                                        <FormControl>
-                                            <Textarea placeholder="Notunuz varsa giriniz" {...field} />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )} />
-
-                            <Button type="button" variant="ghost" className="w-full text-sm text-blue-600 hover:underline" onClick={() => setShowAdvanced(!showAdvanced)}>
-                                {showAdvanced ? "Gelişmiş Bilgileri Gizle" : "Gelişmiş Bilgileri Göster"}
-                            </Button>
-
-                            {showAdvanced && (
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
-                                    {/* Ports */}
-                                    <div className="space-y-4 border p-4 rounded-lg">
-                                        <h4 className="font-medium text-sm text-muted-foreground">Liman Bilgileri</h4>
-
+                            {/* Bilgiler Grid - Kompakt ve Kurumsal */}
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 py-4 min-w-0">
+                                {/* Temel Bilgiler Kartı */}
+                                <div className="bg-muted/30 rounded-lg border p-4 space-y-3">
+                                    <h4 className="text-sm font-semibold text-foreground flex items-center gap-2 pb-2 border-b">
+                                        <Hash className="h-4 w-4 text-muted-foreground" />
+                                        Temel Bilgiler
+                                    </h4>
+                                    <div className="space-y-3">
                                         <FormField
                                             control={form.control}
-                                            name="departurePort"
+                                            name="name"
                                             render={({ field }) => (
                                                 <FormItem>
-                                                    <FormLabel>Kalkış Limanı</FormLabel>
+                                                    <FormLabel className="text-xs text-muted-foreground">
+                                                        Gemi Adı <span className="text-red-500">*</span>
+                                                    </FormLabel>
                                                     <FormControl>
-                                                        <Input placeholder="Kalkış limanını giriniz" {...field} />
+                                                        <Input placeholder="Gemi adı giriniz" {...field} />
                                                     </FormControl>
                                                     <FormMessage />
                                                 </FormItem>
@@ -674,28 +453,171 @@ export function ShipAddOrEditModal({ isOpen, onClose, ship, onSuccess }: ShipAdd
 
                                         <FormField
                                             control={form.control}
-                                            name="destinationPort"
+                                            name="imoNumber"
                                             render={({ field }) => (
                                                 <FormItem>
-                                                    <FormLabel>Varış Limanı</FormLabel>
+                                                    <FormLabel className="text-xs text-muted-foreground">
+                                                        IMO Numarası <span className="text-red-500">*</span>
+                                                    </FormLabel>
                                                     <FormControl>
-                                                        <Input placeholder="Varış limanını giriniz" {...field} />
+                                                        <Input placeholder="IMO numarasını giriniz" {...field} />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+
+                                        <FormField
+                                            control={form.control}
+                                            name="mmsiNumber"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel className="text-xs text-muted-foreground">
+                                                        MMSI Numarası
+                                                    </FormLabel>
+                                                    <FormControl>
+                                                        <Input placeholder="MMSI numarasını giriniz" {...field} />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+
+                                        <FormField
+                                            control={form.control}
+                                            name="callsign"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel className="text-xs text-muted-foreground">
+                                                        Çağrı İşareti
+                                                    </FormLabel>
+                                                    <FormControl>
+                                                        <Input placeholder="Çağrı işareti" {...field} />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+
+                                        <FormField
+                                            control={form.control}
+                                            name="flag"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel className="text-xs text-muted-foreground">
+                                                        Bayrak
+                                                    </FormLabel>
+                                                    <FormControl>
+                                                        <ReactFlagsSelect
+                                                            className="my-custom-flags-select pt-2"
+                                                            placeholder="Bayrak seçiniz"
+                                                            onSelect={field.onChange}
+                                                            selected={field.value || ""}
+                                                            searchable={true}
+                                                            searchPlaceholder="Ülke adı ara.."
+                                                            customLabels={uppercaseLabels}
+                                                        />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+
+                                        <FormField
+                                            control={form.control}
+                                            name="type"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel className="text-xs text-muted-foreground">
+                                                        Gemi Tipi <span className="text-red-500">*</span>
+                                                    </FormLabel>
+                                                    <FormControl>
+                                                        <Select onValueChange={field.onChange} value={field.value || ""}>
+                                                            <SelectTrigger className="w-full">
+                                                                <SelectValue placeholder="Gemi tipi seçiniz" />
+                                                            </SelectTrigger>
+                                                            <SelectContent>
+                                                                {Object.entries(ShipType).map(([key, value]) => (
+                                                                    <SelectItem key={key} value={value}>
+                                                                        {value}
+                                                                    </SelectItem>
+                                                                ))}
+                                                            </SelectContent>
+                                                        </Select>
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+
+                                        <FormField
+                                            control={form.control}
+                                            name="status"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel className="text-xs text-muted-foreground">
+                                                        Durum <span className="text-red-500">*</span>
+                                                    </FormLabel>
+                                                    <FormControl>
+                                                        <Select onValueChange={field.onChange} value={field.value}>
+                                                            <SelectTrigger className="w-full">
+                                                                <SelectValue placeholder="Durum Seçiniz" />
+                                                            </SelectTrigger>
+                                                            <SelectContent>
+                                                                {Object.values(Status)
+                                                                    .map((status) => (
+                                                                        <SelectItem key={status} value={status}>
+                                                                            {status}
+                                                                        </SelectItem>
+                                                                    ))}
+                                                            </SelectContent>
+                                                        </Select>
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+
+                                        <FormField
+                                            control={form.control}
+                                            name="builtYear"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel className="text-xs text-muted-foreground">
+                                                        İnşa Yılı
+                                                    </FormLabel>
+                                                    <FormControl>
+                                                        <Input
+                                                            type="number"
+                                                            min="1900"
+                                                            max={new Date().getFullYear()}
+                                                            placeholder="İnşa yılı giriniz"
+                                                            {...field}
+                                                            onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : undefined)}
+                                                        />
                                                     </FormControl>
                                                     <FormMessage />
                                                 </FormItem>
                                             )}
                                         />
                                     </div>
-                                    {/* Dimensions */}
-                                    <div className="space-y-4 border p-4 rounded-lg">
-                                        <h4 className="font-medium text-sm text-muted-foreground">Boyutlar</h4>
+                                </div>
 
+                                {/* Boyutlar ve Ölçüler Kartı */}
+                                <div className="bg-muted/30 rounded-lg border p-4 space-y-3">
+                                    <h4 className="text-sm font-semibold text-foreground flex items-center gap-2 pb-2 border-b">
+                                        <Ruler className="h-4 w-4 text-muted-foreground" />
+                                        Boyutlar ve Ölçüler
+                                    </h4>
+                                    <div className="space-y-3">
                                         <FormField
                                             control={form.control}
                                             name="length"
                                             render={({ field }) => (
                                                 <FormItem>
-                                                    <FormLabel>Uzunluk (m)</FormLabel>
+                                                    <FormLabel className="text-xs text-muted-foreground">
+                                                        Uzunluk (m)
+                                                    </FormLabel>
                                                     <FormControl>
                                                         <Input
                                                             type="number"
@@ -716,7 +638,9 @@ export function ShipAddOrEditModal({ isOpen, onClose, ship, onSuccess }: ShipAdd
                                             name="beam"
                                             render={({ field }) => (
                                                 <FormItem>
-                                                    <FormLabel>Genişlik (m)</FormLabel>
+                                                    <FormLabel className="text-xs text-muted-foreground">
+                                                        Genişlik (m)
+                                                    </FormLabel>
                                                     <FormControl>
                                                         <Input
                                                             type="number"
@@ -737,7 +661,9 @@ export function ShipAddOrEditModal({ isOpen, onClose, ship, onSuccess }: ShipAdd
                                             name="draft"
                                             render={({ field }) => (
                                                 <FormItem>
-                                                    <FormLabel>Su Çekimi (m)</FormLabel>
+                                                    <FormLabel className="text-xs text-muted-foreground">
+                                                        Su Çekimi (m)
+                                                    </FormLabel>
                                                     <FormControl>
                                                         <Input
                                                             type="number"
@@ -752,18 +678,15 @@ export function ShipAddOrEditModal({ isOpen, onClose, ship, onSuccess }: ShipAdd
                                                 </FormItem>
                                             )}
                                         />
-                                    </div>
-
-                                    {/* Weights */}
-                                    <div className="space-y-4 border p-4 rounded-lg">
-                                        <h4 className="font-medium text-sm text-muted-foreground">Ağırlık Bilgileri</h4>
 
                                         <FormField
                                             control={form.control}
                                             name="grossTonnage"
                                             render={({ field }) => (
                                                 <FormItem>
-                                                    <FormLabel>Brüt Tonaj (GT)</FormLabel>
+                                                    <FormLabel className="text-xs text-muted-foreground">
+                                                        Brüt Tonaj (GT)
+                                                    </FormLabel>
                                                     <FormControl>
                                                         <Input
                                                             type="number"
@@ -783,7 +706,9 @@ export function ShipAddOrEditModal({ isOpen, onClose, ship, onSuccess }: ShipAdd
                                             name="deadweight"
                                             render={({ field }) => (
                                                 <FormItem>
-                                                    <FormLabel>Deadweight (DWT)</FormLabel>
+                                                    <FormLabel className="text-xs text-muted-foreground">
+                                                        Deadweight (DWT)
+                                                    </FormLabel>
                                                     <FormControl>
                                                         <Input
                                                             type="number"
@@ -803,7 +728,9 @@ export function ShipAddOrEditModal({ isOpen, onClose, ship, onSuccess }: ShipAdd
                                             name="netTonnage"
                                             render={({ field }) => (
                                                 <FormItem>
-                                                    <FormLabel>Net Tonaj (NT)</FormLabel>
+                                                    <FormLabel className="text-xs text-muted-foreground">
+                                                        Net Tonaj (NT)
+                                                    </FormLabel>
                                                     <FormControl>
                                                         <Input
                                                             type="number"
@@ -819,13 +746,127 @@ export function ShipAddOrEditModal({ isOpen, onClose, ship, onSuccess }: ShipAdd
                                         />
                                     </div>
                                 </div>
-                            )}
 
-                            <div className="flex justify-end gap-2">
-                                <Button type="button" variant="outline" onClick={handleClose}>
+                                {/* Seyir Bilgileri Kartı */}
+                                <div className="bg-muted/30 rounded-lg border p-4 space-y-3">
+                                    <h4 className="text-sm font-semibold text-foreground flex items-center gap-2 pb-2 border-b">
+                                        <Compass className="h-4 w-4 text-muted-foreground" />
+                                        Seyir Bilgileri
+                                    </h4>
+                                    <div className="space-y-3">
+                                        <FormField
+                                            control={form.control}
+                                            name="eta"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel className="text-xs text-muted-foreground">
+                                                        ETA (Tahmini Varış)
+                                                    </FormLabel>
+                                                    <FormControl>
+                                                        <DateTimePicker
+                                                            value={field.value}
+                                                            onChange={field.onChange}
+                                                            placeholder="Tarih ve saat seçin"
+                                                        />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+
+                                        <FormField
+                                            control={form.control}
+                                            name="etd"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel className="text-xs text-muted-foreground">
+                                                        ETD (Tahmini Kalkış)
+                                                    </FormLabel>
+                                                    <FormControl>
+                                                        <DateTimePicker
+                                                            value={field.value}
+                                                            onChange={field.onChange}
+                                                            placeholder="Tarih ve saat seçin"
+                                                        />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+
+                                        <FormField
+                                            control={form.control}
+                                            name="departurePort"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel className="text-xs text-muted-foreground">
+                                                        Kalkış Limanı
+                                                    </FormLabel>
+                                                    <FormControl>
+                                                        <Input placeholder="Kalkış limanını giriniz" {...field} />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+
+                                        <FormField
+                                            control={form.control}
+                                            name="destinationPort"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel className="text-xs text-muted-foreground">
+                                                        Varış Limanı
+                                                    </FormLabel>
+                                                    <FormControl>
+                                                        <Input placeholder="Varış limanını giriniz" {...field} />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Notlar Kartı - Tam Genişlik */}
+                                <FormField
+                                    control={form.control}
+                                    name="notes"
+                                    render={({ field }) => (
+                                        <FormItem className="md:col-span-3 min-w-0 w-full">
+                                            <div className="bg-muted/30 rounded-lg border p-4 space-y-3 w-full min-w-0 overflow-hidden">
+                                                <h4 className="text-sm font-semibold text-foreground flex items-center gap-2 pb-2 border-b">
+                                                    <StickyNote className="h-4 w-4 text-muted-foreground" />
+                                                    Notlar
+                                                </h4>
+                                                <FormControl className="w-full min-w-0">
+                                                    <Textarea
+                                                        placeholder="Notunuz varsa giriniz"
+                                                        className="min-h-[80px] resize-none break-words overflow-wrap-anywhere w-full min-w-0"
+                                                        style={{ maxWidth: '100%' }}
+                                                        {...field}
+                                                    />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </div>
+                                        </FormItem>
+                                    )}
+                                />
+                            </div>
+
+
+                            {/* Footer */}
+                            <div className="flex justify-end gap-3 pt-4 border-t">
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={handleClose}
+                                    disabled={isSubmitting}
+                                    className="px-6"
+                                >
                                     İptal
                                 </Button>
-                                <Button type="submit" disabled={isSubmitting}>
+                                <Button type="submit" disabled={isSubmitting} className="px-6">
                                     {isSubmitting ? "İşleniyor..." : (ship && ship.id) ? "Güncelle" : "Kaydet"}
                                 </Button>
                             </div>

@@ -82,7 +82,7 @@ export default function ProfilePage() {
                     <CardContent className="pt-6">
                         <div className="flex flex-col items-center text-center space-y-4">
                             <Avatar className="h-24 w-24">
-                                <AvatarImage crossOrigin="anonymous" src={user?.photo ? `http://localhost:3000/${user.photo}` : ''} alt="Profile" />
+                                <AvatarImage crossOrigin="anonymous" src={user?.photo ? `http://localhost:4000/${user.photo}` : ''} alt="Profile" />
                                 <AvatarFallback className="text-2xl">
                                     {user?.firstName?.[0]}{user?.lastName?.[0]}
                                 </AvatarFallback>

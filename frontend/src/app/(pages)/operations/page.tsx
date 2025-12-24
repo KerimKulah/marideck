@@ -357,6 +357,27 @@ export default function OperationsPage() {
                     />
                 </div>
 
+                <div className="flex items-center gap-1.5 rounded-lg border bg-muted/30 p-1">
+                    <Button
+                        variant={mainTab === 'my-operations' ? 'default' : 'ghost'}
+                        size="sm"
+                        onClick={() => handleMainFilterChange('my-operations')}
+                        className="h-8 px-3 text-xs font-medium"
+                    >
+                        <Briefcase className="h-3.5 w-3.5 mr-1.5" />
+                        Operasyonlarım
+                    </Button>
+                    <Button
+                        variant={mainTab === 'all-operations' ? 'default' : 'ghost'}
+                        size="sm"
+                        onClick={() => handleMainFilterChange('all-operations')}
+                        className="h-8 px-3 text-xs font-medium"
+                    >
+                        <List className="h-3.5 w-3.5 mr-1.5" />
+                        Tüm Operasyonlar
+                    </Button>
+                </div>
+
                 {/* Right: Add Button + Filter Button */}
                 <div className="flex items-center gap-2">
                     <DropdownMenu>
@@ -426,30 +447,6 @@ export default function OperationsPage() {
                 </div>
             </div>
 
-            {/* Bottom Row: Scope Tabs - Below Search */}
-            <div className="flex items-center">
-                <div className="flex items-center gap-1.5 rounded-lg border bg-muted/30 p-1">
-                    <Button
-                        variant={mainTab === 'my-operations' ? 'default' : 'ghost'}
-                        size="sm"
-                        onClick={() => handleMainFilterChange('my-operations')}
-                        className="h-8 px-3 text-xs font-medium"
-                    >
-                        <Briefcase className="h-3.5 w-3.5 mr-1.5" />
-                        Operasyonlarım
-                    </Button>
-                    <Button
-                        variant={mainTab === 'all-operations' ? 'default' : 'ghost'}
-                        size="sm"
-                        onClick={() => handleMainFilterChange('all-operations')}
-                        className="h-8 px-3 text-xs font-medium"
-                    >
-                        <List className="h-3.5 w-3.5 mr-1.5" />
-                        Tüm Operasyonlar
-                    </Button>
-                </div>
-            </div>
-
             <div className="rounded-lg border overflow-x-auto">
                 <Table className="w-full min-w-[700px] sm:min-w-full">
                     <TableHeader>
@@ -484,7 +481,7 @@ export default function OperationsPage() {
                                         <div className="flex flex-col items-start">
 
                                             <div >{operation.name}</div>
-                                            <div className="text-xs text-muted-foreground">{operation.details}</div>
+                                            <div className="text-xs text-muted-foreground max-w-[175px] overflow-hidden text-ellipsis whitespace-nowrap">{operation.details}</div>
                                         </div>
                                     </TableCell>
 

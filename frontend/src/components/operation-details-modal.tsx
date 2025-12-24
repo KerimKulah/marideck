@@ -35,7 +35,8 @@ import {
     FileText,
     Edit,
     FileSpreadsheet,
-    XCircle
+    XCircle,
+    Package
 } from "lucide-react"
 
 // Types
@@ -203,303 +204,212 @@ export function OperationDetailsModal({ open = true, onOpenChange = () => {}, op
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-[95vw] max-h-[90vh] lg:min-w-[50vw] overflow-y-auto">
-                <DialogHeader>
-                    <div className="flex justify-between items-start">
-                        <div>
-                            <DialogTitle className="text-2xl flex items-center gap-2">
-                                {currentOperation?.name}
-                                {getStatusBadge(currentOperation?.status)}
-                            </DialogTitle>
-                            <div className="text-sm text-muted-foreground flex items-center gap-2 mt-1">
-                                <span>#{currentOperation?.id}</span>
-                                <span>•</span>
-                                <span className="flex items-center gap-1">
-                                    <Clock className="h-3.5 w-3.5" />
-                                    {formatDateTime(currentOperation?.createdAt)}
-                                </span>
-                            </div>
-                        </div>
-                    </div>
+            <DialogContent className="w-[95vw] lg:min-w-[900px] max-w-7xl max-h-[90vh] overflow-y-auto">
+                <DialogHeader className="pb-3 border-b">
+                    <DialogTitle className="text-xl font-semibold">
+                        Operasyon Detayları
+                    </DialogTitle>
                 </DialogHeader>
 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    {/* Left Column */}
-                    <div className="lg:col-span-2 space-y-6">
-                        {/* Operation Details */}
-                        <div className="bg-muted/30 rounded-lg p-4">
-                            <div className="flex items-center justify-between mb-4">
-                                <h3 className="font-medium flex items-center gap-2">
-                                    <Info className="h-4 w-4" />
-                                    Operasyon Detayları
-                                </h3>
-                            </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <InfoRow
-                                    icon={Calendar}
-                                    label="Başlangıç Tarihi"
-                                    value={formatDate(currentOperation?.startDate)}
-                                />
-                                <InfoRow
-                                    icon={Calendar}
-                                    label="Bitiş Tarihi"
-                                    value={formatDate(currentOperation?.endDate)}
-                                />
-                                <InfoRow
-                                    icon={Clock}
-                                    label="Süre"
-                                    value={currentOperation?.startDate && currentOperation?.endDate
-                                        ? `${Math.ceil((new Date(currentOperation.endDate).getTime() - new Date(currentOperation.startDate).getTime()) / (1000 * 60 * 60 * 24))} gün`
-                                        : 'Belirtilmemiş'}
-                                    className="md:col-span-2"
-                                />
-                                <div className="md:col-span-2">
-                                    <div className="flex items-start gap-3 py-2">
-                                        <FileText className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
-                                        <div className="flex-1 min-w-0">
-                                            <p className="text-xs text-muted-foreground mb-1">Açıklama</p>
-                                            <div className="bg-muted/50 p-3 rounded-md">
-                                                <p className="text-sm whitespace-pre-line">{currentOperation?.details || 'Açıklama bulunmuyor'}</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Customer Information */}
-                        <SectionCard
-                            title="Müşteri Bilgileri"
-                            icon={User}
-                            isOpen={expandedSections.customer}
-                            onToggle={() => toggleSection('customer')}
-                        >
-                            {currentOperation?.customer ? (
-                                <div className="space-y-4">
-                                    <div className="flex items-start gap-4">
-                                        <div className="bg-primary/10 p-3 rounded-full">
-                                            <User className="h-6 w-6 text-primary" />
-                                        </div>
-                                        <div>
-                                            <h4 className="font-medium">{currentOperation.customer.name || 'İsimsiz Müşteri'}</h4>
-                                            <p className="text-sm text-muted-foreground">{currentOperation.customer.company || 'Firma bilgisi yok'}</p>
-                                        </div>
-                                    </div>
-
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <InfoRow
-                                            icon={Mail}
-                                            label="E-posta"
-                                            value={currentOperation.customer.email || 'Belirtilmemiş'}
-                                        />
-                                        <InfoRow
-                                            icon={Phone}
-                                            label="Telefon"
-                                            value={formatPhone(currentOperation.customer.phone)}
-                                        />
-                                        {currentOperation.customer.country && (
-                                            <InfoRow
-                                                icon={MapPin}
-                                                label="Ülke"
-                                                value={
-                                                    <div className="flex items-center gap-2">
-                                                        <span>🇹🇷</span>
-                                                        <span>Türkiye</span>
-                                                    </div>
-                                                }
-                                            />
-                                        )}
-                                        <InfoRow
-                                            icon={Building2}
-                                            label="Vergi Numarası"
-                                            value={currentOperation.customer.taxNumber || 'Belirtilmemiş'}
-                                        />
-                                    </div>
-
-                                    {currentOperation.customer.address && (
-                                        <div className="mt-2">
-                                            <InfoRow
-                                                icon={MapPin}
-                                                label="Adres"
-                                                value={
-                                                    <div className="bg-muted/30 p-2 rounded text-sm">
-                                                        {currentOperation.customer.address}
-                                                    </div>
-                                                }
-                                            />
-                                        </div>
-                                    )}
-                                </div>
-                            ) : (
-                                <p className="text-sm text-muted-foreground text-center py-4">Müşteri bilgisi bulunamadı</p>
-                            )}
-                        </SectionCard>
-
-                        {/* Ship Information */}
-                        <SectionCard
-                            title="Gemi Bilgileri"
-                            icon={Ship}
-                            isOpen={expandedSections.ship}
-                            onToggle={() => toggleSection('ship')}
-                        >
-                            {currentOperation?.ship ? (
-                                <div className="space-y-4">
-                                    <div className="flex items-start gap-4">
-                                        <div className="bg-primary/10 p-3 rounded-full">
-                                            <Ship className="h-6 w-6 text-primary" />
-                                        </div>
-                                        <div>
-                                            <h4 className="font-medium">{currentOperation.ship.name || 'İsimsiz Gemi'}</h4>
-                                            <p className="text-sm text-muted-foreground">{currentOperation.ship.type || 'Gemi tipi belirtilmemiş'}</p>
-                                        </div>
-                                    </div>
-
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <InfoRow
-                                            icon={Ship}
-                                            label="IMO Numarası"
-                                            value={currentOperation.ship.imoNumber || 'Belirtilmemiş'}
-                                        />
-                                        <InfoRow
-                                            icon={Ship}
-                                            label="MMSI Numarası"
-                                            value={currentOperation.ship.mmsiNumber || 'Belirtilmemiş'}
-                                        />
-                                        {currentOperation.ship.flag && (
-                                            <InfoRow
-                                                icon={MapPin}
-                                                label="Bayrak"
-                                                value={
-                                                    <div className="flex items-center gap-2">
-                                                        <span>🇹🇷</span>
-                                                        <span>Türkiye</span>
-                                                    </div>
-                                                }
-                                            />
-                                        )}
-                                        <InfoRow
-                                            icon={Calendar}
-                                            label="İnşa Yılı"
-                                            value={currentOperation.ship.builtYear || 'Belirtilmemiş'}
-                                        />
-                                        <InfoRow
-                                            icon={Ruler}
-                                            label="Uzunluk"
-                                            value={currentOperation.ship.length ? `${currentOperation.ship.length} m` : 'Belirtilmemiş'}
-                                        />
-                                        <InfoRow
-                                            icon={Anchor}
-                                            label="Brüt Tonaj"
-                                            value={currentOperation.ship.grossTonnage ? `${currentOperation.ship.grossTonnage} GT` : 'Belirtilmemiş'}
-                                        />
-                                        <InfoRow
-                                            icon={MapPin}
-                                            label="Kalkış Limanı"
-                                            value={currentOperation.ship.departurePort || 'Belirtilmemiş'}
-                                        />
-                                        <InfoRow
-                                            icon={MapPin}
-                                            label="Varış Limanı"
-                                            value={currentOperation.ship.destinationPort || 'Belirtilmemiş'}
-                                        />
-                                    </div>
-                                </div>
-                            ) : (
-                                <p className="text-sm text-muted-foreground text-center py-4">Gemi bilgisi bulunamadı</p>
-                            )}
-                        </SectionCard>
-
-                        {/* Cargo Information */}
-                        <SectionCard
-                            title="Yük Bilgileri"
-                            icon={FileText}
-                            isOpen={expandedSections.cargo}
-                            onToggle={() => toggleSection('cargo')}
-                        >
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <InfoRow
-                                    icon={FileText}
-                                    label="Yük Tipi"
-                                    value={currentOperation?.cargoType || 'Belirtilmemiş'}
-                                />
-                                <div className="md:col-span-2">
-                                    <InfoRow
-                                        icon={FileText}
-                                        label="Yük Detayları"
-                                        value={
-                                            <div className="bg-muted/30 p-3 rounded-md">
-                                                <p className="text-sm whitespace-pre-line">{currentOperation?.cargoDetails || 'Yük detayı bulunmuyor'}</p>
-                                            </div>
-                                        }
-                                    />
-                                </div>
-                            </div>
-                        </SectionCard>
+                {/* Profil Header - Kompakt */}
+                <div className="flex items-center gap-4 pb-4 border-b">
+                    <div className="w-14 h-14 rounded-lg bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950 dark:to-blue-900 flex items-center justify-center flex-shrink-0 border border-blue-200 dark:border-blue-800">
+                        <Anchor className="h-7 w-7 text-blue-600 dark:text-blue-400" />
                     </div>
-
-                    {/* Right Column */}
-                    <div className="space-y-6">
-                        {/* Team Members */}
-                        <SectionCard
-                            title="Ekip Üyeleri"
-                            icon={User}
-                            badge={currentOperation?.users?.length || 0}
-                            isOpen={expandedSections.team}
-                            onToggle={() => toggleSection('team')}
-                        >
-                            {currentOperation?.users?.length > 0 ? (
-                                <div className="space-y-3">
-                                    {currentOperation.users.map((user: any) => (
-                                        <div key={user.id} className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg">
-                                            <Avatar className="h-10 w-10">
-                                                <AvatarFallback>
-                                                    {user.firstName?.charAt(0) || 'U'}
-                                                </AvatarFallback>
-                                            </Avatar>
-                                            <div className="flex-1 min-w-0">
-                                                <p className="font-medium text-sm truncate">{user.firstName + ' ' + user.lastName}</p>
-                                            </div>
-                                            <div className="flex gap-2">
-                                                <Button variant="ghost" size="icon" className="h-8 w-8">
-                                                    <Mail className="h-4 w-4" />
-                                                </Button>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            ) : (
-                                <p className="text-sm text-muted-foreground text-center py-4">Henüz ekip üyesi bulunmuyor</p>
-                            )}
-                        </SectionCard>
-
-                        {/* Timeline / Notes */}
-                        <div className="border rounded-lg p-4">
-                            <h3 className="font-medium flex items-center gap-2 mb-4">
-                                <FileText className="h-4 w-4" />
-                                Notlar
-                            </h3>
-                            <div className="space-y-4">
-                                <Textarea
-                                    placeholder="Bu operasyonla ilgili not ekleyin..."
-                                    className="min-h-[100px]"
-                                />
-                                <Button className="w-full">Not Ekle</Button>
+                    <div className="flex-1 min-w-0">
+                        <h3 className="text-lg font-semibold text-foreground break-words">
+                            {currentOperation?.name || 'İsimsiz Operasyon'}
+                        </h3>
+                        <div className="flex items-center gap-2 mt-1">
+                            <span className="text-sm text-muted-foreground">#{currentOperation?.id}</span>
+                            <span className="text-sm text-muted-foreground">•</span>
+                            <div className="flex items-center gap-1">
+                                <Clock className="h-3.5 w-3.5 text-muted-foreground" />
+                                <span className="text-sm text-muted-foreground">{formatDateTime(currentOperation?.createdAt)}</span>
                             </div>
-                        </div>
-
-                        {/* Quick Actions */}
-                        <div className="space-y-2">
-                            <Button variant="outline" className="w-full">
-                                Düzenle
-                            </Button>
-                            <Button variant="outline" className="w-full">
-                                Rapor Oluştur
-                            </Button>
-                            <Button variant="outline" className="w-full text-destructive hover:text-destructive">
-                                Operasyonu İptal Et
-                            </Button>
                         </div>
                     </div>
+                    {getStatusBadge(currentOperation?.status)}
+                </div>
+
+                {/* Bilgiler Grid - Kompakt ve Kurumsal */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 py-4">
+                    {/* Temel Bilgiler Kartı */}
+                    <div className="bg-muted/30 rounded-lg border p-4 space-y-3">
+                        <h4 className="text-sm font-semibold text-foreground flex items-center gap-2 pb-2 border-b">
+                            <Info className="h-4 w-4 text-muted-foreground" />
+                            Temel Bilgiler
+                        </h4>
+                        <div className="space-y-2.5">
+                            <div>
+                                <p className="text-xs text-muted-foreground mb-1">Operasyon Tipi</p>
+                                <span className="text-sm font-medium text-foreground">
+                                    {currentOperation?.type || '-'}
+                                </span>
+                            </div>
+                            <div>
+                                <p className="text-xs text-muted-foreground mb-1">Başlangıç Tarihi</p>
+                                <div className="flex items-center gap-2">
+                                    <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
+                                    <span className="text-sm font-medium text-foreground">
+                                        {formatDate(currentOperation?.startDate)}
+                                    </span>
+                                </div>
+                            </div>
+                            <div>
+                                <p className="text-xs text-muted-foreground mb-1">Bitiş Tarihi</p>
+                                <div className="flex items-center gap-2">
+                                    <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
+                                    <span className="text-sm font-medium text-foreground">
+                                        {formatDate(currentOperation?.endDate)}
+                                    </span>
+                                </div>
+                            </div>
+                            <div>
+                                <p className="text-xs text-muted-foreground mb-1">Süre</p>
+                                <div className="flex items-center gap-2">
+                                    <Clock className="h-3.5 w-3.5 text-muted-foreground" />
+                                    <span className="text-sm font-medium text-foreground">
+                                        {currentOperation?.startDate && currentOperation?.endDate
+                                            ? `${Math.ceil((new Date(currentOperation.endDate).getTime() - new Date(currentOperation.startDate).getTime()) / (1000 * 60 * 60 * 24))} gün`
+                                            : '-'}
+                                    </span>
+                                </div>
+                            </div>
+                            <div>
+                                <p className="text-xs text-muted-foreground mb-1">Liman</p>
+                                <div className="flex items-center gap-2">
+                                    <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
+                                    <span className="text-sm font-medium text-foreground">
+                                        {currentOperation?.port || '-'}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Müşteri Bilgileri Kartı */}
+                    {currentOperation?.customer && (
+                        <div className="bg-muted/30 rounded-lg border p-4 space-y-3">
+                            <h4 className="text-sm font-semibold text-foreground flex items-center gap-2 pb-2 border-b">
+                                <User className="h-4 w-4 text-muted-foreground" />
+                                Müşteri Bilgileri
+                            </h4>
+                            <div className="space-y-2.5">
+                                <div>
+                                    <p className="text-xs text-muted-foreground mb-1">Müşteri</p>
+                                    <span className="text-sm font-medium text-foreground">
+                                        {currentOperation.customer.name || '-'}
+                                    </span>
+                                </div>
+                                {currentOperation.customer.company && (
+                                    <div>
+                                        <p className="text-xs text-muted-foreground mb-1">Firma</p>
+                                        <span className="text-sm font-medium text-foreground">
+                                            {currentOperation.customer.company}
+                                        </span>
+                                    </div>
+                                )}
+                                {currentOperation.customer.email && (
+                                    <div>
+                                        <p className="text-xs text-muted-foreground mb-1">E-posta</p>
+                                        <div className="flex items-center gap-2">
+                                            <Mail className="h-3.5 w-3.5 text-muted-foreground" />
+                                            <span className="text-sm font-medium text-foreground">
+                                                {currentOperation.customer.email}
+                                            </span>
+                                        </div>
+                                    </div>
+                                )}
+                                {currentOperation.customer.phone && (
+                                    <div>
+                                        <p className="text-xs text-muted-foreground mb-1">Telefon</p>
+                                        <div className="flex items-center gap-2">
+                                            <Phone className="h-3.5 w-3.5 text-muted-foreground" />
+                                            <span className="text-sm font-medium text-foreground">
+                                                {formatPhone(currentOperation.customer.phone)}
+                                            </span>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Gemi Bilgileri Kartı */}
+                    {currentOperation?.ship && (
+                        <div className="bg-muted/30 rounded-lg border p-4 space-y-3">
+                            <h4 className="text-sm font-semibold text-foreground flex items-center gap-2 pb-2 border-b">
+                                <Ship className="h-4 w-4 text-muted-foreground" />
+                                Gemi Bilgileri
+                            </h4>
+                            <div className="space-y-2.5">
+                                <div>
+                                    <p className="text-xs text-muted-foreground mb-1">Gemi Adı</p>
+                                    <span className="text-sm font-medium text-foreground">
+                                        {currentOperation.ship.name || '-'}
+                                    </span>
+                                </div>
+                                {currentOperation.ship.imoNumber && (
+                                    <div>
+                                        <p className="text-xs text-muted-foreground mb-1">IMO Numarası</p>
+                                        <span className="text-sm font-medium text-foreground">
+                                            {currentOperation.ship.imoNumber}
+                                        </span>
+                                    </div>
+                                )}
+                                {currentOperation.ship.type && (
+                                    <div>
+                                        <p className="text-xs text-muted-foreground mb-1">Gemi Tipi</p>
+                                        <span className="text-sm font-medium text-foreground">
+                                            {currentOperation.ship.type}
+                                        </span>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Yük Bilgileri Kartı */}
+                    {(currentOperation?.cargoType || currentOperation?.cargoDetails) && (
+                        <div className="bg-muted/30 rounded-lg border p-4 space-y-3 md:col-span-3">
+                            <h4 className="text-sm font-semibold text-foreground flex items-center gap-2 pb-2 border-b">
+                                <Package className="h-4 w-4 text-muted-foreground" />
+                                Yük Bilgileri
+                            </h4>
+                            <div className="space-y-2.5">
+                                {currentOperation?.cargoType && (
+                                    <div>
+                                        <p className="text-xs text-muted-foreground mb-1">Yük Tipi</p>
+                                        <span className="text-sm font-medium text-foreground">
+                                            {currentOperation.cargoType}
+                                        </span>
+                                    </div>
+                                )}
+                                {currentOperation?.cargoDetails && (
+                                    <div>
+                                        <p className="text-xs text-muted-foreground mb-1">Yük Detayları</p>
+                                        <div className="bg-muted/50 p-3 rounded-md">
+                                            <p className="text-sm whitespace-pre-line break-words">{currentOperation.cargoDetails}</p>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Detaylar Kartı */}
+                    {currentOperation?.details && (
+                        <div className="bg-muted/30 rounded-lg border p-4 space-y-3 md:col-span-3">
+                            <h4 className="text-sm font-semibold text-foreground flex items-center gap-2 pb-2 border-b">
+                                <FileText className="h-4 w-4 text-muted-foreground" />
+                                Detaylar
+                            </h4>
+                            <div className="bg-muted/50 p-3 rounded-md">
+                                <p className="text-sm whitespace-pre-line break-words">{currentOperation.details}</p>
+                            </div>
+                        </div>
+                    )}
                 </div>
             </DialogContent>
         </Dialog>

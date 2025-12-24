@@ -1,6 +1,5 @@
 @import "tailwindcss";
 @import "tw-animate-css";
-@plugin "daisyui";
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme inline {
@@ -185,4 +184,3 @@
 .my-custom-flags-select button[id="rfs-btn"]:hover {
   border-color: rgba(161, 161, 161, 0.3) !important;
 }
-

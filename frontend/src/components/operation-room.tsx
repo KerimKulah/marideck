@@ -189,7 +189,7 @@ export function OperationRoom({ open, onOpenChange, operation, onOperationUpdate
                                 sortedLogs.map((log: any) => (
                                     <div key={log.id} className="flex gap-3 group hover:bg-muted/50 p-2 rounded-lg relative">
                                         <Avatar className="h-10 w-10">
-                                            <AvatarImage crossOrigin="anonymous" src={`http://localhost:3000/${log.createdBy?.photo}`} alt="" />
+                                            <AvatarImage crossOrigin="anonymous" src={`http://localhost:4000/${log.createdBy?.photo}`} alt="" />
                                             <AvatarFallback>
                                                 {log.createdBy?.firstName?.[0]}{log.createdBy?.lastName?.[0]}
                                             </AvatarFallback>
