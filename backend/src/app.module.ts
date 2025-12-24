@@ -11,6 +11,7 @@ import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 import { OperationModule } from './operation/operation.module';
 import { OperationLogModule } from './operation-log/operation-log.module';
+import { TaskModule } from './task/task.module';
 
 @Module({
   imports: [
@@ -28,7 +29,7 @@ import { OperationLogModule } from './operation-log/operation-log.module';
     }),
 
     // Modules  
-    AuthModule, CustomerModule, ShipModule, OperationModule, OperationLogModule,
+    AuthModule, CustomerModule, ShipModule, OperationModule, OperationLogModule, TaskModule,
 
     // Configs etc.
     ConfigModule.forRoot({ isGlobal: true }),
