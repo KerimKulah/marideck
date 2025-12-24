@@ -24,6 +24,8 @@ import { Globe } from "lucide-react"
 import VesselLocationModal from "@/components/vessel-location-modal"
 import { ShipDetailsModal } from "@/components/ship-details-modal"
 import { AisLookup } from "@/ais/ais-lookup"
+import { useIsMobile } from "@/hooks/use-mobile"
+import { ChevronRight } from "lucide-react"
 
 const CountryCell = ({ countryCode }: { countryCode?: string }) => {
     if (!countryCode) return <div className="flex items-center gap-2"><Globe className="h-4 w-4 text-muted-foreground" />Bilinmiyor</div>;
@@ -123,6 +125,7 @@ const getEtaSortIcon = (active: boolean, order: 'ASC' | 'DESC') => {
 
 export default function ShipsPage() {
     const dispatch = useDispatch<AppDispatch>();
+    const isMobile = useIsMobile();
     const { ships, loading, error, page, limit, totalPages, searchQuery, totalShips, sortBy, sortOrder } = useSelector((state: RootState) => state.ship);
     const [searchInput, setSearchInput] = useState(searchQuery);
     const [selectedShip, setSelectedShip] = useState<any | null>(null);
@@ -300,248 +303,384 @@ export default function ShipsPage() {
             </div>
 
             <div className="rounded-lg border overflow-x-auto">
-                <Table style={{ tableLayout: 'fixed' }}>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead>Fotoğraf</TableHead>
-                            <TableHead>IMO / MMSI</TableHead>
-                            <TableHead>Gemi Adı</TableHead>
-                            <TableHead>Tipi</TableHead>
-                            <TableHead>Bayrak</TableHead>
-                            <TableHead>
-                                <Button
-                                    variant="ghost"
-                                    onClick={() => {
-                                        if (sortBy === 'eta') {
-                                            dispatch(setSortOrder(sortOrder === 'ASC' ? 'DESC' : 'ASC'))
-                                        } else {
-                                            dispatch(setSortBy('eta'))
-                                            dispatch(setSortOrder('ASC'))
-                                        }
-                                    }}
-                                    className="h-auto -ml-3 font-semibold hover:bg-transparent flex items-center cursor-pointer"
-                                >
-                                    <span>ETA</span>
-                                    <span className="ml-1">{getEtaSortIcon(sortBy === 'eta', sortOrder)}</span>
-                                </Button>
-                            </TableHead>
-                            <TableHead>Yaklaştığı Liman</TableHead>
-                            <TableHead>Durum</TableHead>
-                            <TableHead className="w-20">Son Güncelleme</TableHead>
-                            <TableHead className="text-center">Konum</TableHead>
-                            <TableHead>İşlemler</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
+                {isMobile ? (
+                    // Mobil görünüm - Kompakt liste görünümü
+                    <div className="divide-y">
                         {loading ? (
-                            // Skeleton loading rows - prevents layout shift
                             Array.from({ length: 5 }).map((_, index) => (
-                                <TableRow key={`skeleton-${index}`} className="hover:bg-transparent">
-                                    {/* Fotoğraf */}
-                                    <TableCell className="py-4">
-                                        <div className="flex items-center justify-center">
-                                            <Skeleton className="h-24 w-32 rounded-lg" />
-                                        </div>
-                                    </TableCell>
-                                    {/* IMO / MMSI */}
-                                    <TableCell>
-                                        <div className="flex flex-col gap-1">
-                                            <div className="flex items-center gap-1">
-                                                <Skeleton className="h-4 w-20" />
-                                                <Skeleton className="h-3 w-3 rounded" />
-                                            </div>
-                                            <div className="flex items-center gap-1">
-                                                <Skeleton className="h-4 w-24" />
-                                                <Skeleton className="h-3 w-3 rounded" />
-                                            </div>
-                                        </div>
-                                    </TableCell>
-                                    {/* Gemi Adı */}
-                                    <TableCell>
-                                        <div className="flex items-center gap-2">
-                                            <Skeleton className="h-4 w-4 rounded" />
-                                            <Skeleton className="h-4 w-32" />
-                                        </div>
-                                    </TableCell>
-                                    {/* Tipi */}
-                                    <TableCell>
-                                        <div className="flex items-center gap-2">
-                                            <Skeleton className="h-4 w-4 rounded" />
-                                            <Skeleton className="h-4 w-24" />
-                                        </div>
-                                    </TableCell>
-                                    {/* Bayrak */}
-                                    <TableCell>
-                                        <Skeleton className="h-4 w-20" />
-                                    </TableCell>
-                                    {/* ETA */}
-                                    <TableCell>
-                                        <div className="flex items-center gap-2">
-                                            <Skeleton className="h-4 w-4 rounded" />
-                                            <Skeleton className="h-4 w-28" />
-                                        </div>
-                                    </TableCell>
-                                    {/* Yaklaştığı Liman */}
-                                    <TableCell>
-                                        <div className="flex items-center gap-2">
-                                            <Skeleton className="h-4 w-4 rounded" />
-                                            <Skeleton className="h-4 w-24" />
-                                        </div>
-                                    </TableCell>
-                                    {/* Durum */}
-                                    <TableCell>
-                                        <Skeleton className="h-6 w-20 rounded-full" />
-                                    </TableCell>
-                                    {/* Son Güncelleme */}
-                                    <TableCell>
-                                        <div className="flex items-center gap-2">
-                                            <Skeleton className="h-4 w-4 rounded" />
-                                            <Skeleton className="h-4 w-24" />
-                                        </div>
-                                    </TableCell>
-                                    {/* Konum */}
-                                    <TableCell>
-                                        <div className="flex items-center justify-center">
-                                            <Skeleton className="h-5 w-5 rounded" />
-                                        </div>
-                                    </TableCell>
-                                    {/* İşlemler */}
-                                    <TableCell>
-                                        <Skeleton className="h-4 w-4 rounded" />
-                                    </TableCell>
-                                </TableRow>
+                                <div key={`skeleton-${index}`} className="p-3 flex items-center gap-3">
+                                    <Skeleton className="h-16 w-16 rounded-lg flex-shrink-0" />
+                                    <div className="flex-1 space-y-2">
+                                        <Skeleton className="h-4 w-3/4" />
+                                        <Skeleton className="h-3 w-1/2" />
+                                    </div>
+                                </div>
                             ))
                         ) : ships?.length === 0 ? (
-                            <TableRow>
-                                <TableCell colSpan={11} className="text-center py-8 text-muted-foreground">
-                                    Henüz gemi kaydı bulunmuyor.
-                                </TableCell>
-                            </TableRow>
+                            <div className="text-center py-8 text-muted-foreground">
+                                Henüz gemi kaydı bulunmuyor.
+                            </div>
                         ) : (
                             ships.map((ship, index) => (
-                                <TableRow key={ship.id || ship.imoNumber || ship.mmsiNumber || `ship-${index}`} className="cursor-pointer">
-                                    {/* Fotoğraf */}
-                                    <TableCell className="py-4">
-                                        <div className="flex items-center justify-center">
+                                <div
+                                    key={ship.id || ship.imoNumber || ship.mmsiNumber || `ship-${index}`}
+                                    className="p-4 border-b last:border-b-0"
+                                >
+                                    {/* Üst kısım - Tıklanabilir alan */}
+                                    <div
+                                        onClick={() => handleOpenShipDetailsModal(ship)}
+                                        className="flex items-center gap-3 mb-3 cursor-pointer active:bg-muted/50 rounded-lg p-2 -m-2"
+                                    >
+                                        {/* Küçük Fotoğraf */}
+                                        <div className="flex-shrink-0">
                                             {getImageUrl(ship.image) ? (
-                                                <img src={getImageUrl(ship.image)!} alt={ship.name} className="h-24 w-32 rounded-lg object-cover shadow-sm" />
+                                                <img src={getImageUrl(ship.image)!} alt={ship.name} className="h-16 w-16 rounded-lg object-cover" />
                                             ) : (
-                                                <div className="h-24 w-32 rounded-lg bg-muted flex items-center justify-center">
-                                                    <Ship className="h-12 w-12 text-muted-foreground" />
+                                                <div className="h-16 w-16 rounded-lg bg-muted flex items-center justify-center">
+                                                    <Ship className="h-8 w-8 text-muted-foreground" />
                                                 </div>
                                             )}
                                         </div>
-                                    </TableCell>
-                                    {/* IMO / MMSI */}
-                                    <TableCell>
-                                        <div className="flex flex-col">
-                                            <div className="flex items-center gap-1">
-                                                <span className="text-sm">IMO: {ship.imoNumber}</span>
-                                                <Tooltip>
-                                                    <TooltipTrigger asChild>
-                                                        <Copy onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            copyToClipboard(ship.imoNumber);
-                                                        }} className="h-3 w-3 cursor-pointer" />
-                                                    </TooltipTrigger>
-                                                    <TooltipContent>
-                                                        <p>Kopyala</p>
-                                                    </TooltipContent>
-                                                </Tooltip>
+
+                                        {/* Ana Bilgiler */}
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex items-center gap-2 mb-1">
+                                                <ShipIcon className="h-4 w-4 flex-shrink-0 text-primary" />
+                                                <span className="font-semibold text-sm truncate">{ship.name}</span>
                                             </div>
-                                            <div className="flex items-center gap-1">
-                                                <span className="text-sm">MMSI: {ship.mmsiNumber ? ship.mmsiNumber : '-'}</span>
-                                                {ship.mmsiNumber && (
+                                            <div className="flex items-center gap-2 mb-1">
+                                                <span className="text-xs text-muted-foreground">IMO: {ship.imoNumber}</span>
+                                                <Badge className={`${statusColors[ship.status as keyof typeof statusColors] || ''} text-xs px-1.5 py-0`}>
+                                                    {statusIcons[ship.status as keyof typeof statusIcons]} {ship.status}
+                                                </Badge>
+                                            </div>
+                                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                                <Calendar className="h-3 w-3" />
+                                                <span className="truncate">{ship.eta ? formatDate(ship.eta) : 'ETA yok'}</span>
+                                            </div>
+                                        </div>
+
+                                        {/* Sağ Ok İkonu */}
+                                        <ChevronRight className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+                                    </div>
+
+                                    {/* Alt kısım - Hızlı işlemler */}
+                                    <div className="flex items-center justify-between gap-2 pt-2 border-t">
+                                        {/* Konum Butonu */}
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleOpenVesselLocationModal(ship);
+                                                    }}
+                                                    className="flex-1"
+                                                >
+                                                    <MapPinnedIcon className="h-4 w-4 mr-2" />
+                                                    Konum
+                                                </Button>
+                                            </TooltipTrigger>
+                                            <TooltipContent>
+                                                <p>Konumu Haritada Göster</p>
+                                            </TooltipContent>
+                                        </Tooltip>
+
+                                        {/* İşlemler Dropdown */}
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                    }}
+                                                    className="flex-1"
+                                                >
+                                                    <MoreHorizontal className="h-4 w-4 mr-2" />
+                                                    İşlemler
+                                                </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+                                                <DropdownMenuItem onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleOpenShipDetailsModal(ship);
+                                                }}>
+                                                    <Eye className="h-4 w-4 mr-2" />
+                                                    Detayları Görüntüle
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleOpenShipAddOrEditModal(ship);
+                                                }}>
+                                                    <Edit className="h-4 w-4 mr-2" />
+                                                    Düzenle / Güncelle
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleDeleteShip(ship.id);
+                                                    }}
+                                                    className="text-red-600 focus:text-red-600"
+                                                >
+                                                    <Trash className="h-4 w-4 mr-2" />
+                                                    Sil
+                                                </DropdownMenuItem>
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
+                                    </div>
+                                </div>
+                            ))
+                        )}
+                    </div>
+                ) : (
+                    // Desktop görünüm - Tablo görünümü
+                    <Table style={{ tableLayout: 'fixed', width: '100%' }}>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead className="w-24">Fotoğraf</TableHead>
+                                <TableHead className="w-32">IMO / MMSI</TableHead>
+                                <TableHead className="w-40">Gemi Adı</TableHead>
+                                <TableHead className="w-32 hidden xl:table-cell">Tipi</TableHead>
+                                <TableHead className="w-28 hidden lg:table-cell">Bayrak</TableHead>
+                                <TableHead className="w-36">
+                                    <Button
+                                        variant="ghost"
+                                        onClick={() => {
+                                            if (sortBy === 'eta') {
+                                                dispatch(setSortOrder(sortOrder === 'ASC' ? 'DESC' : 'ASC'))
+                                            } else {
+                                                dispatch(setSortBy('eta'))
+                                                dispatch(setSortOrder('ASC'))
+                                            }
+                                        }}
+                                        className="h-auto -ml-3 font-semibold hover:bg-transparent flex items-center cursor-pointer"
+                                    >
+                                        <span>ETA</span>
+                                        <span className="ml-1">{getEtaSortIcon(sortBy === 'eta', sortOrder)}</span>
+                                    </Button>
+                                </TableHead>
+                                <TableHead className="w-36 hidden xl:table-cell">Yaklaştığı Liman</TableHead>
+                                <TableHead className="w-28">Durum</TableHead>
+                                <TableHead className="w-32 hidden 2xl:table-cell">Son Güncelleme</TableHead>
+                                <TableHead className="w-16 text-center hidden xl:table-cell">Konum</TableHead>
+                                <TableHead className="w-16">İşlemler</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {loading ? (
+                                // Skeleton loading rows - prevents layout shift
+                                Array.from({ length: 5 }).map((_, index) => (
+                                    <TableRow key={`skeleton-${index}`} className="hover:bg-transparent">
+                                        {/* Fotoğraf */}
+                                        <TableCell className="py-4">
+                                            <div className="flex items-center justify-center">
+                                                <Skeleton className="h-24 w-32 rounded-lg" />
+                                            </div>
+                                        </TableCell>
+                                        {/* IMO / MMSI */}
+                                        <TableCell>
+                                            <div className="flex flex-col gap-1">
+                                                <div className="flex items-center gap-1">
+                                                    <Skeleton className="h-4 w-20" />
+                                                    <Skeleton className="h-3 w-3 rounded" />
+                                                </div>
+                                                <div className="flex items-center gap-1">
+                                                    <Skeleton className="h-4 w-24" />
+                                                    <Skeleton className="h-3 w-3 rounded" />
+                                                </div>
+                                            </div>
+                                        </TableCell>
+                                        {/* Gemi Adı */}
+                                        <TableCell>
+                                            <div className="flex items-center gap-2">
+                                                <Skeleton className="h-4 w-4 rounded" />
+                                                <Skeleton className="h-4 w-32" />
+                                            </div>
+                                        </TableCell>
+                                        {/* Tipi */}
+                                        <TableCell className="hidden xl:table-cell">
+                                            <div className="flex items-center gap-2">
+                                                <Skeleton className="h-4 w-4 rounded" />
+                                                <Skeleton className="h-4 w-24" />
+                                            </div>
+                                        </TableCell>
+                                        {/* Bayrak */}
+                                        <TableCell className="hidden lg:table-cell">
+                                            <Skeleton className="h-4 w-20" />
+                                        </TableCell>
+                                        {/* ETA */}
+                                        <TableCell>
+                                            <div className="flex items-center gap-2">
+                                                <Skeleton className="h-4 w-4 rounded" />
+                                                <Skeleton className="h-4 w-28" />
+                                            </div>
+                                        </TableCell>
+                                        {/* Yaklaştığı Liman */}
+                                        <TableCell className="hidden xl:table-cell">
+                                            <div className="flex items-center gap-2">
+                                                <Skeleton className="h-4 w-4 rounded" />
+                                                <Skeleton className="h-4 w-24" />
+                                            </div>
+                                        </TableCell>
+                                        {/* Durum */}
+                                        <TableCell>
+                                            <Skeleton className="h-6 w-20 rounded-full" />
+                                        </TableCell>
+                                        {/* Son Güncelleme */}
+                                        <TableCell className="hidden 2xl:table-cell">
+                                            <div className="flex items-center gap-2">
+                                                <Skeleton className="h-4 w-4 rounded" />
+                                                <Skeleton className="h-4 w-24" />
+                                            </div>
+                                        </TableCell>
+                                        {/* Konum */}
+                                        <TableCell className="hidden xl:table-cell">
+                                            <div className="flex items-center justify-center">
+                                                <Skeleton className="h-5 w-5 rounded" />
+                                            </div>
+                                        </TableCell>
+                                        {/* İşlemler */}
+                                        <TableCell>
+                                            <Skeleton className="h-4 w-4 rounded" />
+                                        </TableCell>
+                                    </TableRow>
+                                ))
+                            ) : ships?.length === 0 ? (
+                                <TableRow>
+                                    <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                                        Henüz gemi kaydı bulunmuyor.
+                                    </TableCell>
+                                </TableRow>
+                            ) : (
+                                ships.map((ship, index) => (
+                                    <TableRow key={ship.id || ship.imoNumber || ship.mmsiNumber || `ship-${index}`} className="cursor-pointer">
+                                        {/* Fotoğraf */}
+                                        <TableCell className="py-4">
+                                            <div className="flex items-center justify-center">
+                                                {getImageUrl(ship.image) ? (
+                                                    <img src={getImageUrl(ship.image)!} alt={ship.name} className="h-24 w-32 rounded-lg object-cover shadow-sm" />
+                                                ) : (
+                                                    <div className="h-24 w-32 rounded-lg bg-muted flex items-center justify-center">
+                                                        <Ship className="h-12 w-12 text-muted-foreground" />
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </TableCell>
+                                        {/* IMO / MMSI */}
+                                        <TableCell>
+                                            <div className="flex flex-col">
+                                                <div className="flex items-center gap-1">
+                                                    <span className="text-sm">IMO: {ship.imoNumber}</span>
                                                     <Tooltip>
                                                         <TooltipTrigger asChild>
                                                             <Copy onClick={(e) => {
                                                                 e.stopPropagation();
-                                                                copyToClipboard(ship.mmsiNumber);
+                                                                copyToClipboard(ship.imoNumber);
                                                             }} className="h-3 w-3 cursor-pointer" />
                                                         </TooltipTrigger>
                                                         <TooltipContent>
                                                             <p>Kopyala</p>
                                                         </TooltipContent>
                                                     </Tooltip>
-                                                )}
-                                            </div>
-                                        </div>
-                                    </TableCell>
-                                    {/* gemi adı */}
-                                    <TableCell>
-                                        <div className="flex items-center gap-2">
-                                            <ShipIcon className="h-4 w-4" /> {ship.name}
-                                        </div>
-                                    </TableCell>
-                                    {/* gemi tipi */}
-                                    <TableCell>
-                                        <div className="flex items-center gap-2">
-                                            <ShipWheel className="h-4 w-4" /> {ship.type}
-                                        </div>
-                                    </TableCell>
-                                    {/* bayrak */}
-                                    <TableCell>
-                                        <CountryCell countryCode={ship.flag} />
-                                    </TableCell>
-                                    {/* eta / etd */}
-                                    <TableCell>
-                                        <div className="flex flex-col gap-2">
-                                            <div className="flex gap-2">
-                                                <Calendar className="h-4 w-4" />{ship.eta ? formatDate(ship.eta) : '-'}
-                                            </div>
-                                        </div>
-                                    </TableCell>
-                                    {/* yaklaştığı liman */}
-                                    <TableCell>
-                                        <div className="flex items-center gap-2">
-                                            <Anchor className="h-4 w-4" />
-                                            {ship.destinationPort || '-'}
-                                        </div>
-                                    </TableCell>
-                                    {/* durum */}
-                                    <TableCell>
-                                        <Badge className={statusColors[ship.status as keyof typeof statusColors] || ''}>
-                                            {statusIcons[ship.status as keyof typeof statusIcons]} {ship.status}
-                                        </Badge>
-                                    </TableCell>
-                                    {/* son güncelleme */}
-                                    <TableCell>
-                                        <div className="flex items-center gap-2">
-                                            <Calendar className="h-4 w-4" />
-                                            {formatDate(ship.updatedAt)}
-                                        </div>
-                                    </TableCell>
-                                    {/* konum */}
-                                    <TableCell>
-                                        <Tooltip>
-                                            <TooltipTrigger asChild>
-                                                <div className="flex items-center justify-center">
-                                                    <MapPinnedIcon color="red" className="h-5 w-5 cursor-pointer" onClick={() => handleOpenVesselLocationModal(ship)} />
                                                 </div>
-                                            </TooltipTrigger>
-                                            <TooltipContent>
-                                                Konumu Haritada Göster
-                                            </TooltipContent>
-                                        </Tooltip>
-                                    </TableCell>
-                                    <TableCell>
-                                        <DropdownMenu>
-                                            <DropdownMenuTrigger asChild>
-                                                <MoreHorizontal className="h-4 w-4 cursor-pointer" />
-                                            </DropdownMenuTrigger>
-                                            <DropdownMenuContent>
-                                                <DropdownMenuItem onClick={() => handleOpenShipDetailsModal(ship)}><Eye className="h-4 w-4" />Detayları Görüntüle</DropdownMenuItem>
-                                                <DropdownMenuItem onClick={() => handleOpenShipAddOrEditModal(ship)}><Edit className="h-4 w-4" />Düzenle / Güncelle</DropdownMenuItem>
-                                                <DropdownMenuItem onClick={() => handleDeleteShip(ship.id)} className="text-red-600 focus:text-red-600"><Trash color="red" className="h-4 w-4" />Sil</DropdownMenuItem>
-                                            </DropdownMenuContent>
-                                        </DropdownMenu>
-                                    </TableCell>
+                                                <div className="flex items-center gap-1">
+                                                    <span className="text-sm">MMSI: {ship.mmsiNumber ? ship.mmsiNumber : '-'}</span>
+                                                    {ship.mmsiNumber && (
+                                                        <Tooltip>
+                                                            <TooltipTrigger asChild>
+                                                                <Copy onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    copyToClipboard(ship.mmsiNumber);
+                                                                }} className="h-3 w-3 cursor-pointer" />
+                                                            </TooltipTrigger>
+                                                            <TooltipContent>
+                                                                <p>Kopyala</p>
+                                                            </TooltipContent>
+                                                        </Tooltip>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </TableCell>
+                                        {/* gemi adı */}
+                                        <TableCell>
+                                            <div className="flex items-center gap-2">
+                                                <ShipIcon className="h-4 w-4 flex-shrink-0" />
+                                                <span className="truncate" title={ship.name}>{ship.name}</span>
+                                            </div>
+                                        </TableCell>
+                                        {/* gemi tipi */}
+                                        <TableCell className="hidden xl:table-cell">
+                                            <div className="flex items-center gap-2 max-w-[150px]">
+                                                <ShipWheel className="h-4 w-4 flex-shrink-0" />
+                                                <span className="truncate" title={ship.type}>{ship.type}</span>
+                                            </div>
+                                        </TableCell>
+                                        {/* bayrak */}
+                                        <TableCell className="hidden lg:table-cell">
+                                            <CountryCell countryCode={ship.flag} />
+                                        </TableCell>
+                                        {/* eta / etd */}
+                                        <TableCell>
+                                            <div className="flex flex-col gap-2">
+                                                <div className="flex gap-2">
+                                                    <Calendar className="h-4 w-4" />{ship.eta ? formatDate(ship.eta) : '-'}
+                                                </div>
+                                            </div>
+                                        </TableCell>
+                                        {/* yaklaştığı liman */}
+                                        <TableCell className="hidden xl:table-cell">
+                                            <div className="flex items-center gap-2 max-w-[150px]">
+                                                <Anchor className="h-4 w-4 flex-shrink-0" />
+                                                <span className="truncate" title={ship.destinationPort || '-'}>{ship.destinationPort || '-'}</span>
+                                            </div>
+                                        </TableCell>
+                                        {/* durum */}
+                                        <TableCell>
+                                            <Badge className={statusColors[ship.status as keyof typeof statusColors] || ''}>
+                                                {statusIcons[ship.status as keyof typeof statusIcons]} {ship.status}
+                                            </Badge>
+                                        </TableCell>
+                                        {/* son güncelleme */}
+                                        <TableCell className="hidden 2xl:table-cell">
+                                            <div className="flex items-center gap-2">
+                                                <Calendar className="h-4 w-4" />
+                                                <span className="truncate" title={formatDate(ship.updatedAt)}>{formatDate(ship.updatedAt)}</span>
+                                            </div>
+                                        </TableCell>
+                                        {/* konum */}
+                                        <TableCell className="hidden xl:table-cell">
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <div className="flex items-center justify-center">
+                                                        <MapPinnedIcon color="red" className="h-5 w-5 cursor-pointer" onClick={() => handleOpenVesselLocationModal(ship)} />
+                                                    </div>
+                                                </TooltipTrigger>
+                                                <TooltipContent>
+                                                    Konumu Haritada Göster
+                                                </TooltipContent>
+                                            </Tooltip>
+                                        </TableCell>
+                                        <TableCell>
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
+                                                    <MoreHorizontal className="h-4 w-4 cursor-pointer" />
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent>
+                                                    <DropdownMenuItem onClick={() => handleOpenShipDetailsModal(ship)}><Eye className="h-4 w-4" />Detayları Görüntüle</DropdownMenuItem>
+                                                    <DropdownMenuItem onClick={() => handleOpenShipAddOrEditModal(ship)}><Edit className="h-4 w-4" />Düzenle / Güncelle</DropdownMenuItem>
+                                                    <DropdownMenuItem onClick={() => handleDeleteShip(ship.id)} className="text-red-600 focus:text-red-600"><Trash color="red" className="h-4 w-4" />Sil</DropdownMenuItem>
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
+                                        </TableCell>
 
-                                </TableRow>
-                            ))
-                        )}
-                    </TableBody>
-                </Table>
+                                    </TableRow>
+                                ))
+                            )}
+                        </TableBody>
+                    </Table>
+                )}
             </div>
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">

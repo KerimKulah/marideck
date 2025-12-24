@@ -141,12 +141,12 @@ export default function PersonnelsPage() {
             <Alert className="bg-blue-50 border-blue-200">
                 <Info className="h-4 w-4 text-blue-600" />
                 <AlertDescription className="text-blue-700">
-                    Bu sayfa Maritime Desk yönetim sistemine erişimi olan personellerin yönetimini sağlar.
+                    Bu sayfa Marideck yönetim sistemine erişimi olan personellerin yönetimini sağlar.
                     Sistemde tanımlı personellerin listesini gösterir ve yeni personel ekleme, düzenleme,
                     görüntüleme ve silme işlemlerini gerçekleştirmenize olanak tanır.
                     <br /><br />
                     <div className="flex items-center gap-2">
-                        <span className="font-medium">ÖNEMLİ:</span> Bu modül sadece Maritime Desk sistemine giriş yapacak
+                        <span className="font-medium">ÖNEMLİ:</span> Bu modül sadece Marideck sistemine giriş yapacak
                         kullanıcıların teknik bilgilerini içerir. Personellerin detaylı özgeçmiş veya kişisel
                         bilgileri burada tutulamaz.
                     </div>

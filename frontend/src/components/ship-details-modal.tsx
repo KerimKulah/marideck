@@ -56,6 +56,7 @@ interface ShipDetailsModalProps {
         status?: string;
         builtYear?: number;
         grossTonnage?: number;
+        netTonnage?: number;
         deadweight?: number;
         draft?: number;
         notes?: string;
@@ -249,6 +250,12 @@ export const ShipDetailsModal = ({ isOpen, onClose, ship }: ShipDetailsModalProp
                                 <p className="text-xs text-muted-foreground mb-1">Brüt Tonaj</p>
                                 <span className="text-sm font-medium text-foreground">
                                     {ship.grossTonnage ? `${ship.grossTonnage} GT` : '-'}
+                                </span>
+                            </div>
+                            <div>
+                                <p className="text-xs text-muted-foreground mb-1">Net Tonaj</p>
+                                <span className="text-sm font-medium text-foreground">
+                                    {ship.netTonnage ? `${ship.netTonnage} NT` : '-'}
                                 </span>
                             </div>
                             <div>

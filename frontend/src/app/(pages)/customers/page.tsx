@@ -24,6 +24,8 @@ import ReactCountryFlag from "react-country-flag"
 import CustomerStatsCards from "@/components/customer-stats-cards"
 import { toast } from "sonner"
 import { isActiveOperation } from "@/lib/operation-status"
+import { useIsMobile } from "@/hooks/use-mobile"
+import { ChevronRight } from "lucide-react"
 
 
 const formatDate = (dateString: string) => {
@@ -78,6 +80,7 @@ const handleMail = (email: string) => {
 
 export default function CustomersPage() {
   const dispatch = useDispatch<AppDispatch>();
+  const isMobile = useIsMobile();
   const { customers, loading, error, page, limit, totalPages, searchQuery, totalCustomers, sortBy, sortOrder, statistics, statisticsLoading } = useSelector((state: RootState) => state.customer);
 
   // Status Badge Component
@@ -297,87 +300,257 @@ export default function CustomersPage() {
       {/* Müşteri Tablosu */}
       <div className="rounded-lg border overflow-y-auto">
         <div className="max-h-[600px] overflow-y-auto ">
-          <Table className="w-full min-w-[700px] sm:min-w-full" style={{ tableLayout: 'fixed' }}>
-            {/* Tablo Header */}
-            <TableHeader>
-              <TableRow>
-                <TableHead>
-                  <Button
-                    variant="ghost"
-                    onClick={() => handleSort('name')}
-                    className="h-auto -ml-3 font-semibold hover:bg-transparent cursor-pointer"
+          {isMobile ? (
+            // Mobil görünüm - Kompakt liste görünümü
+            <div className="divide-y">
+              {loading ? (
+                Array.from({ length: 5 }).map((_, index) => (
+                  <div key={`skeleton-${index}`} className="p-3 flex items-center gap-3">
+                    <Skeleton className="h-12 w-12 rounded-full flex-shrink-0" />
+                    <div className="flex-1 space-y-2">
+                      <Skeleton className="h-4 w-3/4" />
+                      <Skeleton className="h-3 w-1/2" />
+                    </div>
+                  </div>
+                ))
+              ) : sortedCustomers?.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  {searchQuery ? 'Arama kriterlerine uygun müşteri bulunamadı.' : 'Henüz müşteri kaydı bulunmuyor.'}
+                </div>
+              ) : (
+                sortedCustomers?.map((customer) => (
+                  <div
+                    key={customer.id}
+                    className="p-4 border-b last:border-b-0"
                   >
-                    Adı Soyadı
-                    {getSortIcon('name')}
-                  </Button>
-                </TableHead>
-                <TableHead>
-                  <Button
-                    variant="ghost"
-                    onClick={() => handleSort('customerType')}
-                    className="h-auto -ml-3 font-semibold hover:bg-transparent cursor-pointer"
-                  >
-                    Kategori / Tür
-                    {getSortIcon('customerType')}
-                  </Button>
-                </TableHead>
-                <TableHead>
-                  <Button
-                    variant="ghost"
-                    onClick={() => handleSort('company')}
-                    className="h-auto -ml-3 font-semibold hover:bg-transparent cursor-pointer"
-                  >
-                    Firma Adı
-                    {getSortIcon('company')}
-                  </Button>
-                </TableHead>
-                <TableHead>
-                  <Button
-                    variant="ghost"
-                    onClick={() => handleSort('email')}
-                    className="h-auto -ml-3 font-semibold hover:bg-transparent cursor-pointer"
-                  >
-                    E-posta
-                    {getSortIcon('email')}
-                  </Button>
-                </TableHead>
-                <TableHead>Telefon</TableHead>
-                <TableHead>
-                  <Button
-                    variant="ghost"
-                    onClick={() => handleSort('country')}
-                    className="h-auto -ml-3.5 font-semibold hover:bg-transparent cursor-pointer"
-                  >
-                    Ülke
-                    {getSortIcon('country')}
-                  </Button>
-                </TableHead>
-                <TableHead>
-                  <Button
-                    variant="ghost"
-                    onClick={() => handleSort('createdAt')}
-                    className="h-auto -ml-3 font-semibold hover:bg-transparent cursor-pointer"
-                  >
-                    Eklenme Tarihi
-                    {getSortIcon('createdAt')}
-                  </Button>
-                </TableHead>
-                <TableHead>
-                  <Button
-                    variant="ghost"
-                    onClick={() => handleSort('operationStatus')}
-                    className="h-auto -ml-2.5 font-semibold hover:bg-transparent cursor-pointer"
-                  >
-                    Durum
-                    {getSortIcon('operationStatus')}
-                  </Button>
-                </TableHead>
-                <TableHead>İşlemler</TableHead>
-              </TableRow>
-            </TableHeader>
+                    {/* Üst kısım - Tıklanabilir alan */}
+                    <div
+                      onClick={() => handleShowDetails(customer)}
+                      className="flex items-center gap-3 mb-3 cursor-pointer active:bg-muted/50 rounded-lg p-2 -m-2"
+                    >
+                      {/* Avatar/İkon */}
+                      <div className="flex-shrink-0">
+                        <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
+                          <User className="h-6 w-6 text-primary" />
+                        </div>
+                      </div>
+                      
+                      {/* Ana Bilgiler */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="font-semibold text-sm truncate">{customer.name}</span>
+                        </div>
+                        <div className="flex items-center gap-2 mb-1">
+                          {customer.company && (
+                            <span className="text-xs text-muted-foreground truncate flex items-center gap-1">
+                              <Building2 className="h-3 w-3" />
+                              {customer.company}
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <StatusBadge customer={customer} />
+                        </div>
+                      </div>
+                      
+                      {/* Sağ Ok İkonu */}
+                      <ChevronRight className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+                    </div>
 
-            {/* Tablo Body */}
-            <TableBody >
+                    {/* Alt kısım - Hızlı işlemler */}
+                    <div className="flex items-center gap-2 pt-2 border-t">
+                      {/* Hızlı İletişim Butonları */}
+                      {customer.email && (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleMail(customer.email);
+                              }}
+                              className="flex-1"
+                            >
+                              <Mail className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Mail Gönder</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      )}
+                      {customer.phone && (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handlePhoneCall(customer.phone);
+                              }}
+                              className="flex-1"
+                            >
+                              <Phone className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Telefon Et</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      )}
+                      {customer.phone && (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleWhatsappMessage(customer.phone);
+                              }}
+                              className="flex-1"
+                            >
+                              <MessageCircle className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>WhatsApp Mesajı</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      )}
+
+                      {/* İşlemler Dropdown */}
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                            }}
+                            className="flex-1"
+                          >
+                            <MoreHorizontal className="h-4 w-4 mr-2" />
+                            İşlemler
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+                          <DropdownMenuItem onClick={(e) => {
+                            e.stopPropagation();
+                            handleShowDetails(customer);
+                          }}>
+                            <Eye className="h-4 w-4 mr-2" />
+                            Detayları Görüntüle
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={(e) => {
+                            e.stopPropagation();
+                            handleEditCustomer(customer);
+                          }}>
+                            <Edit className="h-4 w-4 mr-2" />
+                            Düzenle
+                          </DropdownMenuItem>
+                          <DropdownMenuItem 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteCustomer(customer.id);
+                            }}
+                            className="text-destructive hover:!text-destructive"
+                          >
+                            <Trash className="h-4 w-4 mr-2" />
+                            Sil
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          ) : (
+            // Desktop görünüm - Tablo görünümü
+            <Table className="w-full min-w-[700px] sm:min-w-full" style={{ tableLayout: 'fixed' }}>
+              {/* Tablo Header */}
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-40">
+                    <Button
+                      variant="ghost"
+                      onClick={() => handleSort('name')}
+                      className="h-auto -ml-3 font-semibold hover:bg-transparent cursor-pointer"
+                    >
+                      Adı Soyadı
+                      {getSortIcon('name')}
+                    </Button>
+                  </TableHead>
+                  <TableHead className="w-32 hidden xl:table-cell">
+                    <Button
+                      variant="ghost"
+                      onClick={() => handleSort('customerType')}
+                      className="h-auto -ml-3 font-semibold hover:bg-transparent cursor-pointer"
+                    >
+                      Kategori / Tür
+                      {getSortIcon('customerType')}
+                    </Button>
+                  </TableHead>
+                  <TableHead className="w-40 hidden lg:table-cell">
+                    <Button
+                      variant="ghost"
+                      onClick={() => handleSort('company')}
+                      className="h-auto -ml-3 font-semibold hover:bg-transparent cursor-pointer"
+                    >
+                      Firma Adı
+                      {getSortIcon('company')}
+                    </Button>
+                  </TableHead>
+                  <TableHead className="w-40">
+                    <Button
+                      variant="ghost"
+                      onClick={() => handleSort('email')}
+                      className="h-auto -ml-3 font-semibold hover:bg-transparent cursor-pointer"
+                    >
+                      E-posta
+                      {getSortIcon('email')}
+                    </Button>
+                  </TableHead>
+                  <TableHead className="w-32 hidden xl:table-cell">Telefon</TableHead>
+                  <TableHead className="w-28 hidden 2xl:table-cell">
+                    <Button
+                      variant="ghost"
+                      onClick={() => handleSort('country')}
+                      className="h-auto -ml-3.5 font-semibold hover:bg-transparent cursor-pointer"
+                    >
+                      Ülke
+                      {getSortIcon('country')}
+                    </Button>
+                  </TableHead>
+                  <TableHead className="w-32 hidden 2xl:table-cell">
+                    <Button
+                      variant="ghost"
+                      onClick={() => handleSort('createdAt')}
+                      className="h-auto -ml-3 font-semibold hover:bg-transparent cursor-pointer"
+                    >
+                      Eklenme Tarihi
+                      {getSortIcon('createdAt')}
+                    </Button>
+                  </TableHead>
+                  <TableHead className="w-28">
+                    <Button
+                      variant="ghost"
+                      onClick={() => handleSort('operationStatus')}
+                      className="h-auto -ml-2.5 font-semibold hover:bg-transparent cursor-pointer"
+                    >
+                      Durum
+                      {getSortIcon('operationStatus')}
+                    </Button>
+                  </TableHead>
+                  <TableHead className="w-16">İşlemler</TableHead>
+                </TableRow>
+              </TableHeader>
+
+              {/* Tablo Body */}
+              <TableBody >
               {loading ? (
                 // Skeleton loading rows - prevents layout shift
                 Array.from({ length: 5 }).map((_, index) => (
@@ -390,14 +563,14 @@ export default function CustomersPage() {
                       </div>
                     </TableCell>
                     {/* Müşteri Türü */}
-                    <TableCell className="min-w-[150px]">
+                    <TableCell className="min-w-[150px] hidden xl:table-cell">
                       <div className="flex items-center gap-2">
                         <Skeleton className="h-4 w-4 rounded" />
                         <Skeleton className="h-4 w-24" />
                       </div>
                     </TableCell>
                     {/* Firma Adı */}
-                    <TableCell className="min-w-[200px]">
+                    <TableCell className="min-w-[200px] hidden lg:table-cell">
                       <div className="flex items-center gap-2">
                         <Skeleton className="h-4 w-4 rounded" />
                         <Skeleton className="h-4 w-36" />
@@ -412,7 +585,7 @@ export default function CustomersPage() {
                       </div>
                     </TableCell>
                     {/* Telefon */}
-                    <TableCell className="min-w-[170px]">
+                    <TableCell className="min-w-[170px] hidden xl:table-cell">
                       <div className="flex items-center gap-2">
                         <Skeleton className="h-4 w-4 rounded" />
                         <Skeleton className="h-4 w-24" />
@@ -420,11 +593,11 @@ export default function CustomersPage() {
                       </div>
                     </TableCell>
                     {/* Ülke */}
-                    <TableCell>
+                    <TableCell className="hidden 2xl:table-cell">
                       <Skeleton className="h-4 w-20" />
                     </TableCell>
                     {/* Eklenme Tarihi */}
-                    <TableCell>
+                    <TableCell className="hidden 2xl:table-cell">
                       <div className="flex items-center gap-1.5">
                         <Skeleton className="h-4 w-4 rounded" />
                         <Skeleton className="h-4 w-24" />
@@ -442,7 +615,7 @@ export default function CustomersPage() {
                 ))
               ) : sortedCustomers?.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
                     {searchQuery ? 'Arama kriterlerine uygun müşteri bulunamadı.' : 'Henüz müşteri kaydı bulunmuyor.'}
                   </TableCell>
                 </TableRow>
@@ -451,15 +624,15 @@ export default function CustomersPage() {
                   <TableRow key={customer.id} className="hover:bg-muted/50 cursor-pointer">
                     {/* Yetkili Kişi */}
                     <TableCell className="min-w-[200px]">
-                      <div className="flex items-center gap-2">
-                        <User className="h-4 w-4 text-muted-foreground" />
-                        <span>
-                          {customer.name?.length > 15 ? `${customer.name.slice(0, 15)}...` : customer.name}
+                      <div className="flex items-center gap-2 max-w-[200px]">
+                        <User className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                        <span className="truncate" title={customer.name}>
+                          {customer.name}
                         </span>
                       </div>
                     </TableCell>
                     {/* Müşteri Türü */}
-                    <TableCell className="min-w-[150px]">
+                    <TableCell className="min-w-[150px] hidden xl:table-cell">
                       <div className="flex items-center gap-2">
                         <Tag className="h-4 w-4 text-muted-foreground" />
                         <span>
@@ -468,21 +641,19 @@ export default function CustomersPage() {
                       </div>
                     </TableCell>
                     {/* Firma Adı */}
-                    <TableCell className="min-w-[200px]">
-                      <div className="flex items-center gap-2">
-                        <Building2 className="h-4 w-4 text-muted-foreground" />
-                        <span>
-                          {customer.company ? (
-                            customer.company?.length > 30 ? `${customer.company.slice(0, 25)}...` : customer.company
-                          ) : 'Bilinmiyor'}
+                    <TableCell className="min-w-[200px] hidden lg:table-cell">
+                      <div className="flex items-center gap-2 max-w-[200px]">
+                        <Building2 className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                        <span className="truncate" title={customer.company || 'Bilinmiyor'}>
+                          {customer.company || 'Bilinmiyor'}
                         </span>
                       </div>
                     </TableCell>
                     {/* E-posta*/}
                     <TableCell className="min-w-[200px]">
-                      <div className="flex items-center gap-2">
-                        <Mail className="h-4 w-4 text-muted-foreground" />
-                        <span className="max-w-[120px]">{customer.email?.length > 15 ? `${customer.email.slice(0, 15)}...` : customer.email}</span>
+                      <div className="flex items-center gap-2 max-w-[200px]">
+                        <Mail className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                        <span className="truncate max-w-[150px]" title={customer.email}>{customer.email}</span>
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <Button
@@ -508,7 +679,7 @@ export default function CustomersPage() {
                       </div>
                     </TableCell>
                     {/* Telefon */}
-                    <TableCell className="min-w-[170px]">
+                    <TableCell className="min-w-[170px] hidden xl:table-cell">
                       <div className="flex items-center gap-2">
                         <Phone className="h-4 w-4 text-muted-foreground" />
                         <span>{formatPhone(customer.phone)}</span>
@@ -536,13 +707,15 @@ export default function CustomersPage() {
                       </div>
                     </TableCell>
                     {/* Ülke */}
-                    <TableCell >
+                    <TableCell className="hidden 2xl:table-cell">
                       <CountryCell countryCode={customer.country} />
                     </TableCell>
                     {/* Eklenme Tarihi */}
-                    <TableCell className="flex items-center gap-1.5 mt-2">
-                      <Calendar className="h-4 w-4" />
-                      {formatDate(customer.createdAt)}
+                    <TableCell className="hidden 2xl:table-cell">
+                      <div className="flex items-center gap-1.5">
+                        <Calendar className="h-4 w-4" />
+                        {formatDate(customer.createdAt)}
+                      </div>
                     </TableCell>
                     {/* Durum */}
                     <TableCell>
@@ -572,6 +745,7 @@ export default function CustomersPage() {
               )}
             </TableBody>
           </Table>
+          )}
         </div>
       </div>
 

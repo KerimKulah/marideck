@@ -62,10 +62,10 @@ export function LoginForm({ className, ...props }: React.ComponentProps<"div">) 
         <CardHeader className="text-center space-y-4">
           {/* Logo - Only visible on mobile/tablet (when hero section is hidden) */}
           <div className="flex justify-center lg:hidden mb-4">
-            <img className="h-16 w-auto" src="/kmaritime-logo.png" alt="MaritimeDesk Logo" />
+            <img className="h-16 w-auto" src="/kmaritime-logo.png" alt="Marideck Logo" />
           </div>
           <div className="space-y-2">
-            <CardTitle>Maritime Desk'e Hoş Geldiniz!</CardTitle>
+            <CardTitle>Marideck'e Hoş Geldiniz!</CardTitle>
             <CardDescription>Lütfen email adresinizi ve şifrenizi girin.</CardDescription>
           </div>
         </CardHeader>
@@ -82,7 +82,7 @@ export function LoginForm({ className, ...props }: React.ComponentProps<"div">) 
                 <Input
                   id="email"
                   type="email"
-                  placeholder="personel@maritimedesk.com"
+                  placeholder="personel@marideck.com"
                   required
                   value={email}
                   onChange={(e) => handleInputChange(e, setEmail)}

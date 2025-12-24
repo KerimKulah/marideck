@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Ship, ExternalLink, RefreshCw } from 'lucide-react';
+import { Ship, ExternalLink, RefreshCw, Info } from 'lucide-react';
 
 interface VesselLocationModalProps {
     isOpen: boolean;
@@ -80,16 +80,16 @@ const VesselLocationModal: React.FC<VesselLocationModalProps> = ({
         <Dialog open={isOpen} onOpenChange={onClose}>
             <DialogContent className="lg:min-w-3xl max-w-4xl max-h-[90vh] overflow-hidden">
                 <DialogHeader>
-                    <div className="flex items-center justify-between pt-2">
-                        <div className="flex items-center gap-3">
-                            <div className="p-2 bg-blue-100 rounded-lg">
-                                <Ship className="h-5 w-5 text-blue-600" />
+                    <div className="flex items-center justify-between pt-2 sm:pt-2 pt-1">
+                        <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
+                            <div className="p-1.5 sm:p-2 bg-blue-100 rounded-lg flex-shrink-0">
+                                <Ship className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600" />
                             </div>
-                            <div>
-                                <DialogTitle className="text-lg font-semibold">
+                            <div className="flex-1 min-w-0">
+                                <DialogTitle className="text-base sm:text-lg font-semibold truncate">
                                     {vessel.name}
                                 </DialogTitle>
-                                <DialogDescription className="text-sm text-gray-600">
+                                <DialogDescription className="text-xs sm:text-sm text-gray-600 truncate">
                                     IMO: {vessel.imo}
                                     {vessel.type && ` • ${vessel.type}`}
                                     {vessel.flag && ` • ${vessel.flag}`}
@@ -101,9 +101,10 @@ const VesselLocationModal: React.FC<VesselLocationModalProps> = ({
                             size="sm"
                             onClick={refreshMap}
                             disabled={loading}
+                            className="flex-shrink-0 ml-2"
                         >
-                            <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-                            Yenile
+                            <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''} sm:mr-2`} />
+                            <span className="hidden sm:inline">Yenile</span>
                         </Button>
                     </div>
                 </DialogHeader>
@@ -143,7 +144,12 @@ const VesselLocationModal: React.FC<VesselLocationModalProps> = ({
                         />
 
                         {/* CSS Manipulation */}
-                        <div className="absolute top-0 left-0 right-0 h-5.5 bg-white z-20"></div>
+                        <div className="absolute top-0 left-0 right-0 h-5.5 bg-white z-20 flex items-center justify-start pl-2 pr-2 overflow-hidden">
+                            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                                <Info className="h-3 w-3 flex-shrink-0" />
+                                <span className="truncate">Harita VesselFinder tarafından sağlanmaktadır.</span>
+                            </div>
+                        </div>
                     </div>
 
                     {/* Action Buttons */}
