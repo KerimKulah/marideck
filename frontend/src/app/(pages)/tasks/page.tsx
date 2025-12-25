@@ -1,6 +1,6 @@
 "use client"
 
-import { Search, Plus, AlertCircle, CheckCircle2, Clock, Calendar as CalendarIcon, MoreHorizontal, Filter, Grid3x3, Pencil, Trash2, CheckCircle, AlertTriangle, User, Briefcase, List, Ship, Users, Mail, Phone, Anchor, ClipboardList } from "lucide-react"
+import { Search, Plus, AlertCircle, CheckCircle2, Clock, Calendar as CalendarIcon, MoreHorizontal, Filter, Grid3x3, Pencil, Trash2, CheckCircle, AlertTriangle, User, Briefcase, List, Ship, Users, Mail, Phone, Anchor, ClipboardList, CheckSquare } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -23,11 +23,13 @@ import { AppDispatch, RootState } from "@/redux/store"
 import { getTasks, deleteTask, updateTask, getTaskStatistics, Task, TaskStatus, TaskPriority } from "@/redux/slices/taskSlice"
 import { toast } from "sonner"
 import { TaskAddOrEditModal } from "@/components/task-addoredit-modal"
-import { MiniLoading } from "@/components/ui/mini-loading"
+import { TaskDetailModal } from "@/components/task-detail-modal"
+import { Skeleton } from "@/components/ui/skeleton"
 import { useSearchParams, useRouter } from "next/navigation"
 import { format } from "date-fns"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { useIsMobile } from "@/hooks/use-mobile"
 
 const statusIcons = {
     completed: <CheckCircle2 className="h-4 w-4 text-green-500" />,
@@ -91,10 +93,12 @@ export default function TasksPage() {
     const searchParams = useSearchParams()
     const router = useRouter()
     const dispatch = useDispatch<AppDispatch>()
+    const isMobile = useIsMobile()
 
     // State
     const [selectedTask, setSelectedTask] = useState<Task | null>(null)
     const [isAddModalOpen, setIsAddModalOpen] = useState(false)
+    const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
     const [taskToDelete, setTaskToDelete] = useState<Task | null>(null)
     const [isDeleting, setIsDeleting] = useState(false)
@@ -243,7 +247,7 @@ export default function TasksPage() {
                 description: task.description,
                 status: 'completed' as TaskStatus,
                 priority: task.priority,
-                dueDate: task.dueDate ? new Date(task.dueDate) : undefined,
+                dueDate: task.dueDate,
                 assignedToId: task.assignedTo.map(u => u.id),
             }
 
@@ -295,21 +299,28 @@ export default function TasksPage() {
     }
 
     return (
-        <div className="grid space-y-4 overflow-x-auto">
-            {/* Premium Filter & Search Bar - Two Row Layout (Matching Operations Page) */}
-            <div className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
-                {/* Search Input */}
-                <div className="relative w-full sm:flex-1">
+        <div className="grid space-y-4">
+            {/* Search Bar */}
+            <div className="flex flex-col sm:flex-row gap-3 sm:items-center justify-between">
+                <div className="relative w-full">
                     <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                     <Input
                         type="search"
                         placeholder="Görev ara..."
-                        className="w-full pl-9 pr-4 py-2 text-sm"
+                        className="w-full pl-9 pr-4 py-2 text-sm sm:text-base"
                         value={searchInput}
                         onChange={handleSearch}
                     />
                 </div>
 
+                <Button className="w-full sm:w-auto" onClick={() => setIsAddModalOpen(true)}>
+                    <Plus className="mr-2 h-4 w-4" />
+                    <span className="sm:inline">Yeni Görev</span>
+                </Button>
+            </div>
+
+            {/* Main Tab Buttons & Filter */}
+            <div className="flex flex-col sm:flex-row gap-3 sm:items-center justify-between">
                 {/* Main Tab Buttons */}
                 <div className="flex items-center gap-1.5 rounded-lg border bg-muted/30 p-1">
                     <Button
@@ -332,11 +343,10 @@ export default function TasksPage() {
                     </Button>
                 </div>
 
-                {/* Right: Filter Button + Add Button */}
-                <div className="flex items-center gap-2">
+                {/* Filter Button */}
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            <Button variant="outline" size="sm" className="h-9">
+                        <Button variant="outline" size="sm" className="h-9 w-full sm:w-auto">
                                 <Filter className="h-4 w-4 mr-2" />
                                 Filtrele
                                 {subTab !== 'all' && (
@@ -411,34 +421,172 @@ export default function TasksPage() {
                             </DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
-                    <Button className="w-full sm:w-auto" onClick={() => setIsAddModalOpen(true)}>
-                        <Plus className="mr-2 h-4 w-4" />
-                        <span>Yeni Görev</span>
-                    </Button>
-                </div>
             </div>
 
             {/* Tasks Table */}
             <div className="rounded-lg border overflow-x-auto">
-                <Table className="min-w-[700px] sm:min-w-full">
+                {isMobile ? (
+                    // Mobil görünüm - Kompakt liste görünümü
+                    <div className="divide-y">
+                        {loading ? (
+                            Array.from({ length: 5 }).map((_, index) => (
+                                <div key={`skeleton-${index}`} className="p-3 flex items-center gap-3">
+                                    <Skeleton className="h-12 w-12 rounded-lg flex-shrink-0" />
+                                    <div className="flex-1 space-y-2">
+                                        <Skeleton className="h-4 w-3/4" />
+                                        <Skeleton className="h-3 w-1/2" />
+                                    </div>
+                                </div>
+                            ))
+                        ) : tasks.length === 0 ? (
+                            <div className="p-8 text-center text-muted-foreground">
+                                {searchTerm ? 'Aramanızla eşleşen görev bulunamadı' : 'Henüz görev bulunmuyor'}
+                            </div>
+                        ) : (
+                            tasks.map((task) => (
+                                <div
+                                    key={task.id}
+                                    className="p-3 flex items-center gap-3 hover:bg-muted/50"
+                                >
+                                    <div
+                                        className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0 cursor-pointer"
+                                        onClick={() => {
+                                            setSelectedTask(task)
+                                            setIsDetailModalOpen(true)
+                                        }}
+                                    >
+                                        <CheckSquare className="h-6 w-6 text-primary" />
+                                    </div>
+                                    <div
+                                        className="flex-1 min-w-0 cursor-pointer"
+                                        onClick={() => {
+                                            setSelectedTask(task)
+                                            setIsDetailModalOpen(true)
+                                        }}
+                                    >
+                                        <p className="font-medium text-sm truncate">{task.title}</p>
+                                        <div className="flex items-center gap-2 mt-1">
+                                            {getStatusBadge(task.status as TaskStatus)}
+                                            {priorityBadges[task.priority as keyof typeof priorityBadges]}
+                                        </div>
+                                    </div>
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                onClick={(e) => {
+                                                    e.stopPropagation()
+                                                }}
+                                            >
+                                                <MoreHorizontal className="h-4 w-4" />
+                                            </Button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align="end">
+                                            <DropdownMenuItem onClick={(e) => {
+                                                e.stopPropagation()
+                                                setSelectedTask(task)
+                                                setIsDetailModalOpen(true)
+                                            }}>
+                                                <ClipboardList className="mr-2 h-4 w-4" />
+                                                Detayları Görüntüle
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem onClick={(e) => {
+                                                e.stopPropagation()
+                                                setSelectedTask(task)
+                                                setIsAddModalOpen(true)
+                                            }}>
+                                                <Pencil className="mr-2 h-4 w-4" />
+                                                Düzenle
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem
+                                                onClick={(e) => {
+                                                    e.stopPropagation()
+                                                    handleMarkAsCompleted(task)
+                                                }}
+                                                disabled={task.status === 'completed'}
+                                            >
+                                                <CheckCircle className="mr-2 h-4 w-4" />
+                                                Tamamlandı Olarak İşaretle
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem
+                                                onClick={(e) => {
+                                                    e.stopPropagation()
+                                                    handleDeleteClick(task)
+                                                }}
+                                                className="text-red-600 focus:text-red-600"
+                                            >
+                                                <Trash2 className="mr-2 h-4 w-4" />
+                                                Sil
+                                            </DropdownMenuItem>
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
+                                </div>
+                            ))
+                        )}
+                    </div>
+                ) : (
+                    // Desktop görünüm - Tablo görünümü
+                    <Table style={{ tableLayout: 'fixed', width: '100%' }}>
                     <TableHeader>
                         <TableRow>
-                            <TableHead>Görev</TableHead>
-                            <TableHead>Atanan Kişiler</TableHead>
-                            <TableHead>İlişkili</TableHead>
-                            <TableHead>Durum</TableHead>
-                            <TableHead>Öncelik</TableHead>
-                            <TableHead>Son Tarih</TableHead>
-                            <TableHead>İşlemler</TableHead>
+                                <TableHead className="w-64">Görev</TableHead>
+                                <TableHead className="w-40">Atanan Kişiler</TableHead>
+                                <TableHead className="w-48 hidden lg:table-cell">İlişkili</TableHead>
+                                <TableHead className="w-28">Durum</TableHead>
+                                <TableHead className="w-28 hidden xl:table-cell">Öncelik</TableHead>
+                                <TableHead className="w-36 hidden md:table-cell">Son Tarih</TableHead>
+                                <TableHead className="w-16">İşlemler</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
                         {loading ? (
-                            <TableRow>
-                                <TableCell colSpan={7} className="text-center py-8">
-                                    <MiniLoading />
+                                // Skeleton loading rows - prevents layout shift
+                                Array.from({ length: 5 }).map((_, index) => (
+                                    <TableRow key={`skeleton-${index}`} className="hover:bg-transparent">
+                                        {/* Görev */}
+                                        <TableCell>
+                                            <div className="flex flex-col gap-1">
+                                                <Skeleton className="h-4 w-3/4" />
+                                                <Skeleton className="h-3 w-1/2" />
+                                            </div>
+                                        </TableCell>
+                                        {/* Atanan Kişiler */}
+                                        <TableCell>
+                                            <div className="flex items-center -space-x-2">
+                                                <Skeleton className="h-8 w-8 rounded-full" />
+                                                <Skeleton className="h-8 w-8 rounded-full" />
+                                                <Skeleton className="h-8 w-8 rounded-full" />
+                                            </div>
+                                        </TableCell>
+                                        {/* İlişkili */}
+                                        <TableCell className="hidden lg:table-cell">
+                                            <div className="flex flex-col gap-1">
+                                                <Skeleton className="h-3 w-24" />
+                                                <Skeleton className="h-3 w-20" />
+                                            </div>
+                                        </TableCell>
+                                        {/* Durum */}
+                                        <TableCell>
+                                            <Skeleton className="h-6 w-20 rounded-full" />
+                                        </TableCell>
+                                        {/* Öncelik */}
+                                        <TableCell className="hidden xl:table-cell">
+                                            <Skeleton className="h-6 w-16 rounded-full" />
+                                        </TableCell>
+                                        {/* Son Tarih */}
+                                        <TableCell className="hidden md:table-cell">
+                                            <div className="flex items-center gap-2">
+                                                <Skeleton className="h-4 w-4 rounded" />
+                                                <Skeleton className="h-4 w-24" />
+                                            </div>
+                                        </TableCell>
+                                        {/* İşlemler */}
+                                        <TableCell>
+                                            <Skeleton className="h-8 w-8 rounded" />
                                 </TableCell>
                             </TableRow>
+                                ))
                         ) : tasks.length === 0 ? (
                             <TableRow>
                                 <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
@@ -448,20 +596,24 @@ export default function TasksPage() {
                         ) : (
                             tasks.map((task) => (
                                 <TableRow key={task.id} className="hover:bg-muted/50">
-                                    <TableCell>
+                                        <TableCell className="min-w-[200px]">
                                         <div className="flex flex-col items-start gap-1">
-                                            <span className="font-medium">{task.title}</span>
+                                                <span className="font-medium truncate w-full">{task.title}</span>
                                             {task.description && (
-                                                <span className="text-xs text-muted-foreground max-w-[250px] overflow-hidden text-ellipsis whitespace-nowrap">
+                                                    <span className="text-xs text-muted-foreground truncate w-full">
                                                     {task.description}
                                                 </span>
                                             )}
                                         </div>
                                     </TableCell>
-                                    <TableCell>
+                                        <TableCell className="min-w-[120px]">
                                         <TooltipProvider delayDuration={0}>
                                             <div className="flex items-center -space-x-2">
-                                                {task.assignedTo.map((user) => (
+                                                    {task.assignedTo.length === 0 ? (
+                                                        <span className="text-sm text-muted-foreground">-</span>
+                                                    ) : (
+                                                        <>
+                                                            {task.assignedTo.slice(0, 5).map((user) => (
                                                     <Tooltip key={user.id}>
                                                         <TooltipTrigger asChild>
                                                             <Avatar className="h-8 w-8 border-2 border-background cursor-default hover:translate-y-[-2px] transition-transform">
@@ -475,30 +627,49 @@ export default function TasksPage() {
                                                         </TooltipContent>
                                                     </Tooltip>
                                                 ))}
-                                                {task.assignedTo.length === 0 && (
-                                                    <span className="text-sm text-muted-foreground">-</span>
+                                                            {task.assignedTo.length > 5 && (
+                                                                <Tooltip>
+                                                                    <TooltipTrigger asChild>
+                                                                        <Avatar className="h-8 w-8 border-2 border-background cursor-default hover:translate-y-[-2px] transition-transform">
+                                                                            <AvatarFallback className="bg-muted text-muted-foreground text-xs font-medium">
+                                                                                +{task.assignedTo.length - 5}
+                                                                            </AvatarFallback>
+                                                                        </Avatar>
+                                                                    </TooltipTrigger>
+                                                                    <TooltipContent>
+                                                                        <div className="space-y-1">
+                                                                            {task.assignedTo.slice(5).map((user) => (
+                                                                                <p key={user.id} className="text-xs">
+                                                                                    {user.firstName} {user.lastName}
+                                                                                </p>
+                                                                            ))}
+                                                                        </div>
+                                                                    </TooltipContent>
+                                                                </Tooltip>
+                                                            )}
+                                                        </>
                                                 )}
                                             </div>
                                         </TooltipProvider>
                                     </TableCell>
-                                    <TableCell>
+                                        <TableCell className="min-w-[150px] hidden lg:table-cell">
                                         <div className="flex flex-col gap-1">
                                             {task.customer && (
                                                 <div className="flex items-center gap-1.5 text-sm" title="Müşteri">
                                                     <User className="h-3 w-3 text-muted-foreground shrink-0" />
-                                                    <span className="truncate max-w-[140px]">{task.customer.name}</span>
+                                                        <span className="truncate">{task.customer.name}</span>
                                                 </div>
                                             )}
                                             {task.ship && (
                                                 <div className="flex items-center gap-1.5 text-sm" title="Gemi">
                                                     <Anchor className="h-3 w-3 text-muted-foreground shrink-0" />
-                                                    <span className="truncate max-w-[140px]">{task.ship.name}</span>
+                                                        <span className="truncate">{task.ship.name}</span>
                                                 </div>
                                             )}
                                             {task.operation && (
                                                 <div className="flex items-center gap-1.5 text-sm" title="Operasyon">
                                                     <Briefcase className="h-3 w-3 text-muted-foreground shrink-0" />
-                                                    <span className="truncate max-w-[140px]">{task.operation.name}</span>
+                                                        <span className="truncate">{task.operation.name}</span>
                                                 </div>
                                             )}
                                             {!task.customer && !task.ship && !task.operation && (
@@ -506,16 +677,16 @@ export default function TasksPage() {
                                             )}
                                         </div>
                                     </TableCell>
-                                    <TableCell>
+                                        <TableCell className="min-w-[100px]">
                                         {getStatusBadge(task.status as TaskStatus)}
                                     </TableCell>
-                                    <TableCell>
+                                        <TableCell className="min-w-[100px] hidden xl:table-cell">
                                         {priorityBadges[task.priority as keyof typeof priorityBadges]}
                                     </TableCell>
-                                    <TableCell>
+                                        <TableCell className="min-w-[120px] hidden md:table-cell">
                                         <div className="flex items-center gap-2">
-                                            <CalendarIcon className="h-4 w-4 text-muted-foreground" />
-                                            <span className="text-sm">{formatDate(task.dueDate)}</span>
+                                                <CalendarIcon className="h-4 w-4 text-muted-foreground shrink-0" />
+                                                <span className="text-sm truncate">{formatDate(task.dueDate)}</span>
                                         </div>
                                     </TableCell>
                                     <TableCell>
@@ -527,7 +698,16 @@ export default function TasksPage() {
                                                 </Button>
                                             </DropdownMenuTrigger>
                                             <DropdownMenuContent align="end">
-                                                <DropdownMenuItem onClick={() => {
+                                                    <DropdownMenuItem onClick={(e) => {
+                                                        e.stopPropagation()
+                                                        setSelectedTask(task)
+                                                        setIsDetailModalOpen(true)
+                                                    }}>
+                                                        <ClipboardList className="mr-2 h-4 w-4" />
+                                                        Detayları Görüntüle
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem onClick={(e) => {
+                                                        e.stopPropagation()
                                                     setSelectedTask(task)
                                                     setIsAddModalOpen(true)
                                                 }}>
@@ -535,14 +715,20 @@ export default function TasksPage() {
                                                     Düzenle
                                                 </DropdownMenuItem>
                                                 <DropdownMenuItem
-                                                    onClick={() => handleMarkAsCompleted(task)}
+                                                        onClick={(e) => {
+                                                            e.stopPropagation()
+                                                            handleMarkAsCompleted(task)
+                                                        }}
                                                     disabled={task.status === 'completed'}
                                                 >
                                                     <CheckCircle className="mr-2 h-4 w-4" />
                                                     Tamamlandı Olarak İşaretle
                                                 </DropdownMenuItem>
                                                 <DropdownMenuItem
-                                                    onClick={() => handleDeleteClick(task)}
+                                                        onClick={(e) => {
+                                                            e.stopPropagation()
+                                                            handleDeleteClick(task)
+                                                        }}
                                                     className="text-red-600 focus:text-red-600"
                                                 >
                                                     <Trash2 className="mr-2 h-4 w-4" />
@@ -556,7 +742,20 @@ export default function TasksPage() {
                         )}
                     </TableBody>
                 </Table>
+                )}
             </div>
+
+            {/* Detail Modal */}
+            <TaskDetailModal
+                open={isDetailModalOpen}
+                onOpenChange={(open) => {
+                    setIsDetailModalOpen(open)
+                    if (!open) {
+                        setSelectedTask(null)
+                    }
+                }}
+                task={selectedTask}
+            />
 
             {/* Add/Edit Modal */}
             <TaskAddOrEditModal

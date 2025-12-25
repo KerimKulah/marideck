@@ -29,7 +29,18 @@ const taskFormSchema = z.object({
     description: z.string().optional(),
     status: z.enum(['pending', 'in_progress', 'completed'] as const),
     priority: z.enum(['low', 'medium', 'high'] as const),
-    dueDate: z.date().optional(),
+    dueDate: z.date()
+        .optional()
+        .refine((date) => {
+            if (!date) return true; // Optional field, can be undefined
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const selectedDate = new Date(date);
+            selectedDate.setHours(0, 0, 0, 0);
+            return selectedDate >= today;
+        }, {
+            message: "Bitiş tarihi bugünden önce olamaz"
+        }),
     assignedToId: z.array(z.number()).min(1, "En az bir kişi atanmalıdır"),
     customerId: z.number().optional().nullable(),
     shipId: z.number().optional().nullable(),
@@ -421,8 +432,13 @@ export function TaskAddOrEditModal({
                                                             mode="single"
                                                             selected={field.value}
                                                             onSelect={field.onChange}
-                                                            initialFocus
+                                                            autoFocus={true}
                                                             locale={tr}
+                                                            disabled={(date) => {
+                                                                const today = new Date();
+                                                                today.setHours(0, 0, 0, 0);
+                                                                return date < today;
+                                                            }}
                                                         />
                                                     </PopoverContent>
                                                 </Popover>

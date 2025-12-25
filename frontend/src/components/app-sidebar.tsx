@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { IconAnchor, IconChartBar, IconDashboard, IconFileWord, IconHelp, IconSettings, IconShip, IconUsers, IconClipboardList, IconCalendar, IconTarget } from "@tabler/icons-react"
+import { IconAnchor, IconChartBar, IconDashboard, IconFileWord, IconHelp, IconSettings, IconShip, IconUsers, IconClipboardList, IconCalendar, IconTarget, IconUserShield } from "@tabler/icons-react"
 import { NavMain } from "@/components/nav-main"
 import { NavSecondary } from "@/components/nav-secondary"
 import { Sidebar, SidebarContent, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar"
@@ -48,26 +48,15 @@ const data = {
       icon: IconClipboardList,
     },
     {
-      title: "Ekip",
-      url: "/personnels",
-      icon: IconUsers,
+      title: "Kullanıcılar",
+      url: "/users",
+      icon: IconUserShield,
     },
     {
       title: "Takvim",
       url: "/calendar",
       icon: IconCalendar,
     },
-    {
-      title: "Limanlar",
-      url: "/ports",
-      icon: IconAnchor,
-    },
-    {
-      title: "İnsan Kaynakları",
-      url: "/human-resources",
-      icon: IconUsers,
-    },
-    
   ],
   navSecondary: [
     {

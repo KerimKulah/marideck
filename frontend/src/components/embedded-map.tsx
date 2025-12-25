@@ -102,7 +102,7 @@ export const EmbeddedMap = () => {
                                 <Info className="h-4 w-4 text-muted-foreground cursor-help" />
                             </TooltipTrigger>
                             <TooltipContent>
-                                <p>Harita VesselFinder tarafından sağlanmaktadır. Details butonu harici bağlantıda açılır.</p>
+                                <p>Harita VesselFinder tarafından sağlanmaktadır. Detaylar harici bağlantıda açılır.</p>
                             </TooltipContent>
                         </Tooltip>
                     </div>

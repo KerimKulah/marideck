@@ -1,4 +1,4 @@
-import { Controller, Get, HttpCode, Param, ParseIntPipe, Query, Post, Body, Delete, Put, UseFilters, UseGuards, Req } from "@nestjs/common";
+import { Controller, Get, HttpCode, Param, ParseIntPipe, Query, Post, Body, Delete, Put, UseFilters, UseGuards } from "@nestjs/common";
 import { TaskService } from "./task.service";
 import { TaskDto } from "./dto/task.dto";
 import { TaskResponseDto } from "./dto/task-response.dto";
@@ -52,22 +52,18 @@ export class TaskController {
   async update(
     @Param('id', ParseIntPipe) id: number,
     @Body() taskDto: TaskDto,
-    @CurrentUserId() userId: number,
-    @Req() req: any
+    @CurrentUserId() userId: number
   ): Promise<{ message: string, data: TaskResponseDto }> {
-    const userRoles = req.user?.roles?.map((role: any) => role.name) || [];
-    return await this.taskService.update(id, taskDto, userId, userRoles);
+    return await this.taskService.update(id, taskDto, userId);
   }
 
   @Delete(':id')
   @HttpCode(200)
   async remove(
     @Param('id', ParseIntPipe) id: number,
-    @CurrentUserId() userId: number,
-    @Req() req: any
+    @CurrentUserId() userId: number
   ) {
-    const userRoles = req.user?.roles?.map((role: any) => role.name) || [];
-    return await this.taskService.remove(id, userId, userRoles);
+    return await this.taskService.remove(id, userId);
   }
 }
 

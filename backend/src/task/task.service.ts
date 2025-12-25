@@ -1,4 +1,4 @@
-import { NotFoundException, ForbiddenException } from '@nestjs/common';
+import { NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Task } from './entities/task.entity';
@@ -177,6 +177,19 @@ export class TaskService {
     }
 
     async create(taskDto: TaskDto, userId: number) {
+        // Validate dueDate: cannot be in the past
+        if (taskDto.dueDate) {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0); // Set to start of day for comparison
+
+            const dueDate = new Date(taskDto.dueDate);
+            dueDate.setHours(0, 0, 0, 0);
+
+            if (dueDate < today) {
+                throw new BadRequestException('Bitiş tarihi bugünden önce olamaz');
+            }
+        }
+
         const task = new Task();
 
         task.title = taskDto.title;
@@ -228,14 +241,38 @@ export class TaskService {
         }
     }
 
-    async update(id: number, taskDto: TaskDto, userId: number, userRoles: string[]): Promise<{ message: string, data: TaskResponseDto }> {
+    async update(id: number, taskDto: TaskDto, userId: number): Promise<{ message: string, data: TaskResponseDto }> {
         const task = await this.findEntity(id);
 
+        // Get user with roles for permission check
+        const user = await this.userRepository.findOne({
+            where: { id: userId },
+            relations: ['roles']
+        });
+
+        if (!user) {
+            throw new NotFoundException('User not found');
+        }
+
         // Permission check: only admin or assigned users can update
+        const userRoles = user.roles?.map(role => role.name) || [];
         const isAdmin = userRoles.includes('admin');
         const isAssignedUser = task.assignedTo.some(user => user.id === userId);
         if (!isAdmin && !isAssignedUser) {
             throw new ForbiddenException('You do not have permission to update this task');
+        }
+
+        // Validate dueDate: cannot be in the past
+        if (taskDto.dueDate) {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0); // Set to start of day for comparison
+
+            const dueDate = new Date(taskDto.dueDate);
+            dueDate.setHours(0, 0, 0, 0);
+
+            if (dueDate < today) {
+                throw new BadRequestException('Bitiş tarihi bugünden önce olamaz');
+            }
         }
 
         // Update basic fields
@@ -290,10 +327,21 @@ export class TaskService {
         return { message: 'Task updated successfully', data: this.toTaskResponseDto(updated) };
     }
 
-    async remove(id: number, userId: number, userRoles: string[]): Promise<{ message: string }> {
+    async remove(id: number, userId: number): Promise<{ message: string }> {
         const task = await this.findEntity(id);
 
+        // Get user with roles for permission check
+        const user = await this.userRepository.findOne({
+            where: { id: userId },
+            relations: ['roles']
+        });
+
+        if (!user) {
+            throw new NotFoundException('User not found');
+        }
+
         // Permission check: only admin or assigned users can delete
+        const userRoles = user.roles?.map(role => role.name) || [];
         const isAdmin = userRoles.includes('admin');
         const isAssignedUser = task.assignedTo.some(user => user.id === userId);
         if (!isAdmin && !isAssignedUser) {

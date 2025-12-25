@@ -12,6 +12,7 @@ import { join } from 'path';
 import { OperationModule } from './operation/operation.module';
 import { OperationLogModule } from './operation-log/operation-log.module';
 import { TaskModule } from './task/task.module';
+import { DocumentModule } from './document/document.module';
 
 @Module({
   imports: [
@@ -29,7 +30,7 @@ import { TaskModule } from './task/task.module';
     }),
 
     // Modules  
-    AuthModule, CustomerModule, ShipModule, OperationModule, OperationLogModule, TaskModule,
+    AuthModule, CustomerModule, ShipModule, OperationModule, OperationLogModule, TaskModule, DocumentModule,
 
     // Configs etc.
     ConfigModule.forRoot({ isGlobal: true }),

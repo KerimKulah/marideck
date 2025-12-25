@@ -5,6 +5,7 @@ import { shipSlice } from './slices/shipSlice';
 import { operationSlice } from './slices/operationSlice';
 import { userSlice } from './slices/userSlice';
 import { taskSlice } from './slices/taskSlice';
+import documentReducer from './slices/documentSlice';
 
 export const store = configureStore({
     reducer: {
@@ -14,6 +15,7 @@ export const store = configureStore({
         operation: operationSlice.reducer,
         user: userSlice.reducer,
         task: taskSlice.reducer,
+        document: documentReducer,
     },
 })
 

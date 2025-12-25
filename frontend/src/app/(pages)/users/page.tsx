@@ -138,20 +138,6 @@ export default function PersonnelsPage() {
 
     return (
         <div className="space-y-2">
-            <Alert className="bg-blue-50 border-blue-200">
-                <Info className="h-4 w-4 text-blue-600" />
-                <AlertDescription className="text-blue-700">
-                    Bu sayfa Marideck yönetim sistemine erişimi olan personellerin yönetimini sağlar.
-                    Sistemde tanımlı personellerin listesini gösterir ve yeni personel ekleme, düzenleme,
-                    görüntüleme ve silme işlemlerini gerçekleştirmenize olanak tanır.
-                    <br /><br />
-                    <div className="flex items-center gap-2">
-                        <span className="font-medium">ÖNEMLİ:</span> Bu modül sadece Marideck sistemine giriş yapacak
-                        kullanıcıların teknik bilgilerini içerir. Personellerin detaylı özgeçmiş veya kişisel
-                        bilgileri burada tutulamaz.
-                    </div>
-                </AlertDescription>
-            </Alert>
 
             <div className="flex flex-col sm:flex-row gap-3 sm:items-center justify-between">
                 <div className="flex flex-col sm:flex-row gap-3 w-full">
@@ -159,7 +145,7 @@ export default function PersonnelsPage() {
                     <div className="relative w-full">
                         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                         <Input
-                            placeholder="Personel ara..."
+                            placeholder="Kullanıcı ara..."
                             className="pl-9 w-full"
                             value={searchInput}
                             onChange={(e) => {
@@ -171,7 +157,7 @@ export default function PersonnelsPage() {
                 </div>
                 <Button onClick={handleAddUser} className="whitespace-nowrap">
                     <UserPlus className="mr-2 h-4 w-4" />
-                    Yeni Personel Ekle
+                    Yeni Kullanıcı Ekle
                 </Button>
             </div>
 
@@ -440,9 +426,9 @@ export default function PersonnelsPage() {
             <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Personeli Sil</DialogTitle>
+                        <DialogTitle>Kullanıcıyı Sil</DialogTitle>
                         <DialogDescription>
-                            Bu işlem geri alınamaz. Personeli silmek istediğinize emin misiniz?
+                            Bu işlem geri alınamaz. Kullanıcıyı silmek istediğinize emin misiniz?
                         </DialogDescription>
                     </DialogHeader>
                     <DialogFooter>
