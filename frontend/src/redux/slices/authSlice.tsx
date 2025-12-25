@@ -1,15 +1,6 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import api from '../../api/axios';
-
-export const setAccessToken = (token: string) => {
-    localStorage.setItem("accessToken", token);
-    api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-}
-
-export const removeAccessToken = () => {
-    localStorage.removeItem("accessToken");
-    delete api.defaults.headers.common["Authorization"];
-}
+import { setAccessToken, removeAccessToken } from '@/lib/access-token-store';
 
 // LOGIN 
 export const login = createAsyncThunk("auth/login", async (credentials: { email: string; password: string }, { rejectWithValue }) => {

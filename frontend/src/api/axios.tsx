@@ -1,4 +1,5 @@
 import { performLogout } from '@/lib/perform-logout';
+import { getAccessToken, setAccessToken } from '@/lib/access-token-store';
 import axios from 'axios';
 
 interface FailedQueueItem {
@@ -28,10 +29,10 @@ const processQueue = (error: any, token: string | null = null) => {
     failedQueue = [];
 };
 
-// Her istekte access token eklenece    k
+// Her istekte access token eklenecek
 api.interceptors.request.use(
     (config) => {
-        const token = localStorage.getItem('accessToken');
+        const token = getAccessToken();
         console.log('📤 Request interceptor', { url: config.url, token });
 
         if (token && config.headers) {
@@ -102,8 +103,7 @@ api.interceptors.response.use(
                 }
 
                 console.log('✅ Yeni accessToken alındı:', newAccessToken);
-                localStorage.setItem('accessToken', newAccessToken);
-                api.defaults.headers.common['Authorization'] = 'Bearer ' + newAccessToken;
+                setAccessToken(newAccessToken);
 
                 processQueue(null, newAccessToken);
 

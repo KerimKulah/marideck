@@ -1,4 +1,5 @@
 import api from "@/api/axios";
+import { removeAccessToken } from "@/lib/access-token-store";
 import { useRouter } from "next/navigation";
 
 export async function performLogout() {
@@ -7,8 +8,7 @@ export async function performLogout() {
         await api.post('/auth/logout');
     } catch {
     } finally { 
-        localStorage.removeItem("accessToken");
-        delete api.defaults.headers.common["Authorization"];
+        removeAccessToken();
         router.replace("/login");
     }
 }
