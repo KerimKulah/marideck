@@ -25,13 +25,15 @@ export class ShipController {
   @Get()
   @HttpCode(200)
   async findAll(
-    @Query('page', ParseIntPipe) page?: number,
-    @Query('limit', ParseIntPipe) limit?: number,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
     @Query('search') search?: string,
     @Query('sortBy') sortBy?: string,
     @Query('sortOrder') sortOrder?: 'ASC' | 'DESC',
   ) {
-    return this.shipService.findAll(page, limit, search, sortBy, sortOrder);
+    const pageNum = page ? parseInt(page, 10) : undefined;
+    const limitNum = limit ? parseInt(limit, 10) : undefined;
+    return this.shipService.findAll(pageNum, limitNum, search, sortBy, sortOrder);
   }
 
   @Get('stats')

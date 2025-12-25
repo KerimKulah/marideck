@@ -12,6 +12,11 @@ export interface Task {
     status: TaskStatus;
     priority: TaskPriority;
     dueDate?: string;
+    assignedTo: Array<{ id: number; firstName: string; lastName: string }>;
+    createdBy: { id: number; firstName: string; lastName: string };
+    customer?: { id: number; name: string };
+    ship?: { id: number; name: string; imoNumber: string };
+    operation?: { id: number; name: string };
     createdAt: string;
     updatedAt: string;
 }
@@ -20,7 +25,7 @@ interface GetTasksParams {
     page?: number;
     limit?: number;
     search?: string;
-    tab?: 'active' | 'completed' | 'all';
+    tab?: 'my-tasks-all' | 'my-tasks-pending' | 'my-tasks-in_progress' | 'my-tasks-completed' | 'all-tasks-all' | 'all-pending' | 'all-in_progress' | 'all-completed';
 }
 
 interface TaskState {
@@ -37,11 +42,14 @@ interface TaskState {
     updateLoading: boolean;
     deleteLoading: boolean;
     statistics: {
-        activeTasks: number;
-        completedTasks: number;
-        pendingTasks: number;
-        inProgressTasks: number;
-        highPriorityTasks: number;
+        myTasksPending: number;
+        myTasksInProgress: number;
+        myTasksCompleted: number;
+        myTasksAll: number;
+        allPending: number;
+        allInProgress: number;
+        allCompleted: number;
+        allTasksAll: number;
     } | null;
     statisticsLoading: boolean;
 }
@@ -149,6 +157,24 @@ export const taskSlice = createSlice({
             state.page = 1;
         },
         resetTaskState: () => initialState,
+        addTaskOptimistic: (state, action) => {
+            const newTask = { ...action.payload, id: `temp-${Date.now()}` };
+            state.tasks.unshift(newTask);
+            state.totalTasks += 1;
+        },
+        updateTaskOptimistic: (state, action) => {
+            const index = state.tasks.findIndex(t => t.id === action.payload.id);
+            if (index !== -1) {
+                state.tasks[index] = { ...state.tasks[index], ...action.payload };
+            }
+            if (state.currentTask?.id === action.payload.id) {
+                state.currentTask = { ...state.currentTask, ...action.payload };
+            }
+        },
+        removeTaskOptimistic: (state, action) => {
+            state.tasks = state.tasks.filter(t => t.id !== action.payload);
+            state.totalTasks = Math.max(0, state.totalTasks - 1);
+        },
     },
     extraReducers: (builder) => {
         // Get Tasks
@@ -191,12 +217,26 @@ export const taskSlice = createSlice({
         builder.addCase(createTask.fulfilled, (state, action) => {
             state.createLoading = false;
             const task = action.payload.data || action.payload;
-            state.tasks.unshift(task);
-            state.totalTasks += 1;
+            
+            // Optimistic update yapıldıysa temp ID'li öğeyi kaldır ve gerçek veriyi ekle
+            const tempIndex = state.tasks.findIndex(t => t.id && t.id.toString().startsWith('temp-'));
+            if (tempIndex !== -1) {
+                state.tasks[tempIndex] = task;
+            } else {
+                // Eğer optimistic update yapılmadıysa direkt ekle
+                state.tasks.unshift(task);
+                state.totalTasks += 1;
+            }
+            
+            state.error = null;
         });
         builder.addCase(createTask.rejected, (state, action) => {
             state.createLoading = false;
             state.error = (action.payload as any)?.message || "Görev oluşturulamadı";
+            
+            // Optimistic update başarısızsa temp öğeyi kaldır
+            state.tasks = state.tasks.filter(t => !t.id || !t.id.toString().startsWith('temp-'));
+            state.totalTasks = Math.max(0, state.totalTasks - 1);
         });
 
         // Update Task
@@ -229,9 +269,17 @@ export const taskSlice = createSlice({
             state.deleteLoading = false;
             state.tasks = state.tasks.filter(t => t.id !== action.payload.id);
             state.totalTasks = Math.max(0, state.totalTasks - 1);
+            
+            // Eğer sayfa boş kaldıysa ve birinci sayfa değilse, önceki sayfaya git
+            if (state.tasks.length === 0 && state.page > 1) {
+                state.page -= 1;
+            }
+            
             if (state.currentTask?.id === action.payload.id) {
                 state.currentTask = null;
             }
+            
+            state.error = null;
         });
         builder.addCase(deleteTask.rejected, (state, action) => {
             state.deleteLoading = false;
@@ -255,5 +303,5 @@ export const taskSlice = createSlice({
 });
 
 export default taskSlice.reducer;
-export const { clearError, setPage, setLimit, setSearchQuery, resetTaskState } = taskSlice.actions;
+export const { clearError, setPage, setLimit, setSearchQuery, resetTaskState, addTaskOptimistic, updateTaskOptimistic, removeTaskOptimistic } = taskSlice.actions;
 

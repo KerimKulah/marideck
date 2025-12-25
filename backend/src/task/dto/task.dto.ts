@@ -1,5 +1,5 @@
 import { Type } from "class-transformer";
-import { IsNotEmpty, IsString, IsDate, IsOptional, IsEnum } from "class-validator";
+import { IsNotEmpty, IsString, IsDate, IsOptional, IsEnum, IsNumber } from "class-validator";
 import { TaskStatus } from "../enums/task-status.enum";
 import { TaskPriority } from "../enums/task-priority.enum";
 
@@ -25,5 +25,21 @@ export class TaskDto {
     @IsDate()
     @Type(() => Date)
     dueDate?: Date;
+
+    @IsNotEmpty({ message: 'Atanan kişiler zorunlu' })
+    @IsNumber({}, { each: true })
+    assignedToId: number[];
+
+    @IsOptional()
+    @IsNumber()
+    customerId?: number;
+
+    @IsOptional()
+    @IsNumber()
+    shipId?: number;
+
+    @IsOptional()
+    @IsNumber()
+    operationId?: number;
 }
 

@@ -80,44 +80,58 @@ export const ChatbotButton = () => {
             <AnimatePresence>
                 {isVisible && (
                     <motion.div
-                        initial={{ opacity: 0, y: 100 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: 100 }}
-                        transition={{ duration: 0.5, type: 'spring', stiffness: 100 }}
-                        className="fixed bottom-8 right-8 z-50"
+                        initial={{ opacity: 0, scale: 0 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0 }}
+                        transition={{ duration: 0.3, type: 'spring', stiffness: 200 }}
+                        className="fixed bottom-6 right-6 z-50"
                     >
-                        {!isOpen && (
+                        {/* Pulse Ring Effect */}
+                        {!isOpen && isPulsing && (
                             <motion.div
-                                animate={isPulsing ? { scale: [1, 1.05, 1] } : { scale: 1 }}
-                                transition={{
-                                    duration: 1.5,
-                                    repeat: Infinity,
-                                    repeatType: 'reverse',
+                                animate={{
+                                    scale: [1, 1.4, 1],
+                                    opacity: [0.6, 0, 0.6]
                                 }}
-                                className="absolute inset-0 bg-primary/20 rounded-full"
+                                transition={{
+                                    duration: 2,
+                                    repeat: Infinity,
+                                    ease: "easeInOut"
+                                }}
+                                className="absolute inset-0 bg-primary rounded-full"
                             />
                         )}
-                        <Button
+
+                        {/* Main FAB Button */}
+                        <motion.button
                             onClick={() => setIsOpen(!isOpen)}
-                            size="lg"
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
                             className={cn(
-                                "relative h-16 w-64 rounded-full shadow-xl transition-all duration-300 overflow-hidden group",
-                                "bg-primary hover:bg-primary/90 text-white",
-                                isOpen ? "opacity-0" : "opacity-100"
+                                "relative h-14 w-14 rounded-full shadow-2xl transition-all duration-300",
+                                "bg-gradient-to-br from-primary via-primary to-primary/80",
+                                "hover:shadow-primary/50 hover:shadow-2xl",
+                                "border-2 border-white/20 backdrop-blur-sm",
+                                "flex items-center justify-center",
+                                "group overflow-hidden",
+                                isOpen ? "opacity-0 pointer-events-none" : "opacity-100"
                             )}
                         >
-                            <div className="absolute -left-2 top-1/2 -translate-y-1/2 w-14 h-14 bg-white/10 rounded-full flex items-center justify-center backdrop-blur-sm">
-                                <Bot className="h-8 w-8 text-white" />
+                            {/* Gradient Overlay */}
+                            <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-full" />
+
+                            {/* Bot Icon */}
+                            <Bot className="h-6 w-6 text-white relative z-10" />
+
+                            {/* Online Status Dot - Butonun içinde kalacak şekilde */}
+                            <div className="absolute bottom-2 right-2.5 h-1.5 w-1.5 bg-green-400 rounded-full z-20 ring-2 ring-primary">
+                                <motion.div
+                                    animate={{ scale: [1, 1.2, 1] }}
+                                    transition={{ duration: 2, repeat: Infinity }}
+                                    className="absolute inset-0 bg-green-400 rounded-full"
+                                />
                             </div>
-                            <div className="ml-8 text-left">
-                                <div className="text-xs font-medium text-white/80">Yapay Zeka Asistanı</div>
-                                <div className="text-sm font-semibold flex items-center gap-1">
-                                    <span>Bana Sorun</span>
-                                    <Sparkles className="h-3 w-3 text-amber-300" />
-                                </div>
-                            </div>
-                            <div className="absolute right-4 top-1/2 -translate-y-1/2 w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                        </Button>
+                        </motion.button>
                     </motion.div>
                 )}
             </AnimatePresence>
@@ -126,26 +140,39 @@ export const ChatbotButton = () => {
             <AnimatePresence>
                 {isOpen && (
                     <motion.div
-                        initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                        initial={{ opacity: 0, y: 20, scale: 0.9 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: 20, scale: 0.95 }}
-                        transition={{ duration: 0.2, ease: 'easeInOut' }}
-                        className="fixed bottom-32 right-8 w-96 h-[500px] bg-card rounded-2xl flex flex-col z-50 overflow-hidden border border-border shadow-2xl"
+                        exit={{ opacity: 0, y: 20, scale: 0.9 }}
+                        transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+                        className="fixed bottom-24 right-6 w-[380px] h-[600px] bg-card/95 backdrop-blur-xl rounded-3xl flex flex-col z-50 overflow-hidden border border-border/50 shadow-2xl"
+                        style={{
+                            boxShadow: '0 20px 60px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.05)'
+                        }}
                     >
                         {/* Header */}
-                        <div className="bg-primary text-white p-4 flex justify-between items-center">
+                        <div className="bg-gradient-to-r from-primary via-primary to-primary/90 text-white p-5 flex justify-between items-center border-b border-white/10">
                             <div className="flex items-center gap-3">
                                 <div className="relative">
-                                    <div className="absolute -inset-1 bg-white/20 rounded-full blur"></div>
-                                    <div className="relative bg-white/10 p-2 rounded-full">
+                                    <motion.div
+                                        animate={{ rotate: [0, 10, -10, 0] }}
+                                        transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
+                                        className="bg-white/20 p-2.5 rounded-2xl backdrop-blur-sm"
+                                    >
                                         <Bot className="h-5 w-5" />
-                                    </div>
+                                    </motion.div>
                                 </div>
                                 <div>
-                                    <h3 className="font-bold text-lg">Yapay Zeka Asistanı</h3>
-                                    <div className="flex items-center gap-1">
-                                        <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-                                        <span className="text-xs text-white/80">Çevrimiçi</span>
+                                    <h3 className="font-bold text-base">AI Asistanı</h3>
+                                    <div className="flex items-center gap-1.5 mt-0.5">
+                                        <div className="relative">
+                                            <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                                            <motion.div
+                                                animate={{ scale: [1, 1.5, 1], opacity: [1, 0, 1] }}
+                                                transition={{ duration: 2, repeat: Infinity }}
+                                                className="absolute inset-0 w-2 h-2 bg-green-400 rounded-full"
+                                            />
+                                        </div>
+                                        <span className="text-xs text-white/90 font-medium">Çevrimiçi</span>
                                     </div>
                                 </div>
                             </div>
@@ -153,7 +180,7 @@ export const ChatbotButton = () => {
                                 onClick={() => setIsOpen(false)}
                                 variant="ghost"
                                 size="icon"
-                                className="h-8 w-8 text-white hover:bg-white/20"
+                                className="h-8 w-8 text-white hover:bg-white/20 rounded-xl transition-colors"
                             >
                                 <X className="h-4 w-4" />
                                 <span className="sr-only">Kapat</span>
@@ -161,17 +188,24 @@ export const ChatbotButton = () => {
                         </div>
 
                         {/* Messages */}
-                        <div className="flex-1 p-4 overflow-y-auto bg-gradient-to-b from-card to-muted/20">
-                            <div className="flex justify-center mb-4">
-                                <div className="bg-muted text-muted-foreground text-xs px-3 py-1 rounded-full flex items-center gap-1">
-                                    <Sparkles className="h-3 w-3 text-amber-500" />
-                                    <span>Yapay Zeka Asistanı size yardımcı olmaktan mutluluk duyar</span>
-                                </div>
+                        <div className="flex-1 p-5 overflow-y-auto bg-gradient-to-b from-background via-background to-muted/30">
+                            <div className="flex justify-center mb-5">
+                                <motion.div
+                                    initial={{ opacity: 0, y: -10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    className="bg-muted/80 backdrop-blur-sm text-muted-foreground text-xs px-4 py-2 rounded-full flex items-center gap-2 border border-border/50"
+                                >
+                                    <Sparkles className="h-3.5 w-3.5 text-amber-500" />
+                                    <span className="font-medium">Size nasıl yardımcı olabilirim?</span>
+                                </motion.div>
                             </div>
 
-                            {messages.map((message) => (
-                                <div
+                            {messages.map((message, index) => (
+                                <motion.div
                                     key={message.id}
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: index * 0.1 }}
                                     className={cn(
                                         "mb-4",
                                         message.sender === 'user' ? 'flex justify-end' : 'flex justify-start'
@@ -179,21 +213,15 @@ export const ChatbotButton = () => {
                                 >
                                     <div
                                         className={cn(
-                                            "max-w-xs p-3 rounded-2xl text-sm relative",
+                                            "max-w-[75%] px-4 py-3 rounded-2xl text-sm relative",
                                             message.sender === 'user'
-                                                ? 'bg-primary text-white rounded-br-none shadow-md'
-                                                : 'bg-background border border-border rounded-tl-none shadow-sm'
+                                                ? 'bg-gradient-to-br from-primary to-primary/90 text-white rounded-br-md shadow-lg'
+                                                : 'bg-muted/80 backdrop-blur-sm border border-border/50 rounded-tl-md shadow-sm text-foreground'
                                         )}
                                     >
-                                        {message.text}
-                                        {message.sender === 'bot' && (
-                                            <div className="absolute -left-1 -bottom-1 w-3 h-3 bg-background border-l border-b border-border transform rotate-45"></div>
-                                        )}
-                                        {message.sender === 'user' && (
-                                            <div className="absolute -right-1 -bottom-1 w-3 h-3 bg-primary transform rotate-45"></div>
-                                        )}
+                                        <p className="leading-relaxed">{message.text}</p>
                                     </div>
-                                </div>
+                                </motion.div>
                             ))}
                             <div ref={messagesEndRef} />
                         </div>
@@ -201,25 +229,29 @@ export const ChatbotButton = () => {
                         {/* Input */}
                         <form
                             onSubmit={handleSendMessage}
-                            className="p-4 border-t border-border bg-background/80 backdrop-blur-sm"
+                            className="p-4 border-t border-border/50 bg-background/60 backdrop-blur-xl flex-shrink-0"
                         >
-                            <div className="relative">
-                                <Input
-                                    type="text"
-                                    value={inputValue}
-                                    onChange={(e) => setInputValue(e.target.value)}
-                                    placeholder="Mesajınızı yazın..."
-                                    className="pl-10 pr-12 py-5 rounded-xl bg-background border-border/50 focus-visible:ring-2 focus-visible:ring-primary"
-                                />
-                                <MessageSquare className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                                <Button
+                            <div className="relative flex items-center gap-2">
+                                <div className="relative flex-1 min-w-0">
+                                    <Input
+                                        type="text"
+                                        value={inputValue}
+                                        onChange={(e) => setInputValue(e.target.value)}
+                                        placeholder="Mesajınızı yazın..."
+                                        className="pl-11 pr-3 py-6 rounded-2xl bg-background/90 border-border/50 focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:border-primary/50 transition-all w-full"
+                                    />
+                                    <MessageSquare className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+                                </div>
+                                <motion.button
                                     type="submit"
-                                    size="icon"
-                                    className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full bg-primary hover:bg-primary/90"
+                                    disabled={!inputValue.trim()}
+                                    whileHover={{ scale: 1.05 }}
+                                    whileTap={{ scale: 0.95 }}
+                                    className="h-11 w-11 flex-shrink-0 rounded-xl bg-primary hover:bg-primary/90 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center transition-all"
                                 >
-                                    <Send className="h-4 w-4" />
+                                    <Send className="h-4 w-4 text-white" />
                                     <span className="sr-only">Gönder</span>
-                                </Button>
+                                </motion.button>
                             </div>
                         </form>
                     </motion.div>

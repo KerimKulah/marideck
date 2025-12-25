@@ -12,12 +12,12 @@ import { UserDto } from './dto/user.dto';
 
 @Controller('users')
 @UseGuards(JwtGuard, RolesGuard)
-@Roles('admin')
 export class UserController {
   constructor(private readonly userService: UserService) { }
 
   //CREATE USER
   @Post()
+  @Roles('admin')
   @HttpCode(201)
   async createUser(@Body() createUserDto: CreateUserDto): Promise<{ message: string }> {
     return this.userService.create(createUserDto);
@@ -25,6 +25,7 @@ export class UserController {
 
   // DELETE USER
   @Delete(':id')
+  @Roles('admin')
   @HttpCode(204)
   async remove(@Param('id', ParseIntPipe) id: number): Promise<{ message: string }> {
     return this.userService.delete(id);
@@ -32,6 +33,7 @@ export class UserController {
 
   // GET ALL USER DTO with pagination and search
   @Get()
+  @Roles('admin', 'employee')
   @HttpCode(200)
   async findAll(
     @Query('page') page?: number,
@@ -53,6 +55,7 @@ export class UserController {
 
   //GET USER
   @Get(':id')
+  @Roles('admin')
   @HttpCode(200)
   async findOne(@Param('id', ParseIntPipe) id: number): Promise<UserDto> {
     return this.userService.getUserDto(id);
@@ -60,6 +63,7 @@ export class UserController {
 
   //DISABLE USER
   @Put(':id/disable')
+  @Roles('admin')
   @HttpCode(204)
   async disableUser(@Param('id', ParseIntPipe) id: number): Promise<{ message: string }> {
     return this.userService.disableUser(id);
@@ -67,6 +71,7 @@ export class UserController {
 
   //ENABLE USER
   @Put(':id/enable')
+  @Roles('admin')
   @HttpCode(204)
   async enableUser(@Param('id', ParseIntPipe) id: number): Promise<{ message: string }> {
     return this.userService.enableUser(id);
@@ -74,6 +79,7 @@ export class UserController {
 
   //HARD DELETE
   @Delete(':id/hard-delete')
+  @Roles('admin')
   @HttpCode(204)
   async hardDelete(@Param('id', ParseIntPipe) id: number): Promise<{ message: string }> {
     return this.userService.hardDelete(id);
@@ -81,6 +87,7 @@ export class UserController {
 
   //UPDATE USER
   @Put(':id')
+  @Roles('admin')
   @HttpCode(200)
   async updateUser(@Param('id', ParseIntPipe) id: number, @Body() updateUserDto: UpdateUserDto): Promise<{ message: string }> {
     return this.userService.updateUser(id, updateUserDto);
@@ -88,6 +95,7 @@ export class UserController {
 
   //UPDATE USER ROLE
   @Put(':id/role')
+  @Roles('admin')
   @HttpCode(200)
   async changeUserRole(@Param('id', ParseIntPipe) id: number, @Body() updateUserRoleDto: UpdateUserRoleDto): Promise<{ message: string }> {
     return this.userService.updateUserRole(id, updateUserRoleDto);
