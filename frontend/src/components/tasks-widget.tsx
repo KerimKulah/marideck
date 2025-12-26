@@ -3,6 +3,7 @@
 import { useEffect } from "react"
 import { CheckCircle, Clock, AlertCircle } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { ScrollArea } from "@/components/ui/scroll-area"
 import Link from "next/link"
 import { useDispatch, useSelector } from "react-redux"
 import { AppDispatch, RootState } from "@/redux/store"
@@ -61,47 +62,51 @@ export const TasksWidget = () => {
             <CardHeader>
                 <div className="flex items-center space-x-2">
                     <CheckCircle className="h-5 w-5 text-primary" />
-                    <CardTitle className="text-lg">Görevler</CardTitle>
+                    <CardTitle className="text-lg">Görevlerim</CardTitle>
                 </div>
                 <div className="h-[1px] w-full bg-border mt-3" />
             </CardHeader>
-            <CardContent>
-                <div className="space-y-2">
-                    {loading ? (
-                        <div className="flex justify-center py-4">
-                            <MiniLoading />
-                        </div>
-                    ) : tasks.length === 0 ? (
-                        <div className="text-center py-4 text-gray-500">
-                            Görev bulunamadı
-                        </div>
-                    ) : (
-                        <ul className="space-y-1">
-                            {tasks.map((task) => (
-                                <li key={task.id} className="flex items-start justify-between p-1 rounded-lg hover:bg-gray-50 cursor-pointer">
-                                    <div className="flex items-start gap-3">
-                                        <div className="mt-0.5">
-                                            {getStatusIcon(task.status)}
+            <CardContent className="p-0">
+                <ScrollArea className="h-[165px] px-4">
+                    <div className="space-y-2 pb-2">
+                        {loading ? (
+                            <div className="flex justify-center py-4">
+                                <MiniLoading />
+                            </div>
+                        ) : tasks.length === 0 ? (
+                            <div className="text-center py-4 text-gray-500">
+                                Görev bulunamadı
+                            </div>
+                        ) : (
+                            <ul className="space-y-1">
+                                {tasks.map((task) => (
+                                    <li key={task.id} className="flex items-start justify-between p-2 rounded-lg hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0">
+                                        <div className="flex items-start gap-3">
+                                            <div className="mt-0.5">
+                                                {getStatusIcon(task.status)}
+                                            </div>
+                                            <div>
+                                                <p className="text-sm font-medium">{task.title}</p>
+                                                {task.dueDate && (
+                                                    <p className="text-xs text-gray-500">
+                                                        Son Tarih: {new Date(task.dueDate).toLocaleDateString('tr-TR')}
+                                                    </p>
+                                                )}
+                                            </div>
                                         </div>
-                                        <div>
-                                            <p className="text-sm font-medium">{task.title}</p>
-                                            {task.dueDate && (
-                                                <p className="text-xs text-gray-500">
-                                                    Son Tarih: {new Date(task.dueDate).toLocaleDateString('tr-TR')}
-                                                </p>
-                                            )}
-                                        </div>
-                                    </div>
-                                    <span className={`text-xs px-2 py-1 rounded-full ${getPriorityColor(task.priority)}`}>
-                                        {getPriorityLabel(task.priority)}
-                                    </span>
-                                </li>
-                            ))}
-                        </ul>
-                    )}
+                                        <span className={`text-xs px-2 py-1 rounded-full ${getPriorityColor(task.priority)}`}>
+                                            {getPriorityLabel(task.priority)}
+                                        </span>
+                                    </li>
+                                ))}
+                            </ul>
+                        )}
+                    </div>
+                </ScrollArea>
+                <div className="px-4 pb-4 pt-2 border-t border-gray-200">
                     <Link
                         href="/tasks"
-                        className="w-full mt-2 text-sm text-blue-600 hover:text-blue-800 font-medium flex items-center justify-center gap-1"
+                        className="w-full text-sm text-blue-600 hover:text-blue-800 font-medium flex items-center justify-center gap-1"
                     >
                         Tüm Görevleri Görüntüle →
                     </Link>
