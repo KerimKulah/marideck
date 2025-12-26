@@ -1,6 +1,6 @@
 "use client"
 
-import { Search, Plus, AlertCircle, CheckCircle2, Clock, Calendar as CalendarIcon, MoreHorizontal, Filter, Grid3x3, Pencil, Trash2, CheckCircle, AlertTriangle, User, Briefcase, List, Ship, Users, Mail, Phone, Anchor, ClipboardList, CheckSquare } from "lucide-react"
+import { Search, Plus, AlertCircle, CheckCircle2, Clock, Calendar as CalendarIcon, MoreHorizontal, Filter, Grid3x3, Pencil, Trash2, CheckCircle, AlertTriangle, User, Briefcase, List, Ship, Users, Mail, Phone, Anchor, ClipboardList, CheckSquare, CircleDot, TrendingUp, Minus, TrendingDown, CircleDashed, CircleFadingArrowUp, CircleCheck } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -38,9 +38,24 @@ const statusIcons = {
 };
 
 const priorityBadges = {
-    high: <Badge variant="destructive">Yüksek</Badge>,
-    medium: <Badge variant="outline" className="border-amber-500 text-amber-600">Orta</Badge>,
-    low: <Badge variant="outline">Düşük</Badge>
+    high: (
+        <Badge className="bg-gradient-to-r from-red-50 to-red-100/50 dark:from-red-950/30 dark:to-red-900/20 text-red-700 dark:text-red-300 border-0 shadow-sm font-semibold px-3 py-1 rounded-full flex items-center gap-1.5">
+            <TrendingUp className="h-3 w-3" />
+            <span>Yüksek</span>
+        </Badge>
+    ),
+    medium: (
+        <Badge className="bg-gradient-to-r from-amber-50 to-amber-100/50 dark:from-amber-950/30 dark:to-amber-900/20 text-amber-700 dark:text-amber-300 border-0 shadow-sm font-semibold px-3 py-1 rounded-full flex items-center gap-1.5">
+            <Minus className="h-3 w-3" />
+            <span>Orta</span>
+        </Badge>
+    ),
+    low: (
+        <Badge className="bg-gradient-to-r from-emerald-50 to-emerald-100/50 dark:from-emerald-950/30 dark:to-emerald-900/20 text-emerald-700 dark:text-emerald-300 border-0 shadow-sm font-semibold px-3 py-1 rounded-full flex items-center gap-1.5">
+            <TrendingDown className="h-3 w-3" />
+            <span>Düşük</span>
+        </Badge>
+    )
 };
 
 const formatDate = (dateString?: string) => {
@@ -293,9 +308,55 @@ export default function TasksPage() {
         }
     }
 
-    // Get due date color based on date
-    const getDueDateColor = (dueDate?: string) => {
-        if (!dueDate) return 'text-muted-foreground'
+    // Get icon color (green for completed, red if overdue, normal otherwise)
+    const getIconColor = (dueDate?: string, status?: TaskStatus) => {
+        if (status === 'completed') {
+            return 'text-emerald-600 dark:text-emerald-500'
+        }
+
+        // Eğer tarih geçtiyse kırmızı
+        if (dueDate) {
+            const today = new Date()
+            today.setHours(0, 0, 0, 0)
+            const due = new Date(dueDate)
+            due.setHours(0, 0, 0, 0)
+            const diffTime = due.getTime() - today.getTime()
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+
+            if (diffDays < 0) {
+                return 'text-red-700 dark:text-red-300'
+            }
+        }
+
+        return 'text-foreground'
+    }
+
+    // Get date text color (green for completed, red if overdue, normal otherwise)
+    const getDateTextColor = (dueDate?: string, status?: TaskStatus) => {
+        if (status === 'completed') {
+            return 'text-emerald-600 dark:text-emerald-500'
+        }
+
+        // Eğer tarih geçtiyse kırmızı
+        if (dueDate) {
+            const today = new Date()
+            today.setHours(0, 0, 0, 0)
+            const due = new Date(dueDate)
+            due.setHours(0, 0, 0, 0)
+            const diffTime = due.getTime() - today.getTime()
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+
+            if (diffDays < 0) {
+                return 'text-red-700 dark:text-red-300'
+            }
+        }
+
+        return 'text-foreground'
+    }
+
+    // Get color for the days info in parentheses (only this part gets colored)
+    const getDaysInfoColor = (dueDate?: string, status?: TaskStatus) => {
+        if (!dueDate || status === 'completed') return ''
 
         const today = new Date()
         today.setHours(0, 0, 0, 0)
@@ -306,27 +367,83 @@ export default function TasksPage() {
 
         if (diffDays < 0) {
             // Geçmiş - Kırmızı
-            return 'text-red-500 font-semibold'
+            return 'text-red-700 dark:text-red-300'
         } else if (diffDays <= 3) {
-            // 3 gün veya daha az - Sarı
-            return 'text-yellow-500 font-medium'
+            // 3 gün veya daha az kaldı - Turuncu
+            return 'text-orange-600 dark:text-orange-400'
+        } else if (diffDays <= 7) {
+            // 4-7 gün kaldı - Yeşil
+            return 'text-emerald-600 dark:text-emerald-500'
         } else {
-            // Normal - Yeşil
-            return 'text-green-500'
+            // 7+ gün kaldı - Normal renk (renk yok)
+            return ''
         }
     }
 
-    // Get status icon and color
-    const getStatusIcon = (status: TaskStatus) => {
+    // Get due date with days info (returns object with date and daysInfo for separate styling)
+    const getDueDateWithDays = (dueDate?: string, status?: TaskStatus) => {
+        if (!dueDate) return { date: '-', daysInfo: null }
+
+        // Eğer görev tamamlandıysa, "Tamamlandı" göster
+        if (status === 'completed') {
+            return { date: 'Tamamlandı', daysInfo: null }
+        }
+
+        const today = new Date()
+        today.setHours(0, 0, 0, 0)
+        const due = new Date(dueDate)
+        due.setHours(0, 0, 0, 0)
+        const diffTime = due.getTime() - today.getTime()
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+
+        const formattedDate = formatDate(dueDate)
+
+        let daysInfo = null
+        if (diffDays < 0) {
+            // Geçmiş - göster
+            const daysPast = Math.abs(diffDays)
+            daysInfo = `(${daysPast} ${daysPast === 1 ? 'gün' : 'gün'} geçti)`
+        } else if (diffDays === 0) {
+            // Bugün - göster
+            daysInfo = '(Bugün)'
+        } else if (diffDays === 1) {
+            // Yarın - göster
+            daysInfo = '(Yarın)'
+        } else if (diffDays <= 7) {
+            // 2-7 gün kaldı - göster
+            daysInfo = `(${diffDays} gün kaldı)`
+        } else {
+            // 7+ gün kaldı - gösterme (normal tarih)
+            daysInfo = null
+        }
+
+        return { date: formattedDate, daysInfo }
+    }
+
+    // Get status icon with diamond shape (for main display)
+    const getStatusIcon = (status: TaskStatus, size: 'sm' | 'md' = 'md') => {
+        const iconSize = size === 'sm' ? 'h-4 w-4' : 'h-5 w-5'
+
         switch (status) {
             case 'completed':
-                return <CheckCircle2 className="h-5 w-5 text-foreground fill-green-500" />
+                // Yeşil CircleCheck
+                return (
+                    <CircleCheck className={`${iconSize} text-green-800`} />
+                )
             case 'in_progress':
-                return <Clock className="h-5 w-5 text-foreground fill-blue-500" />
+                // Mavi CircleFadingArrowUp (fill)
+                return (
+                    <CircleFadingArrowUp className={`${iconSize} text-blue-600`} />
+                )
             case 'pending':
-                return <AlertCircle className="h-5 w-5 text-foreground fill-yellow-500" />
+                // Gri CircleDashed (koyu ama rahat gözüken)
+                return (
+                    <CircleDashed className={`${iconSize} text-gray-600 dark:text-gray-400`} />
+                )
             default:
-                return <AlertCircle className="h-5 w-5 text-foreground fill-muted-foreground" />
+                return (
+                    <CircleDashed className={`${iconSize} text-muted-foreground`} />
+                )
         }
     }
 
@@ -528,13 +645,13 @@ export default function TasksPage() {
                                             setIsDetailModalOpen(true)
                                         }}
                                     >
-                                        <div className="flex items-center gap-2">
+                                        <div className="flex items-center gap-1.5">
                                             <DropdownMenu>
                                                 <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
                                                     <Button
                                                         variant="ghost"
                                                         size="sm"
-                                                        className="h-8 w-8 p-1.5 flex-shrink-0 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md transition-all duration-200 hover:scale-105 hover:shadow-sm border border-transparent hover:border-gray-300 dark:hover:border-gray-600"
+                                                        className="h-8 w-8 p-0 flex items-center justify-center flex-shrink-0 cursor-pointer hover:bg-gray-100  rounded-md transition-all duration-200 hover:scale-105 hover:shadow-sm border border-transparent hover:border-gray-300"
                                                     >
                                                         {getStatusIcon(task.status as TaskStatus)}
                                                     </Button>
@@ -545,7 +662,7 @@ export default function TasksPage() {
                                                         className={`cursor-pointer ${task.status === 'pending' ? 'bg-accent font-medium' : ''}`}
                                                     >
                                                         <div className="flex items-center gap-2 w-full">
-                                                            <AlertCircle className="h-4 w-4 text-foreground fill-yellow-500" />
+                                                            {getStatusIcon('pending', 'sm')}
                                                             <span>Bekliyor</span>
                                                         </div>
                                                     </DropdownMenuItem>
@@ -554,7 +671,7 @@ export default function TasksPage() {
                                                         className={`cursor-pointer ${task.status === 'in_progress' ? 'bg-accent font-medium' : ''}`}
                                                     >
                                                         <div className="flex items-center gap-2 w-full">
-                                                            <Clock className="h-4 w-4 text-foreground fill-blue-500" />
+                                                            {getStatusIcon('in_progress', 'sm')}
                                                             <span>Devam Ediyor</span>
                                                         </div>
                                                     </DropdownMenuItem>
@@ -563,7 +680,7 @@ export default function TasksPage() {
                                                         className={`cursor-pointer ${task.status === 'completed' ? 'bg-accent font-medium' : ''}`}
                                                     >
                                                         <div className="flex items-center gap-2 w-full">
-                                                            <CheckCircle2 className="h-4 w-4 text-foreground fill-green-500" />
+                                                            {getStatusIcon('completed', 'sm')}
                                                             <span>Tamamlandı</span>
                                                         </div>
                                                     </DropdownMenuItem>
@@ -573,12 +690,24 @@ export default function TasksPage() {
                                         </div>
                                         <div className="flex items-center gap-2 mt-1">
                                             {priorityBadges[task.priority as keyof typeof priorityBadges]}
-                                            {task.dueDate && (
-                                                <div className={`flex items-center gap-1 ${getDueDateColor(task.dueDate)}`}>
-                                                    <CalendarIcon className="h-3 w-3" />
-                                                    <span className="text-xs">{formatDate(task.dueDate)}</span>
-                                                </div>
-                                            )}
+                                            {task.dueDate && (() => {
+                                                const dateInfo = getDueDateWithDays(task.dueDate, task.status as TaskStatus)
+                                                const daysColor = getDaysInfoColor(task.dueDate, task.status as TaskStatus)
+                                                const iconColor = getIconColor(task.dueDate, task.status as TaskStatus)
+                                                const textColor = getDateTextColor(task.dueDate, task.status as TaskStatus)
+
+                                                return (
+                                                    <div className="flex items-center gap-1">
+                                                        <CalendarIcon className={`h-3 w-3 ${iconColor}`} />
+                                                        <span className={`text-xs ${textColor}`}>
+                                                            {dateInfo.date}
+                                                            {dateInfo.daysInfo && (
+                                                                <span className={daysColor}> {dateInfo.daysInfo}</span>
+                                                            )}
+                                                        </span>
+                                                    </div>
+                                                )
+                                            })()}
                                         </div>
                                     </div>
                                     <DropdownMenu>
@@ -613,16 +742,6 @@ export default function TasksPage() {
                                             <DropdownMenuItem
                                                 onClick={(e) => {
                                                     e.stopPropagation()
-                                                    handleMarkAsCompleted(task)
-                                                }}
-                                                disabled={task.status === 'completed'}
-                                            >
-                                                <CheckCircle className="mr-2 h-4 w-4" />
-                                                Tamamlandı Olarak İşaretle
-                                            </DropdownMenuItem>
-                                            <DropdownMenuItem
-                                                onClick={(e) => {
-                                                    e.stopPropagation()
                                                     handleDeleteClick(task)
                                                 }}
                                                 className="text-red-600 focus:text-red-600"
@@ -641,11 +760,11 @@ export default function TasksPage() {
                     <Table style={{ tableLayout: 'fixed', width: '100%' }}>
                         <TableHeader>
                             <TableRow>
-                                <TableHead className="w-64">Görev</TableHead>
+                                <TableHead className="w-48">Görev</TableHead>
+                                <TableHead className="w-36 hidden md:table-cell">Son Tarih</TableHead>
+                                <TableHead className="w-28 hidden xl:table-cell">Öncelik</TableHead>
                                 <TableHead className="w-40">Atanan Kişiler</TableHead>
                                 <TableHead className="w-48 hidden lg:table-cell">İlişkili</TableHead>
-                                <TableHead className="w-28 hidden xl:table-cell">Öncelik</TableHead>
-                                <TableHead className="w-36 hidden md:table-cell">Son Tarih</TableHead>
                                 <TableHead className="w-16">İşlemler</TableHead>
                             </TableRow>
                         </TableHeader>
@@ -661,6 +780,17 @@ export default function TasksPage() {
                                                 <Skeleton className="h-3 w-1/2" />
                                             </div>
                                         </TableCell>
+                                        {/* Son Tarih */}
+                                        <TableCell className="hidden md:table-cell">
+                                            <div className="flex items-center gap-2">
+                                                <Skeleton className="h-4 w-4 rounded" />
+                                                <Skeleton className="h-4 w-24" />
+                                            </div>
+                                        </TableCell>
+                                        {/* Öncelik */}
+                                        <TableCell className="hidden xl:table-cell">
+                                            <Skeleton className="h-6 w-16 rounded-full" />
+                                        </TableCell>
                                         {/* Atanan Kişiler */}
                                         <TableCell>
                                             <div className="flex items-center -space-x-2">
@@ -674,17 +804,6 @@ export default function TasksPage() {
                                             <div className="flex flex-col gap-1">
                                                 <Skeleton className="h-3 w-24" />
                                                 <Skeleton className="h-3 w-20" />
-                                            </div>
-                                        </TableCell>
-                                        {/* Öncelik */}
-                                        <TableCell className="hidden xl:table-cell">
-                                            <Skeleton className="h-6 w-16 rounded-full" />
-                                        </TableCell>
-                                        {/* Son Tarih */}
-                                        <TableCell className="hidden md:table-cell">
-                                            <div className="flex items-center gap-2">
-                                                <Skeleton className="h-4 w-4 rounded" />
-                                                <Skeleton className="h-4 w-24" />
                                             </div>
                                         </TableCell>
                                         {/* İşlemler */}
@@ -702,15 +821,15 @@ export default function TasksPage() {
                             ) : (
                                 tasks.map((task) => (
                                     <TableRow key={task.id} className="hover:bg-muted/50">
-                                        <TableCell className="min-w-[200px]">
+                                        <TableCell className="min-w-[150px]">
                                             <div className="flex flex-col items-start gap-1">
-                                                <div className="flex items-center gap-2 w-full">
+                                                <div className="flex items-center gap-1.5 w-full">
                                                     <DropdownMenu>
                                                         <DropdownMenuTrigger asChild>
                                                             <Button
                                                                 variant="ghost"
                                                                 size="sm"
-                                                                className="h-8 w-8 p-1.5 flex-shrink-0 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md transition-all duration-200 hover:scale-105 hover:shadow-sm border border-transparent hover:border-gray-300 dark:hover:border-gray-600"
+                                                                className="h-8 w-8 p-0 flex items-center justify-center flex-shrink-0 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md transition-all duration-200 hover:scale-105 hover:shadow-sm border border-transparent hover:border-gray-300 dark:hover:border-gray-600"
                                                             >
                                                                 {getStatusIcon(task.status as TaskStatus)}
                                                             </Button>
@@ -721,7 +840,7 @@ export default function TasksPage() {
                                                                 className={`cursor-pointer ${task.status === 'pending' ? 'bg-accent font-medium' : ''}`}
                                                             >
                                                                 <div className="flex items-center gap-2 w-full">
-                                                                    <AlertCircle className="h-4 w-4 text-foreground fill-yellow-500" />
+                                                                    {getStatusIcon('pending', 'sm')}
                                                                     <span>Bekliyor</span>
                                                                 </div>
                                                             </DropdownMenuItem>
@@ -730,7 +849,7 @@ export default function TasksPage() {
                                                                 className={`cursor-pointer ${task.status === 'in_progress' ? 'bg-accent font-medium' : ''}`}
                                                             >
                                                                 <div className="flex items-center gap-2 w-full">
-                                                                    <Clock className="h-4 w-4 text-foreground fill-blue-500" />
+                                                                    {getStatusIcon('in_progress', 'sm')}
                                                                     <span>Devam Ediyor</span>
                                                                 </div>
                                                             </DropdownMenuItem>
@@ -739,7 +858,7 @@ export default function TasksPage() {
                                                                 className={`cursor-pointer ${task.status === 'completed' ? 'bg-accent font-medium' : ''}`}
                                                             >
                                                                 <div className="flex items-center gap-2 w-full">
-                                                                    <CheckCircle2 className="h-4 w-4 text-foreground fill-green-500" />
+                                                                    {getStatusIcon('completed', 'sm')}
                                                                     <span>Tamamlandı</span>
                                                                 </div>
                                                             </DropdownMenuItem>
@@ -753,6 +872,29 @@ export default function TasksPage() {
                                                     </span>
                                                 )}
                                             </div>
+                                        </TableCell>
+                                        <TableCell className="min-w-[120px] hidden md:table-cell">
+                                            {(() => {
+                                                const dateInfo = getDueDateWithDays(task.dueDate, task.status as TaskStatus)
+                                                const daysColor = getDaysInfoColor(task.dueDate, task.status as TaskStatus)
+                                                const iconColor = getIconColor(task.dueDate, task.status as TaskStatus)
+                                                const textColor = getDateTextColor(task.dueDate, task.status as TaskStatus)
+
+                                                return (
+                                                    <div className="flex items-center gap-2">
+                                                        <CalendarIcon className={`h-4 w-4 shrink-0 ${iconColor}`} />
+                                                        <span className={`text-sm truncate ${textColor}`}>
+                                                            {dateInfo.date}
+                                                            {dateInfo.daysInfo && (
+                                                                <span className={daysColor}> {dateInfo.daysInfo}</span>
+                                                            )}
+                                                        </span>
+                                                    </div>
+                                                )
+                                            })()}
+                                        </TableCell>
+                                        <TableCell className="min-w-[100px] hidden xl:table-cell">
+                                            {priorityBadges[task.priority as keyof typeof priorityBadges]}
                                         </TableCell>
                                         <TableCell className="min-w-[120px]">
                                             <TooltipProvider delayDuration={0}>
@@ -825,15 +967,6 @@ export default function TasksPage() {
                                                 )}
                                             </div>
                                         </TableCell>
-                                        <TableCell className="min-w-[100px] hidden xl:table-cell">
-                                            {priorityBadges[task.priority as keyof typeof priorityBadges]}
-                                        </TableCell>
-                                        <TableCell className="min-w-[120px] hidden md:table-cell">
-                                            <div className="flex items-center gap-2">
-                                                <CalendarIcon className={`h-4 w-4 shrink-0 ${getDueDateColor(task.dueDate)}`} />
-                                                <span className={`text-sm truncate ${getDueDateColor(task.dueDate)}`}>{formatDate(task.dueDate)}</span>
-                                            </div>
-                                        </TableCell>
                                         <TableCell>
                                             <DropdownMenu>
                                                 <DropdownMenuTrigger asChild>
@@ -858,16 +991,6 @@ export default function TasksPage() {
                                                     }}>
                                                         <Pencil className="mr-2 h-4 w-4" />
                                                         Düzenle
-                                                    </DropdownMenuItem>
-                                                    <DropdownMenuItem
-                                                        onClick={(e) => {
-                                                            e.stopPropagation()
-                                                            handleMarkAsCompleted(task)
-                                                        }}
-                                                        disabled={task.status === 'completed'}
-                                                    >
-                                                        <CheckCircle className="mr-2 h-4 w-4" />
-                                                        Tamamlandı Olarak İşaretle
                                                     </DropdownMenuItem>
                                                     <DropdownMenuItem
                                                         onClick={(e) => {
