@@ -391,16 +391,16 @@ export function WeatherWidget() {
                         {getWeatherIcon(weather.condition, weather.description)}
                     </div>
                     <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                            <div className="text-sm font-semibold text-gray-900 truncate">{weather.location}</div>
-                            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                        <div className="flex items-center gap-1.5 flex-wrap mt-2">
+                            <div className="text-sm font-semibold text-gray-900  truncate">{weather.location}</div>
+                            <div className="flex items-center gap-1 text-xs text-muted-foreground ">
                                 <Navigation className="w-3 h-3" />
                                 <span className="font-mono">
                                     {weather.latitude.toFixed(4)}, {weather.longitude.toFixed(4)}
                                 </span>
                             </div>
                         </div>
-                        <div className="flex items-center gap-1.5 mt-1">
+                        <div className="flex items-center gap-2">
                             <div className="text-xl font-bold text-gray-900">{weather.temperature}°C</div>
                             <div className="text-xs text-muted-foreground mt-1.5">(Hissedilen: {weather.feelsLike}°C)</div>
                         </div>
