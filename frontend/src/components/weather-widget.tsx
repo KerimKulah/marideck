@@ -1,8 +1,7 @@
 "use client"
 import React, { useState, useEffect } from 'react';
-import { Cloud, Sun, CloudRain, CloudSnow, Compass, Thermometer, Droplets, Eye, RefreshCw, MapPin, Wind } from 'lucide-react';
-import { Arrow } from '@radix-ui/react-tooltip';
-import { CardHeader, CardTitle } from './ui/card';
+import { Compass, Thermometer, Droplets, Eye, RefreshCw, MapPin, Wind, Navigation } from 'lucide-react';
+import { Card, CardHeader, CardTitle, CardContent } from './ui/card';
 
 interface WeatherData {
     location: string;
@@ -15,6 +14,8 @@ interface WeatherData {
     description: string;
     pressure: number;
     feelsLike: number;
+    latitude: number;
+    longitude: number;
 }
 
 
@@ -23,14 +24,32 @@ export function WeatherWidget() {
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
     const [city, setCity] = useState<string>('Istanbul');
+    const [lastUpdateTime, setLastUpdateTime] = useState<Date | null>(null);
 
     const fetchWeather = async (cityName = city) => {
         setLoading(true);
         setError(null);
 
         try {
+            // Koordinat formatı kontrolü (lat, lon veya lat,lon)
+            const coordPattern = /^-?\d+\.?\d*\s*,\s*-?\d+\.?\d*$/;
+            const isCoordinate = coordPattern.test(cityName.trim());
+
+            let apiUrl: string;
+            let cacheKey: string;
+
+            if (isCoordinate) {
+                // Koordinat ile arama
+                const [lat, lon] = cityName.trim().split(',').map(coord => coord.trim());
+                apiUrl = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${process.env.NEXT_PUBLIC_OPENWEATHERMAP_API_KEY}&units=metric&lang=tr`;
+                cacheKey = `weather_${lat}_${lon}`;
+            } else {
+                // Şehir adı ile arama
+                apiUrl = `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(cityName)}&appid=${process.env.NEXT_PUBLIC_OPENWEATHERMAP_API_KEY}&units=metric&lang=tr`;
+                cacheKey = `weather_${cityName}`;
+            }
+
             // Cache kontrolü
-            const cacheKey = `weather_${cityName}`;
             const cachedData = localStorage.getItem(cacheKey);
             const cacheTime = localStorage.getItem(`${cacheKey}_time`);
 
@@ -39,15 +58,14 @@ export function WeatherWidget() {
                 // 10 dakika içindeyse cache'den kullan
                 if (timeDiff < 600000) {
                     setWeather(JSON.parse(cachedData));
+                    setLastUpdateTime(new Date(parseInt(cacheTime)));
                     setLoading(false);
                     return;
                 }
             }
 
-            // OpenWeatherMap ücretsiz API kullanıyoruz
-            const response = await fetch(
-                `https://api.openweathermap.org/data/2.5/weather?q=${cityName}&appid=${process.env.NEXT_PUBLIC_OPENWEATHERMAP_API_KEY}&units=metric&lang=tr`
-            );
+            // OpenWeatherMap API isteği
+            const response = await fetch(apiUrl);
 
             if (!response.ok) {
                 setError('Hava durumu bilgisi alınamadı.');
@@ -67,7 +85,9 @@ export function WeatherWidget() {
                 windDirection: data.wind.deg,
                 description: data.weather[0].description,
                 pressure: data.main.pressure,
-                feelsLike: Math.round(data.main.feels_like)
+                feelsLike: Math.round(data.main.feels_like),
+                latitude: data.coord.lat,
+                longitude: data.coord.lon
             };
 
             // Cache'e kaydet
@@ -75,6 +95,7 @@ export function WeatherWidget() {
             localStorage.setItem(`${cacheKey}_time`, Date.now().toString());
 
             setWeather(weatherData);
+            setLastUpdateTime(new Date());
 
         } catch (err) {
             setError('Gerçek hava durumu verisi alınamadı.');
@@ -98,6 +119,7 @@ export function WeatherWidget() {
             const timeDiff = Date.now() - parseInt(cacheTime);
             if (timeDiff < 600000) { // 10 dakika
                 setWeather(JSON.parse(cachedData));
+                setLastUpdateTime(new Date(parseInt(cacheTime)));
                 setLoading(false);
                 return;
             }
@@ -106,22 +128,184 @@ export function WeatherWidget() {
         fetchWeather();
     }, []);
 
-    const getWeatherIcon = (condition: string) => {
-        switch (condition) {
+    const getWeatherIcon = (condition: string, description?: string) => {
+        // Gün/gece kontrolü için saat
+        const hour = new Date().getHours();
+        const isDay = hour >= 6 && hour < 20;
+        const iconClassName = "w-25 h-25";
+
+        // OpenWeatherMap condition mapping
+        switch (condition.toLowerCase()) {
             case 'clear':
-                return <Sun className="w-10 h-10" />;
+                return (
+                    <img
+                        src={isDay ? "/weather-icon/day.svg" : "/weather-icon/night.svg"}
+                        alt="Açık"
+                        className={iconClassName}
+                    />
+                );
+
             case 'clouds':
-                return <Cloud className="w-10 h-10" />;
+                // Açıklamaya göre bulut yoğunluğu
+                const desc = description?.toLowerCase() || '';
+                if (desc.includes('few') || desc.includes('az')) {
+                    return (
+                        <img
+                            src={isDay ? "/weather-icon/cloudy-day-1.svg" : "/weather-icon/cloudy-night-1.svg"}
+                            alt="Az Bulutlu"
+                            className={iconClassName}
+                        />
+                    );
+                } else if (desc.includes('scattered') || desc.includes('dağınık')) {
+                    return (
+                        <img
+                            src={isDay ? "/weather-icon/cloudy-day-2.svg" : "/weather-icon/cloudy-night-2.svg"}
+                            alt="Dağınık Bulutlu"
+                            className={iconClassName}
+                        />
+                    );
+                } else {
+                    return (
+                        <img
+                            src={isDay ? "/weather-icon/cloudy-day-3.svg" : "/weather-icon/cloudy-night-3.svg"}
+                            alt="Bulutlu"
+                            className={iconClassName}
+                        />
+                    );
+                }
+
             case 'rain':
+                // Yağmur şiddetine göre
+                const rainDesc = description?.toLowerCase() || '';
+                if (rainDesc.includes('light') || rainDesc.includes('hafif')) {
+                    return (
+                        <img
+                            src="/weather-icon/rainy-1.svg"
+                            alt="Hafif Yağmurlu"
+                            className={iconClassName}
+                        />
+                    );
+                } else if (rainDesc.includes('moderate') || rainDesc.includes('orta')) {
+                    return (
+                        <img
+                            src="/weather-icon/rainy-2.svg"
+                            alt="Orta Şiddetli Yağmur"
+                            className={iconClassName}
+                        />
+                    );
+                } else {
+                    return (
+                        <img
+                            src="/weather-icon/rainy-3.svg"
+                            alt="Şiddetli Yağmur"
+                            className={iconClassName}
+                        />
+                    );
+                }
+
             case 'drizzle':
-                return <CloudRain className="w-10 h-10" />;
+                return (
+                    <img
+                        src="/weather-icon/rainy-1.svg"
+                        alt="Çiseleyen Yağmur"
+                        className={iconClassName}
+                    />
+                );
+
             case 'snow':
-                return <CloudSnow className="w-10 h-10" />;
+                // Kar şiddetine göre
+                const snowDesc = description?.toLowerCase() || '';
+                if (snowDesc.includes('light') || snowDesc.includes('hafif')) {
+                    return (
+                        <img
+                            src="/weather-icon/snowy-1.svg"
+                            alt="Hafif Karlı"
+                            className={iconClassName}
+                        />
+                    );
+                } else if (snowDesc.includes('moderate') || snowDesc.includes('orta')) {
+                    return (
+                        <img
+                            src="/weather-icon/snowy-2.svg"
+                            alt="Orta Şiddetli Kar"
+                            className={iconClassName}
+                        />
+                    );
+                } else {
+                    return (
+                        <img
+                            src="/weather-icon/snowy-3.svg"
+                            alt="Yoğun Kar"
+                            className={iconClassName}
+                        />
+                    );
+                }
+
+            case 'thunderstorm':
+                return (
+                    <img
+                        src="/weather-icon/thunder.svg"
+                        alt="Fırtına"
+                        className={iconClassName}
+                    />
+                );
+
             case 'mist':
             case 'fog':
-                return <Cloud className="w-10 h-10" />;
+                return (
+                    <img
+                        src={isDay ? "/weather-icon/cloudy-day-3.svg" : "/weather-icon/cloudy-night-3.svg"}
+                        alt="Sis"
+                        className={iconClassName}
+                    />
+                );
+
+            case 'haze':
+                return (
+                    <img
+                        src={isDay ? "/weather-icon/cloudy-day-2.svg" : "/weather-icon/cloudy-night-2.svg"}
+                        alt="Pus"
+                        className={iconClassName}
+                    />
+                );
+
+            case 'dust':
+            case 'sand':
+            case 'ash':
+                return (
+                    <img
+                        src="/weather-icon/cloudy.svg"
+                        alt="Toz/Kül"
+                        className={iconClassName}
+                    />
+                );
+
+            case 'squall':
+                return (
+                    <img
+                        src="/weather-icon/thunder.svg"
+                        alt="Şiddetli Rüzgar"
+                        className={iconClassName}
+                    />
+                );
+
+            case 'tornado':
+                return (
+                    <img
+                        src="/weather-icon/thunder.svg"
+                        alt="Tornado"
+                        className={iconClassName}
+                    />
+                );
+
             default:
-                return <Sun className="w-10 h-10" />;
+                return (
+                    <img
+                        src={isDay ? "/weather-icon/day.svg" : "/weather-icon/night.svg"}
+                        alt="Bilinmeyen"
+                        className={iconClassName}
+                    />
+                );
         }
     };
 
@@ -142,98 +326,120 @@ export function WeatherWidget() {
 
     if (loading) {
         return (
-            <div className="bg-white rounded-lg border shadow-sm p-6 max-w-md mx-auto">
-                <div className="flex items-center justify-center h-40">
-                    <RefreshCw className="w-8 h-8 text-black animate-spin" />
-                    <span className=" text-black ml-2">Hava durumu yükleniyor...</span>
-                </div>
-            </div>
+            <Card className="h-full">
+                <CardContent className="flex items-center justify-center h-full">
+                    <div className="flex items-center space-x-2">
+                        <RefreshCw className="w-5 h-5 text-primary animate-spin" />
+                        <span className="text-sm text-muted-foreground">Yükleniyor...</span>
+                    </div>
+                </CardContent>
+            </Card>
         );
     }
 
     if (!weather) {
         return (
-            <div className="bg-gradient-to-br from-red-400 to-red-600 rounded-lg border shadow-sm p-6 text-white max-w-md mx-auto">
-                <div className="text-center">
-                    <h2 className="text-xl font-bold mb-2">Hata</h2>
-                    <p>Hava durumu bilgisi alınamadı.</p>
+            <Card className="h-full">
+                <CardContent className="flex flex-col items-center justify-center h-full text-center">
+                    <p className="text-sm text-muted-foreground mb-3">Hava durumu bilgisi alınamadı.</p>
                     <button
                         onClick={() => fetchWeather()}
-                        className="mt-4 bg-white/30 hover:bg-white/40 transition-colors duration-200 rounded-lg px-4 py-2 cursor-pointer"
+                        className="text-sm text-primary hover:underline"
                     >
                         Tekrar Dene
                     </button>
-                </div>
-            </div>
+                </CardContent>
+            </Card>
         );
     }
 
     return (
-        <div className="bg-white p-4 rounded-lg border shadow-sm w-full">
-            <div className="pb-3">
-                <div className="flex items-center space-x-2 mt-2">
-                    <Thermometer className="h-5 w-5 text-primary" />
-                    <h2 className="text-lg font-medium">Hava Durumu</h2>
+        <Card className="h-full !py-3 !gap-3">
+            <CardHeader className="!px-4 !pb-1 pt-2">
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                        <Thermometer className="h-5 w-5 text-primary" />
+                        <CardTitle className="text-[16px]">Hava Durumu</CardTitle>
+                    </div>
+                    {lastUpdateTime && (
+                        <div className="text-xs text-muted-foreground">
+                            (Son Güncellenme: {lastUpdateTime.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })})
+                        </div>
+                    )}
                 </div>
-                <div className="h-[1px] w-full bg-border mt-4" />
-            </div>
-            <div className="mb-1">
-                <div className="flex items-center space-x-1 mb-1">
+                <div className="h-[1px] w-full bg-border" />
+            </CardHeader>
+            <CardContent className="space-y-2 !px-4 !pt-0">
+                {/* City Input */}
+                <div>
                     <input
                         type="text"
-                        placeholder="Şehir adı..."
-                        className="bg-gray-50 rounded-lg px-2 py-1 text-xs text-black placeholder-gray-400 border border-gray-200 outline-none flex-1 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="Şehir adı veya koordinat (örn: 41.0082, 28.9784)"
+                        className="w-full bg-gray-50 rounded-md px-3 py-1.5 text-sm border border-gray-200 outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
                         onKeyUp={handleCityChange}
                         onBlur={(e) => setCity(e.target.value)}
                         aria-label="Şehir adı"
                     />
+                    {error && (
+                        <p className="text-red-500 text-xs mt-1">{error}</p>
+                    )}
                 </div>
-                {error && (
-                    <p className="text-red-500 text-[11px] mt-0.5">{error}</p>
-                )}
-            </div>
 
-            <div className="border-b pb-2 pt-1 flex items-center justify-between">
-                <div className="flex items-center space-x-2">
-                    {getWeatherIcon(weather.condition)}
-                    <div className="flex flex-col space-y-0">
-                        <div className="text-sm font-bold text-gray-900">{weather.location} </div>
-                        <div className="text-sm font-bold text-gray-900">{weather.temperature}°C</div>
-                        <div className="text-xs text-gray-600 capitalize">{weather.description}, Hissedilen: {weather.feelsLike}°C </div>
+                {/* Main Weather Info */}
+                <div className="flex items-center gap-3 border-b -mt-5">
+                    <div className="flex-shrink-0 mt-2">
+                        {getWeatherIcon(weather.condition, weather.description)}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                            <div className="text-sm font-semibold text-gray-900 truncate">{weather.location}</div>
+                            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                                <Navigation className="w-3 h-3" />
+                                <span className="font-mono">
+                                    {weather.latitude.toFixed(4)}, {weather.longitude.toFixed(4)}
+                                </span>
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-1.5 mt-1">
+                            <div className="text-xl font-bold text-gray-900">{weather.temperature}°C</div>
+                            <div className="text-xs text-muted-foreground mt-1.5">(Hissedilen: {weather.feelsLike}°C)</div>
+                        </div>
+                        <div className="text-xs text-muted-foreground mt-1 capitalize">
+                            {weather.description}
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            {/* Detaylı bilgiler */}
-            <div className="grid grid-cols-2 gap-2 mt-3">
-                <div className="flex items-center space-x-1.5">
-                    <Droplets className="w-3.5 h-3.5 text-black" />
-                    <span className="text-xs text-gray-600">Nem: {weather.humidity}%</span>
+                {/* Detaylı bilgiler */}
+                <div className="grid grid-cols-2 gap-2">
+                    <div className="flex items-center gap-1.5">
+                        <Droplets className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                        <span className="text-xs text-muted-foreground truncate">Nem: {weather.humidity}%</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                        <Wind className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                        <span className="text-xs text-muted-foreground truncate">Rüzgar: {weather.windSpeed} km/sa</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                        <Eye className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                        <span className="text-xs text-muted-foreground truncate">Görüş: {weather.visibility} km</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                        <Compass className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                        <span className="text-xs text-muted-foreground truncate">Yön: {getWindDirection(weather.windDirection)}</span>
+                    </div>
                 </div>
-                <div className="flex items-center space-x-1.5">
-                    <Wind className="w-3.5 h-3.5 text-black" />
-                    <span className="text-xs text-gray-600">Rüzgar: {weather.windSpeed} km/sa</span>
-                </div>
-                <div className="flex items-center space-x-1.5">
-                    <Eye className="w-3.5 h-3.5 text-black" />
-                    <span className="text-xs text-gray-600">Görüş: {weather.visibility} km</span>
-                </div>
-                <div className="flex items-center space-x-1.5">
-                    <Compass className="w-3.5 h-3.5 text-black" />
-                    <span className="text-xs text-gray-600">Yön: {getWindDirection(weather.windDirection)}</span>
-                </div>
-            </div>
 
-            <div className="mt-5 flex justify-end">
+                {/* Update Button */}
                 <button
                     onClick={() => fetchWeather()}
                     disabled={loading}
-                    className="flex-1 bg-black hover:bg-neutral-800 cursor-pointer text-white disabled:opacity-50 transition-colors rounded-lg px-4 py-2 text-sm font-medium flex items-center justify-center space-x-2"
+                    className="w-full bg-primary hover:bg-primary/90 text-primary-foreground disabled:opacity-50 transition-colors rounded-md px-3 py-2 text-sm font-medium flex items-center justify-center gap-2"
                 >
                     <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
                     <span>Güncelle</span>
                 </button>
-            </div>
-        </div>
+            </CardContent>
+        </Card>
     );
 }

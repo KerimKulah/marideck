@@ -1,6 +1,6 @@
 "use client"
 
-import { Search, Plus, MoreHorizontal, Ship, Clock, Anchor, LocationEditIcon, Locate, MapPin, MapPinned, Circle, Edit, Trash, AlertTriangle, ChevronDown, ShipIcon, Calendar, MapPinnedIcon, X, Eye, Copy, Filter, ArrowUpDown, ArrowUp, ArrowDown, ShipWheel } from "lucide-react"
+import { Search, Plus, MoreHorizontal, Ship, Clock, Anchor, LocationEditIcon, Locate, MapPin, MapPinned, Circle, Edit, Trash, AlertTriangle, ChevronDown, ShipIcon, Calendar, MapPinnedIcon, X, Eye, Copy, Filter, ArrowUpDown, ArrowUp, ArrowDown, ShipWheel, Info } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -16,6 +16,7 @@ import { getShips, setPage, setLimit, setSearchQuery, deleteShip, removeShipOpti
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import debounce from "lodash/debounce"
 import { toast } from "sonner"
 import ReactCountryFlag from "react-country-flag"
@@ -877,12 +878,23 @@ export default function ShipsPage() {
                     <DialogHeader>
                         <div className="flex items-center gap-2">
                             <Ship className="h-5 w-5 text-primary" />
-                            <DialogTitle>IMO/MMSI ile Gemi Arama</DialogTitle>
+                            <DialogTitle>IMO/MMSI ile Gemi Ekleme</DialogTitle>
                         </div>
                         <DialogDescription>
                             IMO/MMSI numarası ile gemiyi arayın ve otomatik olarak ekleyin.
                         </DialogDescription>
                     </DialogHeader>
+                    <Alert className="mb-4">
+                        <AlertDescription>
+                            <div className="space-y-1">
+                                <p className="font-medium flex items-center gap-2"><Info className="h-4 w-4" />Bilgilendirme</p>
+                                <p className="text-xs">
+                                    IMO/MMSI üzerinden çekilen seyir bilgileri (ETA, ETD, limanlar, durum) her zaman güncel olmayabilir.
+                                    Lütfen kritik operasyonlar öncesinde bilgileri kontrol edin ve gerekirse manuel olarak güncelleyin.
+                                </p>
+                            </div>
+                        </AlertDescription>
+                    </Alert>
                     <AisLookup
                         isOpen={isAisLookupOpen}
                         onClose={() => setIsAisLookupOpen(false)}

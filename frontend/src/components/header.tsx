@@ -3,11 +3,12 @@
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, } from "@/components/ui/breadcrumb"
 import { Separator } from "@/components/ui/separator"
 import { SidebarTrigger } from "@/components/ui/sidebar"
-import { Bell, ChevronDown, User, LogOut, Settings } from "lucide-react"
+import { Bell, ChevronDown, User, LogOut, Settings, CheckCircle, AlertCircle, Info, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger, } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Skeleton } from "@/components/ui/skeleton"
+import { ScrollArea } from "@/components/ui/scroll-area"
 import { usePathname } from "next/navigation"
 import { useMemo, useEffect, useState } from "react"
 import { Logout } from "./logout"
@@ -96,18 +97,117 @@ export function Header() {
                         {formattedNow}
                     </div>
                 )}
-                {/* Notifications Button */}
-                <Button
-                    variant="ghost"
-                    size="icon"
-                    className="relative rounded-full h-9 w-9 hover:bg-gray-100 cursor-pointer"
-                    aria-label="Bildirimler"
-                >
-                    <Bell className="h-4 w-4" />
-                    <span className="absolute -top-1 -right-1 h-4 w-4 flex items-center justify-center rounded-full bg-red-500 text-white text-[10px] font-medium">
-                        3
-                    </span>
-                </Button>
+                {/* Notifications Dropdown */}
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="relative rounded-full h-9 w-9 hover:bg-gray-100 cursor-pointer"
+                            aria-label="Bildirimler"
+                        >
+                            <Bell className="h-4 w-4" />
+                            <span className="absolute -top-1 -right-1 h-4 w-4 flex items-center justify-center rounded-full bg-red-500 text-white text-[10px] font-medium">
+                                3
+                            </span>
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent className="w-80 rounded-lg" align="end" sideOffset={8}>
+                        <DropdownMenuLabel className="flex items-center justify-between px-3 py-2">
+                            <span className="font-semibold">Bildirimler</span>
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-6 px-2 text-xs text-muted-foreground hover:text-foreground"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    // Tüm bildirimleri okundu olarak işaretle
+                                }}
+                            >
+                                Tümünü okundu işaretle
+                            </Button>
+                        </DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        <ScrollArea className="h-[400px]">
+                            <div className="space-y-1 p-1">
+                                {/* Bildirim örnekleri */}
+                                <div className="flex items-start gap-2 p-3 rounded-md hover:bg-accent cursor-pointer group">
+                                    <AlertCircle className="h-4 w-4 text-red-500 mt-0.5 flex-shrink-0" />
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-sm font-medium">Yeni Görev Atandı</p>
+                                        <p className="text-xs text-muted-foreground line-clamp-2">
+                                            Size yeni bir görev atandı: "Gemi belgelerini kontrol et"
+                                        </p>
+                                        <p className="text-xs text-muted-foreground mt-1">2 dakika önce</p>
+                                    </div>
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-6 w-6 opacity-0 group-hover:opacity-100 flex-shrink-0"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            // Bildirimi kapat
+                                        }}
+                                    >
+                                        <X className="h-3 w-3" />
+                                    </Button>
+                                </div>
+                                <div className="flex items-start gap-2 p-3 rounded-md hover:bg-accent cursor-pointer group">
+                                    <Info className="h-4 w-4 text-blue-500 mt-0.5 flex-shrink-0" />
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-sm font-medium">Gemi Yaklaşıyor</p>
+                                        <p className="text-xs text-muted-foreground line-clamp-2">
+                                            "MS Istanbul" gemisi 2 saat içinde limana varacak
+                                        </p>
+                                        <p className="text-xs text-muted-foreground mt-1">15 dakika önce</p>
+                                    </div>
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-6 w-6 opacity-0 group-hover:opacity-100 flex-shrink-0"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                        }}
+                                    >
+                                        <X className="h-3 w-3" />
+                                    </Button>
+                                </div>
+                                <div className="flex items-start gap-2 p-3 rounded-md hover:bg-accent cursor-pointer group">
+                                    <CheckCircle className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-sm font-medium">Operasyon Tamamlandı</p>
+                                        <p className="text-xs text-muted-foreground line-clamp-2">
+                                            "Yükleme Operasyonu #1234" başarıyla tamamlandı
+                                        </p>
+                                        <p className="text-xs text-muted-foreground mt-1">1 saat önce</p>
+                                    </div>
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-6 w-6 opacity-0 group-hover:opacity-100 flex-shrink-0"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                        }}
+                                    >
+                                        <X className="h-3 w-3" />
+                                    </Button>
+                                </div>
+                            </div>
+                        </ScrollArea>
+                        <DropdownMenuSeparator />
+                        <div className="px-3 py-2">
+                            <Button
+                                variant="ghost"
+                                className="w-full justify-center text-sm text-muted-foreground hover:text-foreground"
+                                onClick={() => {
+                                    // Tüm bildirimleri görüntüle sayfasına git
+                                }}
+                            >
+                                Tüm Bildirimleri Görüntüle
+                            </Button>
+                        </div>
+                    </DropdownMenuContent>
+                </DropdownMenu>
 
                 {/* User Profile Dropdown */}
                 {loading ? (

@@ -552,34 +552,6 @@ export function ShipAddOrEditModal({ isOpen, onClose, ship, onSuccess }: ShipAdd
 
                                         <FormField
                                             control={form.control}
-                                            name="status"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel className="text-xs text-muted-foreground">
-                                                        Durum <span className="text-red-500">*</span>
-                                                    </FormLabel>
-                                                    <FormControl>
-                                                        <Select onValueChange={field.onChange} value={field.value}>
-                                                            <SelectTrigger className="w-full">
-                                                                <SelectValue placeholder="Durum Seçiniz" />
-                                                            </SelectTrigger>
-                                                            <SelectContent>
-                                                                {Object.values(Status)
-                                                                    .map((status) => (
-                                                                        <SelectItem key={status} value={status}>
-                                                                            {status}
-                                                                        </SelectItem>
-                                                                    ))}
-                                                            </SelectContent>
-                                                        </Select>
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-
-                                        <FormField
-                                            control={form.control}
                                             name="builtYear"
                                             render={({ field }) => (
                                                 <FormItem>
@@ -820,6 +792,34 @@ export function ShipAddOrEditModal({ isOpen, onClose, ship, onSuccess }: ShipAdd
                                                     </FormLabel>
                                                     <FormControl>
                                                         <Input placeholder="Varış limanını giriniz" {...field} />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+
+                                        <FormField
+                                            control={form.control}
+                                            name="status"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel className="text-xs text-muted-foreground">
+                                                        Durum <span className="text-red-500">*</span>
+                                                    </FormLabel>
+                                                    <FormControl>
+                                                        <Select onValueChange={field.onChange} value={field.value}>
+                                                            <SelectTrigger className="w-full">
+                                                                <SelectValue placeholder="Durum Seçiniz" />
+                                                            </SelectTrigger>
+                                                            <SelectContent>
+                                                                {Object.values(Status)
+                                                                    .map((status) => (
+                                                                        <SelectItem key={status} value={status}>
+                                                                            {status}
+                                                                        </SelectItem>
+                                                                    ))}
+                                                            </SelectContent>
+                                                        </Select>
                                                     </FormControl>
                                                     <FormMessage />
                                                 </FormItem>

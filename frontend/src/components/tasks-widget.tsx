@@ -54,20 +54,20 @@ export const TasksWidget = () => {
     const { tasks, loading } = useSelector((state: RootState) => state.task)
 
     useEffect(() => {
-        dispatch(getTasks({ page: 1, limit: 5, tab: 'active' }))
+        dispatch(getTasks({ page: 1, limit: 5, tab: 'my-tasks-all' }))
     }, [dispatch])
 
     return (
-        <Card className="h-full">
-            <CardHeader>
+        <Card className="h-full !py-3 !gap-3">
+            <CardHeader className="!px-4 !pb-1 pt-2">
                 <div className="flex items-center space-x-2">
                     <CheckCircle className="h-5 w-5 text-primary" />
-                    <CardTitle className="text-lg">Görevlerim</CardTitle>
+                    <CardTitle className="text-[16px]">Görevlerim</CardTitle>
                 </div>
-                <div className="h-[1px] w-full bg-border mt-3" />
+                <div className="h-[1px] w-full bg-border" />
             </CardHeader>
-            <CardContent className="p-0">
-                <ScrollArea className="h-[165px] px-4">
+            <CardContent className="!p-0">
+                <ScrollArea className="h-[190px] px-4">
                     <div className="space-y-2 pb-2">
                         {loading ? (
                             <div className="flex justify-center py-4">
@@ -103,10 +103,10 @@ export const TasksWidget = () => {
                         )}
                     </div>
                 </ScrollArea>
-                <div className="px-4 pb-4 pt-2 border-t border-gray-200">
+                <div className="px-4 pt-3 border-gray-200">
                     <Link
                         href="/tasks"
-                        className="w-full text-sm text-blue-600 hover:text-blue-800 font-medium flex items-center justify-center gap-1"
+                        className="w-full text-sm text-foreground hover:text-primary font-medium flex items-center justify-center gap-1"
                     >
                         Tüm Görevleri Görüntüle →
                     </Link>
