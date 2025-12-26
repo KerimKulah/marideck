@@ -54,18 +54,18 @@ const getTypeLabel = (type: DocumentType) => {
 }
 
 const getStatusLabel = (status: DocumentStatus) => {
-  switch (status) {
-    case 'valid':
+    switch (status) {
+        case 'valid':
       return 'Geçerli'
-    case 'expired':
+        case 'expired':
       return 'Süresi Dolmuş'
-    case 'expiring-soon':
+        case 'expiring-soon':
       return 'Yakında Dolacak'
-    case 'draft':
+        case 'draft':
       return 'Taslak'
     default:
       return status
-  }
+    }
 }
 
 const getStatusVariant = (status: DocumentStatus) => {
@@ -78,7 +78,7 @@ const getStatusVariant = (status: DocumentStatus) => {
       return 'outline'
     case 'draft':
       return 'secondary'
-    default:
+        default:
       return 'outline'
   }
 }
@@ -103,7 +103,7 @@ const getFileIcon = (mimeType: string, fileName: string) => {
   // Images
   if (mimeType.startsWith('image/') || fileName.toLowerCase().match(/\.(jpg|jpeg|png|gif|webp|svg|bmp)$/i)) {
     return <ImageIcon className="h-6 w-6 text-blue-600" />
-  }
+    }
 
   // Word Documents
   if (mimeType === 'application/msword' ||
@@ -260,8 +260,8 @@ export default function DocumentsPage() {
 
   const filteredDocuments = documents
 
-  return (
-    <div className="grid space-y-4">
+    return (
+        <div className="grid space-y-4">
       {/* Search Bar */}
       <div className="flex flex-col sm:flex-row gap-3 sm:items-center justify-between">
         <div className="relative w-full">
@@ -273,11 +273,11 @@ export default function DocumentsPage() {
             value={searchInput}
             onChange={handleSearch}
           />
-        </div>
+                </div>
         <Button className="w-full sm:w-auto" onClick={() => setIsAddModalOpen(true)}>
           <Plus className="mr-2 h-4 w-4" />
           <span className="sm:inline">Yeni Belge</span>
-        </Button>
+                    </Button>
       </div>
 
       {/* Filters */}
@@ -308,8 +308,8 @@ export default function DocumentsPage() {
               <SelectItem value="draft">Taslak</SelectItem>
             </SelectContent>
           </Select>
-        </div>
-      </div>
+                </div>
+            </div>
 
       {/* Documents List/Table */}
       {isMobile ? (
@@ -402,15 +402,15 @@ export default function DocumentsPage() {
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </div>
-              </div>
+            </div>
             ))
           )}
         </div>
       ) : (
         // Desktop view - Table
         <Table style={{ tableLayout: 'fixed', width: '100%' }}>
-          <TableHeader>
-            <TableRow>
+                            <TableHeader>
+                                <TableRow>
               <TableHead className="w-64">Belge</TableHead>
               <TableHead className="w-32 hidden md:table-cell">Tip</TableHead>
               <TableHead className="w-32 hidden lg:table-cell">Durum</TableHead>
@@ -418,9 +418,9 @@ export default function DocumentsPage() {
               <TableHead className="w-32 hidden md:table-cell">Dosya</TableHead>
               <TableHead className="w-32 hidden md:table-cell">Yüklenme</TableHead>
               <TableHead className="w-16">İşlemler</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
             {loading ? (
               Array.from({ length: 5 }).map((_, index) => (
                 <TableRow key={`skeleton-${index}`} className="hover:bg-transparent">
@@ -445,7 +445,7 @@ export default function DocumentsPage() {
                   <TableCell className="hidden md:table-cell">
                     <Skeleton className="h-4 w-24" />
                   </TableCell>
-                  <TableCell>
+                                        <TableCell>
                     <Skeleton className="h-8 w-8 rounded" />
                   </TableCell>
                 </TableRow>
@@ -462,7 +462,7 @@ export default function DocumentsPage() {
               filteredDocuments.map((document: Document) => (
                 <TableRow key={document.id} className="hover:bg-muted/50">
                   <TableCell className="min-w-[200px]">
-                    <div className="flex items-center gap-3">
+                                            <div className="flex items-center gap-3">
                       <div className={`h-10 w-10 rounded-lg border flex items-center justify-center flex-shrink-0 ${getFileIconColor(document.mimeType, document.fileName)}`}>
                         {getFileIcon(document.mimeType, document.fileName)}
                       </div>
@@ -473,17 +473,17 @@ export default function DocumentsPage() {
                             No: {document.documentNumber}
                           </div>
                         )}
-                      </div>
-                    </div>
-                  </TableCell>
+                                                </div>
+                                            </div>
+                                        </TableCell>
                   <TableCell className="min-w-[100px] hidden md:table-cell">
                     <span className="text-sm">{getTypeLabel(document.type)}</span>
                   </TableCell>
                   <TableCell className="min-w-[100px] hidden lg:table-cell">
                     <Badge variant={getStatusVariant(document.status)}>
                       {getStatusLabel(document.status)}
-                    </Badge>
-                  </TableCell>
+                                            </Badge>
+                                        </TableCell>
                   <TableCell className="min-w-[150px] hidden xl:table-cell">
                     <div className="flex flex-col gap-1">
                       {document.customer && (
@@ -510,23 +510,23 @@ export default function DocumentsPage() {
                     </div>
                   </TableCell>
                   <TableCell className="min-w-[100px] hidden md:table-cell">
-                    <div className="flex flex-col">
+                                            <div className="flex flex-col">
                       <span className="text-sm truncate">{document.fileName}</span>
                       <span className="text-xs text-muted-foreground">{formatFileSize(document.fileSize)}</span>
-                    </div>
-                  </TableCell>
+                                            </div>
+                                        </TableCell>
                   <TableCell className="min-w-[100px] hidden md:table-cell">
                     <span className="text-sm">{formatDate(document.createdAt)}</span>
-                  </TableCell>
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
+                                        </TableCell>
+                                        <TableCell>
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
                         <Button variant="ghost" size="icon" onClick={(e) => e.stopPropagation()}>
-                          <MoreHorizontal className="h-4 w-4" />
-                          <span className="sr-only">İşlemler</span>
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
+                                                        <MoreHorizontal className="h-4 w-4" />
+                                                        <span className="sr-only">İşlemler</span>
+                                                    </Button>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent align="end">
                         <DropdownMenuItem onClick={(e) => {
                           e.stopPropagation()
                           handleView(document)
@@ -538,7 +538,7 @@ export default function DocumentsPage() {
                           e.stopPropagation()
                           handleDownload(document)
                         }}>
-                          <Download className="mr-2 h-4 w-4" />
+                                                        <Download className="mr-2 h-4 w-4" />
                           İndir
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={(e) => {
@@ -548,7 +548,7 @@ export default function DocumentsPage() {
                         }}>
                           <Pencil className="mr-2 h-4 w-4" />
                           Düzenle
-                        </DropdownMenuItem>
+                                                    </DropdownMenuItem>
                         <DropdownMenuItem
                           onClick={(e) => {
                             e.stopPropagation()
@@ -559,15 +559,15 @@ export default function DocumentsPage() {
                         >
                           <Trash2 className="mr-2 h-4 w-4 text-destructive" />
                           Sil
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
+                                                    </DropdownMenuItem>
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
+                                        </TableCell>
+                                    </TableRow>
               ))
             )}
-          </TableBody>
-        </Table>
+                            </TableBody>
+                        </Table>
       )}
 
       {/* Pagination */}
@@ -597,7 +597,7 @@ export default function DocumentsPage() {
               Sonraki
             </Button>
           </div>
-        </div>
+                    </div>
       )}
 
       {/* Modals */}
@@ -646,6 +646,6 @@ export default function DocumentsPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
-  )
+        </div>
+    )
 }

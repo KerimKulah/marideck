@@ -266,6 +266,70 @@ export default function TasksPage() {
         }
     }
 
+    // Handle status change
+    const handleStatusChange = async (task: Task, newStatus: TaskStatus) => {
+        try {
+            const updateData = {
+                title: task.title,
+                description: task.description,
+                status: newStatus,
+                priority: task.priority,
+                dueDate: task.dueDate,
+                assignedToId: task.assignedTo.map(u => u.id),
+            }
+
+            await dispatch(updateTask({
+                id: task.id.toString(),
+                data: updateData
+            })).unwrap()
+
+            toast.success("Görev durumu güncellendi")
+            const backendTab = getBackendTab(mainTab, subTab)
+            dispatch(getTasks({ page, limit, search: searchTerm, tab: backendTab }))
+            dispatch(getTaskStatistics())
+        } catch (error) {
+            console.error("Görev güncellenirken hata oluştu:", error)
+            toast.error("Görev güncellenirken bir hata oluştu")
+        }
+    }
+
+    // Get due date color based on date
+    const getDueDateColor = (dueDate?: string) => {
+        if (!dueDate) return 'text-muted-foreground'
+
+        const today = new Date()
+        today.setHours(0, 0, 0, 0)
+        const due = new Date(dueDate)
+        due.setHours(0, 0, 0, 0)
+        const diffTime = due.getTime() - today.getTime()
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+
+        if (diffDays < 0) {
+            // Geçmiş - Kırmızı
+            return 'text-red-500 font-semibold'
+        } else if (diffDays <= 3) {
+            // 3 gün veya daha az - Sarı
+            return 'text-yellow-500 font-medium'
+        } else {
+            // Normal - Yeşil
+            return 'text-green-500'
+        }
+    }
+
+    // Get status icon and color
+    const getStatusIcon = (status: TaskStatus) => {
+        switch (status) {
+            case 'completed':
+                return <CheckCircle2 className="h-5 w-5 text-foreground fill-green-500" />
+            case 'in_progress':
+                return <Clock className="h-5 w-5 text-foreground fill-blue-500" />
+            case 'pending':
+                return <AlertCircle className="h-5 w-5 text-foreground fill-yellow-500" />
+            default:
+                return <AlertCircle className="h-5 w-5 text-foreground fill-muted-foreground" />
+        }
+    }
+
     // Handle delete - open dialog
     const handleDeleteClick = (task: Task) => {
         setTaskToDelete(task)
@@ -344,83 +408,83 @@ export default function TasksPage() {
                 </div>
 
                 {/* Filter Button */}
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
                         <Button variant="outline" size="sm" className="h-9 w-full sm:w-auto">
-                                <Filter className="h-4 w-4 mr-2" />
-                                Filtrele
-                                {subTab !== 'all' && (
-                                    <span className="ml-2 h-4 min-w-[18px] px-1.5 rounded-full bg-primary/10 text-primary text-[10px] font-semibold flex items-center justify-center">
-                                        1
+                            <Filter className="h-4 w-4 mr-2" />
+                            Filtrele
+                            {subTab !== 'all' && (
+                                <span className="ml-2 h-4 min-w-[18px] px-1.5 rounded-full bg-primary/10 text-primary text-[10px] font-semibold flex items-center justify-center">
+                                    1
+                                </span>
+                            )}
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-52">
+                        <DropdownMenuItem
+                            onClick={() => handleSubFilterChange('all')}
+                            className={`${subTab === 'all' ? 'bg-accent font-medium' : ''} cursor-pointer`}
+                        >
+                            <div className="flex items-center justify-between w-full">
+                                <div className="flex items-center gap-2">
+                                    <Grid3x3 className="h-4 w-4 text-muted-foreground" />
+                                    <span>Tümü</span>
+                                </div>
+                            </div>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                            onClick={() => handleSubFilterChange('pending')}
+                            className={`${subTab === 'pending' ? 'bg-accent font-medium' : ''} cursor-pointer`}
+                        >
+                            <div className="flex items-center justify-between w-full">
+                                <div className="flex items-center gap-2">
+                                    <AlertCircle className="h-4 w-4 text-muted-foreground" />
+                                    <span>Beklemede Olanlar</span>
+                                </div>
+                                {(mainTab === 'my-tasks' && tabCounts.myTasksPending > 0) ||
+                                    (mainTab === 'all-tasks' && tabCounts.allPending > 0) ? (
+                                    <span className="h-5 min-w-[20px] px-1.5 rounded-full bg-primary/10 text-primary text-xs font-semibold flex items-center justify-center">
+                                        {mainTab === 'my-tasks' ? tabCounts.myTasksPending : tabCounts.allPending}
                                     </span>
-                                )}
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-52">
-                            <DropdownMenuItem
-                                onClick={() => handleSubFilterChange('all')}
-                                className={`${subTab === 'all' ? 'bg-accent font-medium' : ''} cursor-pointer`}
-                            >
-                                <div className="flex items-center justify-between w-full">
-                                    <div className="flex items-center gap-2">
-                                        <Grid3x3 className="h-4 w-4 text-muted-foreground" />
-                                        <span>Tümü</span>
-                                    </div>
+                                ) : null}
+                            </div>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                            onClick={() => handleSubFilterChange('in_progress')}
+                            className={`${subTab === 'in_progress' ? 'bg-accent font-medium' : ''} cursor-pointer`}
+                        >
+                            <div className="flex items-center justify-between w-full">
+                                <div className="flex items-center gap-2">
+                                    <Clock className="h-4 w-4 text-muted-foreground" />
+                                    <span>Devam Ediyor</span>
                                 </div>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                                onClick={() => handleSubFilterChange('pending')}
-                                className={`${subTab === 'pending' ? 'bg-accent font-medium' : ''} cursor-pointer`}
-                            >
-                                <div className="flex items-center justify-between w-full">
-                                    <div className="flex items-center gap-2">
-                                        <AlertCircle className="h-4 w-4 text-muted-foreground" />
-                                        <span>Beklemede Olanlar</span>
-                                    </div>
-                                    {(mainTab === 'my-tasks' && tabCounts.myTasksPending > 0) ||
-                                        (mainTab === 'all-tasks' && tabCounts.allPending > 0) ? (
-                                        <span className="h-5 min-w-[20px] px-1.5 rounded-full bg-primary/10 text-primary text-xs font-semibold flex items-center justify-center">
-                                            {mainTab === 'my-tasks' ? tabCounts.myTasksPending : tabCounts.allPending}
-                                        </span>
-                                    ) : null}
+                                {(mainTab === 'my-tasks' && tabCounts.myTasksInProgress > 0) ||
+                                    (mainTab === 'all-tasks' && tabCounts.allInProgress > 0) ? (
+                                    <span className="h-5 min-w-[20px] px-1.5 rounded-full bg-primary/10 text-primary text-xs font-semibold flex items-center justify-center">
+                                        {mainTab === 'my-tasks' ? tabCounts.myTasksInProgress : tabCounts.allInProgress}
+                                    </span>
+                                ) : null}
+                            </div>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                            onClick={() => handleSubFilterChange('completed')}
+                            className={`${subTab === 'completed' ? 'bg-accent font-medium' : ''} cursor-pointer`}
+                        >
+                            <div className="flex items-center justify-between w-full">
+                                <div className="flex items-center gap-2">
+                                    <CheckCircle className="h-4 w-4 text-muted-foreground " />
+                                    <span>Tamamlananlar</span>
                                 </div>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                                onClick={() => handleSubFilterChange('in_progress')}
-                                className={`${subTab === 'in_progress' ? 'bg-accent font-medium' : ''} cursor-pointer`}
-                            >
-                                <div className="flex items-center justify-between w-full">
-                                    <div className="flex items-center gap-2">
-                                        <Clock className="h-4 w-4 text-muted-foreground" />
-                                        <span>Devam Ediyor</span>
-                                    </div>
-                                    {(mainTab === 'my-tasks' && tabCounts.myTasksInProgress > 0) ||
-                                        (mainTab === 'all-tasks' && tabCounts.allInProgress > 0) ? (
-                                        <span className="h-5 min-w-[20px] px-1.5 rounded-full bg-primary/10 text-primary text-xs font-semibold flex items-center justify-center">
-                                            {mainTab === 'my-tasks' ? tabCounts.myTasksInProgress : tabCounts.allInProgress}
-                                        </span>
-                                    ) : null}
-                                </div>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                                onClick={() => handleSubFilterChange('completed')}
-                                className={`${subTab === 'completed' ? 'bg-accent font-medium' : ''} cursor-pointer`}
-                            >
-                                <div className="flex items-center justify-between w-full">
-                                    <div className="flex items-center gap-2">
-                                        <CheckCircle className="h-4 w-4 text-muted-foreground" />
-                                        <span>Tamamlananlar</span>
-                                    </div>
-                                    {(mainTab === 'my-tasks' && tabCounts.myTasksCompleted > 0) ||
-                                        (mainTab === 'all-tasks' && tabCounts.allCompleted > 0) ? (
-                                        <span className="h-5 min-w-[20px] px-1.5 rounded-full bg-primary/10 text-primary text-xs font-semibold flex items-center justify-center">
-                                            {mainTab === 'my-tasks' ? tabCounts.myTasksCompleted : tabCounts.allCompleted}
-                                        </span>
-                                    ) : null}
-                                </div>
-                            </DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
+                                {(mainTab === 'my-tasks' && tabCounts.myTasksCompleted > 0) ||
+                                    (mainTab === 'all-tasks' && tabCounts.allCompleted > 0) ? (
+                                    <span className="h-5 min-w-[20px] px-1.5 rounded-full bg-primary/10 text-primary text-xs font-semibold flex items-center justify-center">
+                                        {mainTab === 'my-tasks' ? tabCounts.myTasksCompleted : tabCounts.allCompleted}
+                                    </span>
+                                ) : null}
+                            </div>
+                        </DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
             </div>
 
             {/* Tasks Table */}
@@ -464,10 +528,57 @@ export default function TasksPage() {
                                             setIsDetailModalOpen(true)
                                         }}
                                     >
-                                        <p className="font-medium text-sm truncate">{task.title}</p>
+                                        <div className="flex items-center gap-2">
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        className="h-8 w-8 p-1.5 flex-shrink-0 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md transition-all duration-200 hover:scale-105 hover:shadow-sm border border-transparent hover:border-gray-300 dark:hover:border-gray-600"
+                                                    >
+                                                        {getStatusIcon(task.status as TaskStatus)}
+                                                    </Button>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent align="start" className="w-48">
+                                                    <DropdownMenuItem
+                                                        onClick={() => handleStatusChange(task, 'pending')}
+                                                        className={`cursor-pointer ${task.status === 'pending' ? 'bg-accent font-medium' : ''}`}
+                                                    >
+                                                        <div className="flex items-center gap-2 w-full">
+                                                            <AlertCircle className="h-4 w-4 text-foreground fill-yellow-500" />
+                                                            <span>Bekliyor</span>
+                                                        </div>
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem
+                                                        onClick={() => handleStatusChange(task, 'in_progress')}
+                                                        className={`cursor-pointer ${task.status === 'in_progress' ? 'bg-accent font-medium' : ''}`}
+                                                    >
+                                                        <div className="flex items-center gap-2 w-full">
+                                                            <Clock className="h-4 w-4 text-foreground fill-blue-500" />
+                                                            <span>Devam Ediyor</span>
+                                                        </div>
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem
+                                                        onClick={() => handleStatusChange(task, 'completed')}
+                                                        className={`cursor-pointer ${task.status === 'completed' ? 'bg-accent font-medium' : ''}`}
+                                                    >
+                                                        <div className="flex items-center gap-2 w-full">
+                                                            <CheckCircle2 className="h-4 w-4 text-foreground fill-green-500" />
+                                                            <span>Tamamlandı</span>
+                                                        </div>
+                                                    </DropdownMenuItem>
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
+                                            <p className="font-medium text-sm truncate flex-1">{task.title}</p>
+                                        </div>
                                         <div className="flex items-center gap-2 mt-1">
-                                            {getStatusBadge(task.status as TaskStatus)}
                                             {priorityBadges[task.priority as keyof typeof priorityBadges]}
+                                            {task.dueDate && (
+                                                <div className={`flex items-center gap-1 ${getDueDateColor(task.dueDate)}`}>
+                                                    <CalendarIcon className="h-3 w-3" />
+                                                    <span className="text-xs">{formatDate(task.dueDate)}</span>
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                     <DropdownMenu>
@@ -528,19 +639,18 @@ export default function TasksPage() {
                 ) : (
                     // Desktop görünüm - Tablo görünümü
                     <Table style={{ tableLayout: 'fixed', width: '100%' }}>
-                    <TableHeader>
-                        <TableRow>
+                        <TableHeader>
+                            <TableRow>
                                 <TableHead className="w-64">Görev</TableHead>
                                 <TableHead className="w-40">Atanan Kişiler</TableHead>
                                 <TableHead className="w-48 hidden lg:table-cell">İlişkili</TableHead>
-                                <TableHead className="w-28">Durum</TableHead>
                                 <TableHead className="w-28 hidden xl:table-cell">Öncelik</TableHead>
                                 <TableHead className="w-36 hidden md:table-cell">Son Tarih</TableHead>
                                 <TableHead className="w-16">İşlemler</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {loading ? (
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {loading ? (
                                 // Skeleton loading rows - prevents layout shift
                                 Array.from({ length: 5 }).map((_, index) => (
                                     <TableRow key={`skeleton-${index}`} className="hover:bg-transparent">
@@ -566,10 +676,6 @@ export default function TasksPage() {
                                                 <Skeleton className="h-3 w-20" />
                                             </div>
                                         </TableCell>
-                                        {/* Durum */}
-                                        <TableCell>
-                                            <Skeleton className="h-6 w-20 rounded-full" />
-                                        </TableCell>
                                         {/* Öncelik */}
                                         <TableCell className="hidden xl:table-cell">
                                             <Skeleton className="h-6 w-16 rounded-full" />
@@ -584,49 +690,91 @@ export default function TasksPage() {
                                         {/* İşlemler */}
                                         <TableCell>
                                             <Skeleton className="h-8 w-8 rounded" />
-                                </TableCell>
-                            </TableRow>
+                                        </TableCell>
+                                    </TableRow>
                                 ))
-                        ) : tasks.length === 0 ? (
-                            <TableRow>
-                                <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
-                                    {searchTerm ? 'Aramanızla eşleşen görev bulunamadı' : 'Henüz görev bulunmuyor'}
-                                </TableCell>
-                            </TableRow>
-                        ) : (
-                            tasks.map((task) => (
-                                <TableRow key={task.id} className="hover:bg-muted/50">
-                                        <TableCell className="min-w-[200px]">
-                                        <div className="flex flex-col items-start gap-1">
-                                                <span className="font-medium truncate w-full">{task.title}</span>
-                                            {task.description && (
-                                                    <span className="text-xs text-muted-foreground truncate w-full">
-                                                    {task.description}
-                                                </span>
-                                            )}
-                                        </div>
+                            ) : tasks.length === 0 ? (
+                                <TableRow>
+                                    <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                                        {searchTerm ? 'Aramanızla eşleşen görev bulunamadı' : 'Henüz görev bulunmuyor'}
                                     </TableCell>
+                                </TableRow>
+                            ) : (
+                                tasks.map((task) => (
+                                    <TableRow key={task.id} className="hover:bg-muted/50">
+                                        <TableCell className="min-w-[200px]">
+                                            <div className="flex flex-col items-start gap-1">
+                                                <div className="flex items-center gap-2 w-full">
+                                                    <DropdownMenu>
+                                                        <DropdownMenuTrigger asChild>
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="sm"
+                                                                className="h-8 w-8 p-1.5 flex-shrink-0 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md transition-all duration-200 hover:scale-105 hover:shadow-sm border border-transparent hover:border-gray-300 dark:hover:border-gray-600"
+                                                            >
+                                                                {getStatusIcon(task.status as TaskStatus)}
+                                                            </Button>
+                                                        </DropdownMenuTrigger>
+                                                        <DropdownMenuContent align="start" className="w-48">
+                                                            <DropdownMenuItem
+                                                                onClick={() => handleStatusChange(task, 'pending')}
+                                                                className={`cursor-pointer ${task.status === 'pending' ? 'bg-accent font-medium' : ''}`}
+                                                            >
+                                                                <div className="flex items-center gap-2 w-full">
+                                                                    <AlertCircle className="h-4 w-4 text-foreground fill-yellow-500" />
+                                                                    <span>Bekliyor</span>
+                                                                </div>
+                                                            </DropdownMenuItem>
+                                                            <DropdownMenuItem
+                                                                onClick={() => handleStatusChange(task, 'in_progress')}
+                                                                className={`cursor-pointer ${task.status === 'in_progress' ? 'bg-accent font-medium' : ''}`}
+                                                            >
+                                                                <div className="flex items-center gap-2 w-full">
+                                                                    <Clock className="h-4 w-4 text-foreground fill-blue-500" />
+                                                                    <span>Devam Ediyor</span>
+                                                                </div>
+                                                            </DropdownMenuItem>
+                                                            <DropdownMenuItem
+                                                                onClick={() => handleStatusChange(task, 'completed')}
+                                                                className={`cursor-pointer ${task.status === 'completed' ? 'bg-accent font-medium' : ''}`}
+                                                            >
+                                                                <div className="flex items-center gap-2 w-full">
+                                                                    <CheckCircle2 className="h-4 w-4 text-foreground fill-green-500" />
+                                                                    <span>Tamamlandı</span>
+                                                                </div>
+                                                            </DropdownMenuItem>
+                                                        </DropdownMenuContent>
+                                                    </DropdownMenu>
+                                                    <span className="font-medium truncate flex-1">{task.title}</span>
+                                                </div>
+                                                {task.description && (
+                                                    <span className="text-xs text-muted-foreground truncate w-full">
+                                                        {task.description}
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </TableCell>
                                         <TableCell className="min-w-[120px]">
-                                        <TooltipProvider delayDuration={0}>
-                                            <div className="flex items-center -space-x-2">
+                                            <TooltipProvider delayDuration={0}>
+                                                <div className="flex items-center -space-x-2">
                                                     {task.assignedTo.length === 0 ? (
                                                         <span className="text-sm text-muted-foreground">-</span>
                                                     ) : (
                                                         <>
                                                             {task.assignedTo.slice(0, 5).map((user) => (
-                                                    <Tooltip key={user.id}>
-                                                        <TooltipTrigger asChild>
-                                                            <Avatar className="h-8 w-8 border-2 border-background cursor-default hover:translate-y-[-2px] transition-transform">
-                                                                <AvatarFallback className="bg-primary/10 text-primary text-xs font-medium">
-                                                                    {getInitials(user.firstName, user.lastName)}
-                                                                </AvatarFallback>
-                                                            </Avatar>
-                                                        </TooltipTrigger>
-                                                        <TooltipContent>
-                                                            <p className="text-xs">{user.firstName} {user.lastName}</p>
-                                                        </TooltipContent>
-                                                    </Tooltip>
-                                                ))}
+                                                                <Tooltip key={user.id}>
+                                                                    <TooltipTrigger asChild>
+                                                                        <Avatar className="h-8 w-8 border-2 border-background cursor-default hover:translate-y-[-2px] transition-transform">
+                                                                            <AvatarFallback className="bg-primary/10 text-primary text-xs font-medium">
+                                                                                {getInitials(user.firstName, user.lastName)}
+                                                                            </AvatarFallback>
+                                                                        </Avatar>
+                                                                    </TooltipTrigger>
+                                                                    <TooltipContent>
+                                                                        <p className="text-xs">{user.firstName} {user.lastName}</p>
+                                                                    </TooltipContent>
+                                                                </Tooltip>
+                                                            ))}
                                                             {task.assignedTo.length > 5 && (
                                                                 <Tooltip>
                                                                     <TooltipTrigger asChild>
@@ -648,56 +796,53 @@ export default function TasksPage() {
                                                                 </Tooltip>
                                                             )}
                                                         </>
+                                                    )}
+                                                </div>
+                                            </TooltipProvider>
+                                        </TableCell>
+                                        <TableCell className="min-w-[150px] hidden lg:table-cell">
+                                            <div className="flex flex-col gap-1">
+                                                {task.customer && (
+                                                    <div className="flex items-center gap-1.5 text-sm" title="Müşteri">
+                                                        <User className="h-3 w-3 text-muted-foreground shrink-0" />
+                                                        <span className="truncate">{task.customer.name}</span>
+                                                    </div>
+                                                )}
+                                                {task.ship && (
+                                                    <div className="flex items-center gap-1.5 text-sm" title="Gemi">
+                                                        <Anchor className="h-3 w-3 text-muted-foreground shrink-0" />
+                                                        <span className="truncate">{task.ship.name}</span>
+                                                    </div>
+                                                )}
+                                                {task.operation && (
+                                                    <div className="flex items-center gap-1.5 text-sm" title="Operasyon">
+                                                        <Briefcase className="h-3 w-3 text-muted-foreground shrink-0" />
+                                                        <span className="truncate">{task.operation.name}</span>
+                                                    </div>
+                                                )}
+                                                {!task.customer && !task.ship && !task.operation && (
+                                                    <span className="text-sm text-muted-foreground">-</span>
                                                 )}
                                             </div>
-                                        </TooltipProvider>
-                                    </TableCell>
-                                        <TableCell className="min-w-[150px] hidden lg:table-cell">
-                                        <div className="flex flex-col gap-1">
-                                            {task.customer && (
-                                                <div className="flex items-center gap-1.5 text-sm" title="Müşteri">
-                                                    <User className="h-3 w-3 text-muted-foreground shrink-0" />
-                                                        <span className="truncate">{task.customer.name}</span>
-                                                </div>
-                                            )}
-                                            {task.ship && (
-                                                <div className="flex items-center gap-1.5 text-sm" title="Gemi">
-                                                    <Anchor className="h-3 w-3 text-muted-foreground shrink-0" />
-                                                        <span className="truncate">{task.ship.name}</span>
-                                                </div>
-                                            )}
-                                            {task.operation && (
-                                                <div className="flex items-center gap-1.5 text-sm" title="Operasyon">
-                                                    <Briefcase className="h-3 w-3 text-muted-foreground shrink-0" />
-                                                        <span className="truncate">{task.operation.name}</span>
-                                                </div>
-                                            )}
-                                            {!task.customer && !task.ship && !task.operation && (
-                                                <span className="text-sm text-muted-foreground">-</span>
-                                            )}
-                                        </div>
-                                    </TableCell>
-                                        <TableCell className="min-w-[100px]">
-                                        {getStatusBadge(task.status as TaskStatus)}
-                                    </TableCell>
+                                        </TableCell>
                                         <TableCell className="min-w-[100px] hidden xl:table-cell">
-                                        {priorityBadges[task.priority as keyof typeof priorityBadges]}
-                                    </TableCell>
+                                            {priorityBadges[task.priority as keyof typeof priorityBadges]}
+                                        </TableCell>
                                         <TableCell className="min-w-[120px] hidden md:table-cell">
-                                        <div className="flex items-center gap-2">
-                                                <CalendarIcon className="h-4 w-4 text-muted-foreground shrink-0" />
-                                                <span className="text-sm truncate">{formatDate(task.dueDate)}</span>
-                                        </div>
-                                    </TableCell>
-                                    <TableCell>
-                                        <DropdownMenu>
-                                            <DropdownMenuTrigger asChild>
-                                                <Button variant="ghost" size="icon">
-                                                    <MoreHorizontal className="h-4 w-4" />
-                                                    <span className="sr-only">İşlemler</span>
-                                                </Button>
-                                            </DropdownMenuTrigger>
-                                            <DropdownMenuContent align="end">
+                                            <div className="flex items-center gap-2">
+                                                <CalendarIcon className={`h-4 w-4 shrink-0 ${getDueDateColor(task.dueDate)}`} />
+                                                <span className={`text-sm truncate ${getDueDateColor(task.dueDate)}`}>{formatDate(task.dueDate)}</span>
+                                            </div>
+                                        </TableCell>
+                                        <TableCell>
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
+                                                    <Button variant="ghost" size="icon">
+                                                        <MoreHorizontal className="h-4 w-4" />
+                                                        <span className="sr-only">İşlemler</span>
+                                                    </Button>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent align="end">
                                                     <DropdownMenuItem onClick={(e) => {
                                                         e.stopPropagation()
                                                         setSelectedTask(task)
@@ -708,40 +853,40 @@ export default function TasksPage() {
                                                     </DropdownMenuItem>
                                                     <DropdownMenuItem onClick={(e) => {
                                                         e.stopPropagation()
-                                                    setSelectedTask(task)
-                                                    setIsAddModalOpen(true)
-                                                }}>
-                                                    <Pencil className="mr-2 h-4 w-4" />
-                                                    Düzenle
-                                                </DropdownMenuItem>
-                                                <DropdownMenuItem
+                                                        setSelectedTask(task)
+                                                        setIsAddModalOpen(true)
+                                                    }}>
+                                                        <Pencil className="mr-2 h-4 w-4" />
+                                                        Düzenle
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem
                                                         onClick={(e) => {
                                                             e.stopPropagation()
                                                             handleMarkAsCompleted(task)
                                                         }}
-                                                    disabled={task.status === 'completed'}
-                                                >
-                                                    <CheckCircle className="mr-2 h-4 w-4" />
-                                                    Tamamlandı Olarak İşaretle
-                                                </DropdownMenuItem>
-                                                <DropdownMenuItem
+                                                        disabled={task.status === 'completed'}
+                                                    >
+                                                        <CheckCircle className="mr-2 h-4 w-4" />
+                                                        Tamamlandı Olarak İşaretle
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem
                                                         onClick={(e) => {
                                                             e.stopPropagation()
                                                             handleDeleteClick(task)
                                                         }}
-                                                    className="text-red-600 focus:text-red-600"
-                                                >
-                                                    <Trash2 className="mr-2 h-4 w-4" />
-                                                    Sil
-                                                </DropdownMenuItem>
-                                            </DropdownMenuContent>
-                                        </DropdownMenu>
-                                    </TableCell>
-                                </TableRow>
-                            ))
-                        )}
-                    </TableBody>
-                </Table>
+                                                        className="text-red-600 focus:text-red-600"
+                                                    >
+                                                        <Trash2 className="mr-2 h-4 w-4" />
+                                                        Sil
+                                                    </DropdownMenuItem>
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
+                                        </TableCell>
+                                    </TableRow>
+                                ))
+                            )}
+                        </TableBody>
+                    </Table>
                 )}
             </div>
 

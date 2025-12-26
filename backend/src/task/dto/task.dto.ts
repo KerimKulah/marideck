@@ -1,5 +1,5 @@
 import { Type } from "class-transformer";
-import { IsNotEmpty, IsString, IsDate, IsOptional, IsEnum, IsNumber, MinDate } from "class-validator";
+import { IsNotEmpty, IsString, IsDate, IsOptional, IsEnum, IsNumber } from "class-validator";
 import { TaskStatus } from "../enums/task-status.enum";
 import { TaskPriority } from "../enums/task-priority.enum";
 
@@ -24,7 +24,6 @@ export class TaskDto {
     @IsOptional()
     @IsDate()
     @Type(() => Date)
-    @MinDate(new Date(), { message: 'Bitiş tarihi bugünden önce olamaz' })
     dueDate?: Date;
 
     @IsNotEmpty({ message: 'Atanan kişiler zorunlu' })

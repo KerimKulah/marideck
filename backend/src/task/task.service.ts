@@ -262,20 +262,8 @@ export class TaskService {
             throw new ForbiddenException('You do not have permission to update this task');
         }
 
-        // Validate dueDate: cannot be in the past
-        if (taskDto.dueDate) {
-            const today = new Date();
-            today.setHours(0, 0, 0, 0); // Set to start of day for comparison
-
-            const dueDate = new Date(taskDto.dueDate);
-            dueDate.setHours(0, 0, 0, 0);
-
-            if (dueDate < today) {
-                throw new BadRequestException('Bitiş tarihi bugünden önce olamaz');
-            }
-        }
-
         // Update basic fields
+        // Note: dueDate validation is only applied when creating new tasks, not when updating existing ones
         task.title = taskDto.title;
         task.description = taskDto.description;
         task.status = taskDto.status;

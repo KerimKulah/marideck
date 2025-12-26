@@ -29,18 +29,7 @@ const taskFormSchema = z.object({
     description: z.string().optional(),
     status: z.enum(['pending', 'in_progress', 'completed'] as const),
     priority: z.enum(['low', 'medium', 'high'] as const),
-    dueDate: z.date()
-        .optional()
-        .refine((date) => {
-            if (!date) return true; // Optional field, can be undefined
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-            const selectedDate = new Date(date);
-            selectedDate.setHours(0, 0, 0, 0);
-            return selectedDate >= today;
-        }, {
-            message: "Bitiş tarihi bugünden önce olamaz"
-        }),
+    dueDate: z.date().optional(), // Validasyon onSubmit içinde yapılıyor (sadece yeni görev için)
     assignedToId: z.array(z.number()).min(1, "En az bir kişi atanmalıdır"),
     customerId: z.number().optional().nullable(),
     shipId: z.number().optional().nullable(),
@@ -234,6 +223,22 @@ export function TaskAddOrEditModal({
     const onSubmit = async (data: TaskFormValues) => {
         try {
             setIsSubmitting(true)
+
+            // Sadece yeni görev oluştururken dueDate validasyonu yap
+            if (!task && data.dueDate) {
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                const selectedDate = new Date(data.dueDate);
+                selectedDate.setHours(0, 0, 0, 0);
+                if (selectedDate < today) {
+                    form.setError('dueDate', {
+                        type: 'manual',
+                        message: 'Bitiş tarihi bugünden önce olamaz'
+                    });
+                    setIsSubmitting(false);
+                    return;
+                }
+            }
 
             const submitData = {
                 ...data,
